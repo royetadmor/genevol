@@ -12,3 +12,7 @@ Makefile
 # Ignoring generated binaries
 /GenEvol/genEvol
 *.so*
+
+# Ignoring data files
+data.fasta
+tree.newick

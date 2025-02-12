@@ -19,8 +19,8 @@ std::vector<std::string> getSpeciesListFromFile(const std::string& filePath);
 int main(int args, char **argv) {
     // Get tree path and count path from args
     IntegerAlphabet* alphabet = new IntegerAlphabet(500); // Max gene family members, wild guess
-    std::string treePath = "/workspaces/chromevol/tree.newick";
-    std::string dataPath = "/workspaces/chromevol/data.fasta";
+    std::string treePath = "/workspaces/genevol/tree.newick";
+    std::string dataPath = "/workspaces/genevol/data.fasta";
 
     // Get tree
     Newick reader;
