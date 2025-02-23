@@ -4,6 +4,16 @@
 
 #include <Bpp/Phyl/Io/IoTree.h>
 #include <Bpp/Phyl/Io/Newick.h>
+#include <Bpp/Phyl/Likelihood/DataFlow/LikelihoodCalculationSingleProcess.h>
+#include <Bpp/Phyl/Likelihood/DataFlow/DataFlow.h>
+#include <Bpp/Phyl/Likelihood/PhyloLikelihoods/SingleProcessPhyloLikelihood.h>
+#include <Bpp/Phyl/Likelihood/ParametrizablePhyloTree.h>
+#include <Bpp/Phyl/Likelihood/NonHomogeneousSubstitutionProcess.h>
+#include <Bpp/Phyl/Model/RateDistribution/GammaDiscreteRateDistribution.h>
+#include <Bpp/Seq/Container/SiteContainerTools.h>
+
+
+#include "ChromosomeSubstitutionModel.h"
 
 
 using namespace bpp;
@@ -12,8 +22,8 @@ using namespace std;
 
 
 VectorSequenceContainer* readGeneFamilyFile(const std::string& filePath, IntegerAlphabet* alphabet);
-int validateTreeSpecies(const PhyloTree& tree, const std::vector<std::string>& speciesList);
 std::vector<std::string> getSpeciesListFromFile(const std::string& filePath);
+std::map<uint, vector<uint>> getMapOfNodeIds(PhyloTree* tree);
 
 
 int main(int args, char **argv) {
@@ -28,8 +38,50 @@ int main(int args, char **argv) {
 
     VectorSequenceContainer* container = readGeneFamilyFile(dataPath, alphabet);
     std::vector<std::string> species = getSpeciesListFromFile(dataPath);
+
+    // Param map
+    std::map<int, std::vector<double>> paramMap = {
+        {1, {2.0}},
+        {2, {3.0}},
+        {3, {2.0}},
+        {4, {2.0}},
+        {5, {1.3}}
+    };
+    std::vector<int> rateChangeType = {0, 0, 0, 0, 0};
+    std::map<uint, std::vector<int>> fixedParams = {
+        {1, {1, 1, 1, 1, 1}} 
+    };
+    int baseNum = 7;
+
+    // Make sub process
+    auto mapOfNodeIds = getMapOfNodeIds(tree_);
+    std::shared_ptr<DiscreteDistribution> gammaDist = std::shared_ptr<DiscreteDistribution>(new GammaDiscreteRateDistribution(1, 1.0));
+    auto parTree = std::make_shared<ParametrizablePhyloTree>(tree_);
+    auto subProcesses = std::make_shared<NonHomogeneousSubstitutionProcess>(gammaDist, parTree);
+    
+
+    // Make model and add to sub process
+    std::shared_ptr<ChromosomeSubstitutionModel> chrModel = std::make_shared<ChromosomeSubstitutionModel>(alphabet, paramMap, baseNum, 9, ChromosomeSubstitutionModel::rootFreqType::ROOT_LL, rateChangeType, false);
+    subProcesses->addModel(chrModel, mapOfNodeIds[1]);
+    SubstitutionProcess* nsubPro = subProcesses->clone();
+
+    // Convert VectorSequenceContainer to SiteContainer
+    // auto siteContainer = SiteContainerTools::buildContainer(container);
+
+    // Convert SiteContainer to AlignedSequenceContainer using the provided constructor
+    // AlignedSequenceContainer asc(*siteContainer);
+
+
+
+    Context* context = new Context();
+    bool weightedRootFreqs = false;
+    // Need to check why we can't use VectorSequenceContainer here
+    auto lik = std::make_shared<LikelihoodCalculationSingleProcess>(*context, *container->clone(), *nsubPro, weightedRootFreqs);
+    SingleProcessPhyloLikelihood* newLik = new SingleProcessPhyloLikelihood(*context, lik, lik->getParameters());
     
     std::cout << container->getSequence(2).toString() << std::endl;
+    std::cout << mapOfNodeIds[1][30] << std::endl;
+    std::cout << newLik->getValue() << std::endl;
     std::cout << "Done" << std::endl;
     return 0;
 }
@@ -115,4 +167,17 @@ std::vector<std::string> getSpeciesListFromFile(const std::string& filePath) {
 
     file.close();
     return speciesList;
+}
+
+std::map<uint, vector<uint>> getMapOfNodeIds(PhyloTree* tree) {
+    std::map<uint, vector<uint>> mapModelNodesIds;
+    auto nodes = tree->getAllNodes();
+    for (size_t i = 0; i < nodes.size(); i++){
+        uint nodeId = tree->getNodeIndex(nodes[i]);
+        if (nodeId == tree->getRootIndex()){
+            continue;
+        }
+        mapModelNodesIds[1].push_back(nodeId);
+    }
+    return mapModelNodesIds;
 }
