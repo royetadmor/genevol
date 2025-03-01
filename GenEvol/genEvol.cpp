@@ -11,6 +11,8 @@
 #include <Bpp/Phyl/Likelihood/NonHomogeneousSubstitutionProcess.h>
 #include <Bpp/Phyl/Model/RateDistribution/GammaDiscreteRateDistribution.h>
 #include <Bpp/Seq/Container/SiteContainerTools.h>
+#include <Bpp/Seq/Container/VectorSiteContainer.h>
+#include <Bpp/Seq/Container/VectorSequenceContainer.h>
 
 
 #include "ChromosomeSubstitutionModel.h"
@@ -21,7 +23,7 @@ using namespace std;
 
 
 
-VectorSequenceContainer* readGeneFamilyFile(const std::string& filePath, IntegerAlphabet* alphabet);
+VectorSiteContainer* readGeneFamilyFile(const std::string& filePath, IntegerAlphabet* alphabet);
 std::vector<std::string> getSpeciesListFromFile(const std::string& filePath);
 std::map<uint, vector<uint>> getMapOfNodeIds(PhyloTree* tree);
 
@@ -36,7 +38,7 @@ int main(int args, char **argv) {
     Newick reader;
     PhyloTree* tree_ = reader.readPhyloTree(treePath);
 
-    VectorSequenceContainer* container = readGeneFamilyFile(dataPath, alphabet);
+    VectorSiteContainer* container = readGeneFamilyFile(dataPath, alphabet);
     std::vector<std::string> species = getSpeciesListFromFile(dataPath);
 
     // Param map
@@ -61,16 +63,9 @@ int main(int args, char **argv) {
     
 
     // Make model and add to sub process
-    std::shared_ptr<ChromosomeSubstitutionModel> chrModel = std::make_shared<ChromosomeSubstitutionModel>(alphabet, paramMap, baseNum, 9, ChromosomeSubstitutionModel::rootFreqType::ROOT_LL, rateChangeType, false);
+    std::shared_ptr<ChromosomeSubstitutionModel> chrModel = std::make_shared<ChromosomeSubstitutionModel>(alphabet, paramMap, baseNum, 500, ChromosomeSubstitutionModel::rootFreqType::ROOT_LL, rateChangeType, false);
     subProcesses->addModel(chrModel, mapOfNodeIds[1]);
     SubstitutionProcess* nsubPro = subProcesses->clone();
-
-    // Convert VectorSequenceContainer to SiteContainer
-    // auto siteContainer = SiteContainerTools::buildContainer(container);
-
-    // Convert SiteContainer to AlignedSequenceContainer using the provided constructor
-    // AlignedSequenceContainer asc(*siteContainer);
-
 
 
     Context* context = new Context();
@@ -79,60 +74,61 @@ int main(int args, char **argv) {
     auto lik = std::make_shared<LikelihoodCalculationSingleProcess>(*context, *container->clone(), *nsubPro, weightedRootFreqs);
     SingleProcessPhyloLikelihood* newLik = new SingleProcessPhyloLikelihood(*context, lik, lik->getParameters());
     
-    std::cout << container->getSequence(2).toString() << std::endl;
+
+    std::vector<std::string> sequenceNames = container->getSequenceNames();
+    std::cout << container->getSequence(sequenceNames[0]).getChar(1) << std::endl;
     std::cout << mapOfNodeIds[1][30] << std::endl;
     std::cout << newLik->getValue() << std::endl;
     std::cout << "Done" << std::endl;
     return 0;
 }
 
-VectorSequenceContainer* readGeneFamilyFile(const std::string& filePath, IntegerAlphabet* alphabet) {
-
+VectorSiteContainer* readGeneFamilyFile(const std::string& filePath, IntegerAlphabet* alphabet) {
     std::ifstream file(filePath);
     if (!file.is_open()) {
         throw std::runtime_error("Could not open file: " + filePath);
     }
 
-    // Read the header to extract species names
     std::string line;
     std::getline(file, line);
     std::istringstream headerStream(line);
-    std::vector<std::string> speciesNames;
+    std::vector<std::string> familyIds;
     std::string columnName;
 
-    // Skip the first two columns ("Desc" and "Family ID")
-    std::getline(headerStream, columnName, '\t');
-    std::getline(headerStream, columnName, '\t');
+    // Skip the first two columns ("Organizem" and "Desc")
+    std::getline(headerStream, columnName, '\t');  
+    std::getline(headerStream, columnName, '\t');  
 
     while (std::getline(headerStream, columnName, '\t')) {
-        speciesNames.push_back(columnName);
+        familyIds.push_back(columnName);
     }
 
-    auto* container = new VectorSequenceContainer(alphabet);
+    // Create a sequence container
+    auto* container = new VectorSiteContainer(alphabet);
+
     while (std::getline(file, line)) {
         std::istringstream lineStream(line);
-        std::string familyId;
+        std::string speciesName;
         std::vector<std::string> geneCounts;
 
-        // Skip the "Desc" column
+        // Read species name
+        std::getline(lineStream, speciesName, '\t');
+
+        // Skip "Desc" column
         std::getline(lineStream, columnName, '\t');
 
-        // Read the Family ID
-        std::getline(lineStream, familyId, '\t');
-
-        // Read the gene counts
+        // Read gene counts
         while (std::getline(lineStream, columnName, '\t')) {
             geneCounts.push_back(columnName);
         }
 
-        // Verify the number of gene counts matches the number of species
-        if (geneCounts.size() != speciesNames.size()) {
+        // Verify the number of gene counts matches the number of families
+        if (geneCounts.size() != familyIds.size()) {
             delete container;
-            throw std::runtime_error("Mismatch between species count and data columns in file.");
+            throw std::runtime_error("Mismatch between family count and data columns in file.");
         }
 
-        auto* seq = new BasicSequence(familyId, geneCounts, alphabet);
-        container->addSequence(*seq, true);
+        container->addSequence(BasicSequence(speciesName, geneCounts, alphabet), true);
     }
     file.close();
     return container;
