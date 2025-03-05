@@ -41,7 +41,7 @@ int main(int args, char **argv) {
     VectorSiteContainer* container = readGeneFamilyFile(dataPath, alphabet);
     std::vector<std::string> species = getSpeciesListFromFile(dataPath);
 
-    // Param map
+    // Define substitution parameters
     std::map<int, std::vector<double>> paramMap = {
         {1, {2.0}},
         {2, {3.0}},
@@ -53,35 +53,34 @@ int main(int args, char **argv) {
     std::map<uint, std::vector<int>> fixedParams = {
         {1, {1, 1, 1, 1, 1}} 
     };
-    int baseNum = 7;
+    int baseNum = 70;
 
-    // Make sub process
+    // Create substitution process
     auto mapOfNodeIds = getMapOfNodeIds(tree_);
     std::shared_ptr<DiscreteDistribution> gammaDist = std::shared_ptr<DiscreteDistribution>(new GammaDiscreteRateDistribution(1, 1.0));
     auto parTree = std::make_shared<ParametrizablePhyloTree>(tree_);
-    auto subProcesses = std::make_shared<NonHomogeneousSubstitutionProcess>(gammaDist, parTree);
+    std::shared_ptr<NonHomogeneousSubstitutionProcess> subProcesses = std::make_shared<NonHomogeneousSubstitutionProcess>(gammaDist, parTree);
     
 
-    // Make model and add to sub process
-    std::shared_ptr<ChromosomeSubstitutionModel> chrModel = std::make_shared<ChromosomeSubstitutionModel>(alphabet, paramMap, baseNum, 500, ChromosomeSubstitutionModel::rootFreqType::ROOT_LL, rateChangeType, false);
+    // Create substitution model
+    std::shared_ptr<ChromosomeSubstitutionModel> chrModel = std::make_shared<ChromosomeSubstitutionModel>(alphabet, paramMap, baseNum, 500, ChromosomeSubstitutionModel::rootFreqType::ROOT_LL, rateChangeType, false, false);
     subProcesses->addModel(chrModel, mapOfNodeIds[1]);
     SubstitutionProcess* nsubPro = subProcesses->clone();
 
-
+    // Create likelihood object
     Context* context = new Context();
-    bool weightedRootFreqs = false;
-    // Need to check why we can't use VectorSequenceContainer here
+    bool weightedRootFreqs = true;
     auto lik = std::make_shared<LikelihoodCalculationSingleProcess>(*context, *container->clone(), *nsubPro, weightedRootFreqs);
     SingleProcessPhyloLikelihood* newLik = new SingleProcessPhyloLikelihood(*context, lik, lik->getParameters());
     
 
     std::vector<std::string> sequenceNames = container->getSequenceNames();
-    std::cout << container->getSequence(sequenceNames[0]).getChar(1) << std::endl;
-    std::cout << mapOfNodeIds[1][30] << std::endl;
     std::cout << newLik->getValue() << std::endl;
     std::cout << "Done" << std::endl;
     return 0;
 }
+
+
 
 VectorSiteContainer* readGeneFamilyFile(const std::string& filePath, IntegerAlphabet* alphabet) {
     std::ifstream file(filePath);
@@ -128,7 +127,7 @@ VectorSiteContainer* readGeneFamilyFile(const std::string& filePath, IntegerAlph
             throw std::runtime_error("Mismatch between family count and data columns in file.");
         }
 
-        container->addSequence(BasicSequence(speciesName, geneCounts, alphabet), true);
+        container->addSequence(BasicSequence(speciesName, geneCounts[0], alphabet), true);
     }
     file.close();
     return container;
@@ -175,5 +174,6 @@ std::map<uint, vector<uint>> getMapOfNodeIds(PhyloTree* tree) {
         }
         mapModelNodesIds[1].push_back(nodeId);
     }
+    // mapModelNodesIds[1].push_back(tree->getRootIndex());
     return mapModelNodesIds;
 }
