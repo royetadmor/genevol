@@ -8,5 +8,5 @@ fi
 
 # Build project
 cmake -DCMAKE_INSTALL_PREFIX=$WORKDIR OMP_NUM_THREADS=20 ./
-make -j 3
+make -j 4
 make install

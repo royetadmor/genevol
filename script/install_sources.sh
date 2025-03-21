@@ -43,7 +43,7 @@ git checkout rel3_anat
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$WORKDIR ..
-make -j 1
+make -j 4
 make install
 cd ../../..
 
