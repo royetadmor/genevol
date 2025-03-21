@@ -32,8 +32,8 @@ std::map<uint, vector<uint>> getMapOfNodeIds(PhyloTree* tree);
 
 int main(int args, char **argv) {
     // Get tree path and count path from args
-    std::string treePath = "/workspaces/genevol/tree.newick";
-    std::string dataPath = "/workspaces/genevol/data.fasta";
+    std::string treePath = "test_data/tree.newick";
+    std::string dataPath = "test_data/data.fasta";
 
     // Set Alphabet
     int minState, maxState;
