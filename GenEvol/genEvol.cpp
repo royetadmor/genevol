@@ -339,24 +339,27 @@ int optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihood
             // param names corresponding to the parameter type
             std::vector<string> paramsNames = typeWithParamNames[rateParamType][paramNameAndType[nameOfParam].second];
             Parameter param = params.getParameter(nameOfParam);
-
-            std::cout << paramsNames.size() << std::endl;
             auto it = std::find(paramsNames.begin(), paramsNames.end(), nameOfParam);
             if (it == paramsNames.end()){
                 throw Exception("ChromosomeNumberOptimizer::optimizeModelParametersOneDimension(): index out of range!");
             }
             size_t index = it - paramsNames.begin();
+            std::cout << index << std::endl;
             // if (rateParamType != static_cast<int>(ChromosomeSubstitutionModel::BASENUM)){
+            std::vector<int> rateChangeType = {8, 0, 1, 1, 0};
+            ChromosomeNumberDependencyFunction::FunctionType funcType = static_cast<ChromosomeNumberDependencyFunction::FunctionType>(rateChangeType[rateParamType]);
             ChromosomeNumberDependencyFunction* functionOp;
+            functionOp = compositeParameter::setDependencyFunction(funcType);
             int minDomain = 1;
             int maxDomain = 110;
-
             functionOp->setDomainsIfNeeded(minDomain, maxDomain);
-            functionOp->updateBounds(params, paramsNames, index, &lowerBound, &upperBound, maxDomain);
-            
-            functionOp->updateBounds(f, nameOfParam, lowerBound, upperBound);
+            if (rateChangeType[rateParamType] != 0) {
+                functionOp->updateBounds(params, paramsNames, index, &lowerBound, &upperBound, maxDomain);
+                functionOp->updateBounds(f, nameOfParam, lowerBound, upperBound);
+            }
 
             delete functionOp;
+            std::cout << "Bla1" << std::endl;
             // }
 
             // }else{
