@@ -2,6 +2,9 @@
 #include <string> 
 #include <set>
 
+#include <Bpp/Numeric/Function/BrentOneDimension.h>
+#include <Bpp/Numeric/AutoParameter.h>
+
 #include <Bpp/Phyl/Io/IoTree.h>
 #include <Bpp/Phyl/Io/Newick.h>
 #include <Bpp/Phyl/Likelihood/DataFlow/LikelihoodCalculationSingleProcess.h>
@@ -28,7 +31,11 @@ double countUniqueStates(const VectorSiteContainer* container);
 VectorSiteContainer* readGeneFamilyFile(const std::string& filePath, IntegerAlphabet* alphabet);
 std::vector<std::string> getSpeciesListFromFile(const std::string& filePath);
 std::map<uint, vector<uint>> getMapOfNodeIds(PhyloTree* tree);
-
+void updateMapsOfParamTypesAndNames(std::map<int, std::map<uint, std::vector<string>>> &typeWithParamNames, std::map<string, std::pair<int, uint>>* paramNameAndType, std::vector<std::string> namesAllParams, std::map<int, std::vector<std::pair<uint, int>>>* sharedParams, std::string suffix);
+int optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoodProcess, double tol, unsigned int maxNumOfIterations, bool mixed=false, unsigned curentIterNum=0);
+uint getModelFromParamName(string name);
+void updateWithTypeAndCorrespondingName(std::map<std::string, int> &typeGeneralName);
+int getTypeOfParamFromParamName(string name);
 
 int main(int args, char **argv) {
     // Get tree path and count path from args
@@ -63,14 +70,14 @@ int main(int args, char **argv) {
 
     // Define substitution parameters
     std::map<int, std::vector<double>> paramMap = {
-        {1, {2.0}},
+        {1, {-999}},
         {2, {3.0}},
         {3, {2.0, 0.1}},
         {4, {2.0, 0.1}},
         {5, {1.3}}
     };
-    std::vector<int> rateChangeType = {0, 0, 1, 1, 0};
-    int baseNum = 7;
+    std::vector<int> rateChangeType = {8, 0, 1, 1, 0};
+    int baseNum = -999;
 
     // Create substitution process
     auto mapOfNodeIds = getMapOfNodeIds(tree_);
@@ -99,9 +106,10 @@ int main(int args, char **argv) {
     auto substitutionModelParams = newLik->getSubstitutionModelParameters().getParameterNames();
     for (int i = 0; i < (int)(substitutionModelParams.size()); i++){
         std::cout << substitutionModelParams[i] << std::endl;
-       std::cout << newLik->getParameters().getParameter(substitutionModelParams[i]).getValue() << std::endl;
+        std::cout << newLik->getParameters().getParameter(substitutionModelParams[i]).getValue() << std::endl;
     }
-    // std::cout << substitutionModelParams.size() << std::endl;
+    std::cout << "Starting optimization" << std::endl;
+    int iterations = optimizeModelParametersOneDimension(newLik, 0.1, 2);
     std::cout << "Done" << std::endl;
     return 0;
 }
@@ -204,7 +212,6 @@ std::map<uint, vector<uint>> getMapOfNodeIds(PhyloTree* tree) {
     return mapModelNodesIds;
 }
 
-
 std::tuple<int, int> getAlphabetLimit(const std::string& filePath) {
     std::ifstream file(filePath);
     if (!file.is_open()) {
@@ -279,4 +286,198 @@ int getGeneCountRange(const VectorSiteContainer* container) {
         }
     }
     return max - min;
+}
+
+// Tol: 0.1, maxNumOfIterations: 2? 
+int optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoodProcess, double tol, unsigned int maxNumOfIterations, bool mixed, unsigned curentIterNum)
+{
+    // Initialize optimizer
+    string text;
+    DerivableSecondOrder* f = likelihoodProcess;
+    BrentOneDimension* optimizer = new BrentOneDimension(f);
+    optimizer->setVerbose(1);
+    optimizer->setProfiler(0);
+    optimizer->setMessageHandler(0);
+    optimizer->setConstraintPolicy(AutoParameter::CONSTRAINTS_AUTO);
+    optimizer->setMaximumNumberOfEvaluations(100);
+
+    // Can use BRACKET_INWARD or BRACKET_OUTWARD instead
+    optimizer->setBracketing(BrentOneDimension::BRACKET_SIMPLE);
+
+    // initializing the likelihood values
+    double currentLikelihood = likelihoodProcess->getValue();
+    double prevLikelihood;
+    unsigned int numOfEvaluations = 0;
+
+    // setting maps of parameter type and the corresponding parameters, and vice versa
+    std::map<int, std::map<uint, std::vector<string>>> typeWithParamNames;//parameter type, num of model, related parameters
+    std::map<string, std::pair<int, uint>> paramNameAndType; // parameter name, its type and number of model
+
+    vector<string> parametersNames = likelihoodProcess->getSubstitutionModelParameters().getParameterNames();
+    updateMapsOfParamTypesAndNames(typeWithParamNames, &paramNameAndType, parametersNames, 0, "");
+    ParameterList params;
+    size_t nbParams = parametersNames.size();
+
+    // starting iterations of optimization
+    for (size_t i = 0; i < maxNumOfIterations; i++)
+    {
+        prevLikelihood = currentLikelihood;
+        for (size_t j = 0; j < nbParams; j ++)
+        {
+            params = likelihoodProcess->getParameters();
+            const string nameOfParam = parametersNames[j];
+            std::cout << "Previous value of "+ nameOfParam + " is: "+ std::to_string(params.getParameter(nameOfParam).getValue()) << std::endl;
+
+            // This checks if there's a param we don't need to optimize (==fixed param)
+            int rateParamType = paramNameAndType[nameOfParam].first;
+            // if (std::count((*fixedParams)[paramNameAndType[nameOfParam].second].begin(), (*fixedParams)[paramNameAndType[nameOfParam].second].end(), rateParamType)){
+            //     continue;
+            // }
+
+            double lowerBound;
+            double upperBound;
+            // param names corresponding to the parameter type
+            std::vector<string> paramsNames = typeWithParamNames[rateParamType][paramNameAndType[nameOfParam].second];
+            Parameter param = params.getParameter(nameOfParam);
+
+            std::cout << paramsNames.size() << std::endl;
+            auto it = std::find(paramsNames.begin(), paramsNames.end(), nameOfParam);
+            if (it == paramsNames.end()){
+                throw Exception("ChromosomeNumberOptimizer::optimizeModelParametersOneDimension(): index out of range!");
+            }
+            size_t index = it - paramsNames.begin();
+            // if (rateParamType != static_cast<int>(ChromosomeSubstitutionModel::BASENUM)){
+            ChromosomeNumberDependencyFunction* functionOp;
+            int minDomain = 1;
+            int maxDomain = 110;
+
+            functionOp->setDomainsIfNeeded(minDomain, maxDomain);
+            functionOp->updateBounds(params, paramsNames, index, &lowerBound, &upperBound, maxDomain);
+            
+            functionOp->updateBounds(f, nameOfParam, lowerBound, upperBound);
+
+            delete functionOp;
+            // }
+
+            // }else{
+            //     // baseNumber parameter
+            //     if (baseNumOptimizationMethod_ != "Brent"){
+            //         if (!std::count((*fixedParams)[paramNameAndType[nameOfParam].second].begin(), (*fixedParams)[paramNameAndType[nameOfParam].second].end(), ChromosomeSubstitutionModel::BASENUM)){
+            //             optimizeBaseNum(likelihoodProcess, parametersNames, j, baseNumCandidates, &currentLikelihood, lowerBound, upperBound, nameOfParam, params, paramNameAndType[nameOfParam].second, baseNumberBounds);
+            //             //text = "parameter value after optimization "+ std::to_string(likelihoodProcess->getLikelihoodCalculation()->getParameter(param.getName()).getValue())+ "\n";
+            //             text = "parameter value after optimization "+ std::to_string(likelihoodProcess->getParameters().getParameter(param.getName()).getValue())+ "\n";
+            //             std::cout << text << std::endl;
+            //             continue;
+            //         }
+            //     }
+            // }
+            std::cout << "Parameter name is: " + nameOfParam << std::endl;
+        
+            // if ((i == 1) & (maxNumOfIterations > 2)){
+            //     optimizer->getStopCondition()->setTolerance(tol* 2);
+            // }else{
+            //     optimizer->getStopCondition()->setTolerance(tol);
+            // }
+            optimizer->getStopCondition()->setTolerance(tol);
+            // if (rateParamType != static_cast<int>(ChromosomeSubstitutionModel::BASENUM)){
+            //     optimizer->setInitialInterval(lowerBound + 1e-10, upperBound);
+            // }else{
+            //     optimizer->setInitialInterval(lowerBound, upperBound);
+            // }
+            optimizer->setInitialInterval(lowerBound, upperBound);            
+            std::cout << "LowerBound" << std::endl;
+            std::cout << upperBound << std::endl;
+            std::cout << "upperBound" << std::endl;
+            std::cout << lowerBound << std::endl;
+            optimizer->init(params.createSubList(param.getName()));
+            currentLikelihood = optimizer->optimize();
+            //text = "parameter value after optimization "+ std::to_string(likelihoodProcess->getLikelihoodCalculation()->getParameter(param.getName()).getValue())+ "\n";
+            std::cout << "parameter value after optimization "+ std::to_string(likelihoodProcess->getParameters().getParameter(param.getName()).getValue()) << std::endl;
+        }
+
+        if (std::abs(prevLikelihood-currentLikelihood) < tol){
+            break;
+        }
+        numOfEvaluations += optimizer->getNumberOfEvaluations();
+
+    }
+    delete optimizer;
+    return numOfEvaluations;
+}
+
+
+void updateMapsOfParamTypesAndNames(std::map<int, std::map<uint, std::vector<string>>> &typeWithParamNames, std::map<string, std::pair<int, uint>>* paramNameAndType, std::vector<std::string> namesAllParams, std::map<int, std::vector<std::pair<uint, int>>>* sharedParams, std::string suffix){
+    std::map<string, vector<std::pair<uint, int>>> sharedParamsNames;
+    if (sharedParams){
+        // LikelihoodUtils::createMapOfSharedParameterNames(*sharedParams, sharedParamsNames);
+        std::cout << "Hi" << std::endl; 
+    }
+    for (size_t i = 0; i < namesAllParams.size(); i++){
+        string cleanParamName;
+        if (suffix != ""){
+            cleanParamName = namesAllParams[i].substr(0, namesAllParams[i].length() - suffix.length());
+        }else{
+            cleanParamName = namesAllParams[i];
+        }
+        uint modelId = getModelFromParamName(cleanParamName);
+        int type = getTypeOfParamFromParamName(cleanParamName);
+        //should get the type
+
+        
+        typeWithParamNames[type][modelId].push_back(namesAllParams[i]);
+        if (paramNameAndType){
+            (*paramNameAndType)[namesAllParams[i]] = std::pair<int, uint>(type, modelId);
+        }
+        if (sharedParams){
+            if (sharedParamsNames.find(namesAllParams[i]) != sharedParamsNames.end()){
+                for (size_t k = 0; k < sharedParamsNames[namesAllParams[i]].size(); k++ ){
+                    uint model = sharedParamsNames[namesAllParams[i]][k].first;
+                    int typeOfSharedParam = sharedParamsNames[namesAllParams[i]][k].second;
+                    typeWithParamNames[typeOfSharedParam][model].push_back(namesAllParams[i]);
+
+                }
+
+            }
+
+        }
+
+    }
+
+}
+
+uint getModelFromParamName(string name){
+    std::regex modelPattern ("_([\\d]+)");
+    std::smatch sm;
+    std::regex_search(name, sm, modelPattern);
+    std::string modelSuffix = sm[sm.size()-1];
+    uint modelId = static_cast<uint>(stoi(modelSuffix));
+    return modelId;
+
+}
+
+void updateWithTypeAndCorrespondingName(std::map<std::string, int> &typeGeneralName){
+    typeGeneralName["gain"] = static_cast<int>(ChromosomeSubstitutionModel::GAIN);
+    typeGeneralName["loss"] = static_cast<int>(ChromosomeSubstitutionModel::LOSS);
+    typeGeneralName["dupl"] = static_cast<int>(ChromosomeSubstitutionModel::DUPL);
+    typeGeneralName["demi"] = static_cast<int>(ChromosomeSubstitutionModel::DEMIDUPL);
+    typeGeneralName["baseNumR"] = static_cast<int>(ChromosomeSubstitutionModel::BASENUMR);
+    typeGeneralName["baseNum_"] = static_cast<int>(ChromosomeSubstitutionModel::BASENUM);
+    
+}
+/**********************************************************************************/
+int getTypeOfParamFromParamName(string name){
+    int type;
+    std::map<std::string, int> typeGeneralName;
+    updateWithTypeAndCorrespondingName(typeGeneralName);
+    auto itParamType = typeGeneralName.begin();
+    while(itParamType != typeGeneralName.end()){
+        string pattern = itParamType->first;
+        if (name.find(pattern) != string::npos){
+            type = typeGeneralName[pattern];
+            break;
+
+        }
+        itParamType ++;
+    }
+    return type;
 }
