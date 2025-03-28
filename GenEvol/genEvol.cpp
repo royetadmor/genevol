@@ -27,15 +27,16 @@ using namespace std;
 
 std::tuple<int, int> getAlphabetLimit(const std::string& filePath);
 int getGeneCountRange(const VectorSiteContainer* container);
-double countUniqueStates(const VectorSiteContainer* container);
 VectorSiteContainer* readGeneFamilyFile(const std::string& filePath, IntegerAlphabet* alphabet);
 std::vector<std::string> getSpeciesListFromFile(const std::string& filePath);
 std::map<uint, vector<uint>> getMapOfNodeIds(PhyloTree* tree);
 void updateMapsOfParamTypesAndNames(std::map<int, std::map<uint, std::vector<string>>> &typeWithParamNames, std::map<string, std::pair<int, uint>>* paramNameAndType, std::vector<std::string> namesAllParams, std::map<int, std::vector<std::pair<uint, int>>>* sharedParams, std::string suffix);
-int optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoodProcess, double tol, unsigned int maxNumOfIterations, bool mixed=false, unsigned curentIterNum=0);
+void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoodProcess, double tol, unsigned int maxNumOfIterations, bool mixed=false, unsigned curentIterNum=0);
 uint getModelFromParamName(string name);
 void updateWithTypeAndCorrespondingName(std::map<std::string, int> &typeGeneralName);
 int getTypeOfParamFromParamName(string name);
+double getTreeScalingFactor(const VectorSiteContainer* container, PhyloTree* tree);
+int countUniqueStates(const Site* site);
 
 int main(int args, char **argv) {
     // Get tree path and count path from args
@@ -54,16 +55,12 @@ int main(int args, char **argv) {
     // Get tree and rescale it
     Newick reader;
     PhyloTree* tree_ = reader.readPhyloTree(treePath);
-    double uniqueStatesCount = countUniqueStates(container);
     int countRange = getGeneCountRange(container);
+    countRange = 50; // TODO: hardcoded
+    double scale_tree_factor = getTreeScalingFactor(container, tree_);
     std::cout << maxState << std::endl;
-    std::cout << uniqueStatesCount << std::endl;
     std::cout << countRange << std::endl;
-    double treeLength = tree_->getTotalLength();
-
-    // TODO: hardcoded
-    auto scale_tree_factor = 2;//uniqueStatesCount/treeLength; // rescale by average amount of unique state by position
-    countRange = 50;
+    std::cout << scale_tree_factor*tree_->getTotalLength() << std::endl;
     tree_->scaleTree(scale_tree_factor);
 
 
@@ -100,7 +97,6 @@ int main(int args, char **argv) {
     
 
     std::vector<std::string> sequenceNames = container->getSequenceNames();
-    std::cout << container->getSequence(sequenceNames[1]).toString() << std::endl;
     std::cout << "Calculating likelihood" << std::endl;
     std::cout << newLik->getValue() << std::endl;
     auto substitutionModelParams = newLik->getSubstitutionModelParameters().getParameterNames();
@@ -109,7 +105,7 @@ int main(int args, char **argv) {
         std::cout << newLik->getParameters().getParameter(substitutionModelParams[i]).getValue() << std::endl;
     }
     std::cout << "Starting optimization" << std::endl;
-    int iterations = optimizeModelParametersOneDimension(newLik, 0.1, 2);
+    optimizeModelParametersOneDimension(newLik, 0.1, 2);
     std::cout << "Done" << std::endl;
     return 0;
 }
@@ -255,18 +251,13 @@ std::tuple<int, int> getAlphabetLimit(const std::string& filePath) {
     return  std::make_tuple(min, max + 10);
 }
 
-double countUniqueStates(const VectorSiteContainer* container) {
+int countUniqueStates(const Site site) {
     std::set<int> uniqueStates;
-    // Iterate over all sites (columns)
-    for (size_t i = 0; i < container->getNumberOfSites(); i++) {
-        const Site& site = container->getSite(i);
-
-        // Iterate over all sequences (rows)
-        for (size_t j = 0; j < site.size(); j++) {
-            uniqueStates.insert(site[j]); 
-        }
+    // Iterate over all sequences (rows)
+    for (size_t j = 0; j < site.size(); j++) {
+        uniqueStates.insert(site[j]); 
     }
-    return static_cast<double>(uniqueStates.size());
+    return uniqueStates.size();
 }
 
 int getGeneCountRange(const VectorSiteContainer* container) {
@@ -289,7 +280,7 @@ int getGeneCountRange(const VectorSiteContainer* container) {
 }
 
 // Tol: 0.1, maxNumOfIterations: 2? 
-int optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoodProcess, double tol, unsigned int maxNumOfIterations, bool mixed, unsigned curentIterNum)
+void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoodProcess, double tol, unsigned int maxNumOfIterations, bool mixed, unsigned curentIterNum)
 {
     // Initialize optimizer
     DerivableSecondOrder* f = likelihoodProcess;
@@ -307,10 +298,10 @@ int optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihood
     double currentLikelihood = likelihoodProcess->getValue();
     double prevLikelihood;
     unsigned int numOfEvaluations = 0;
-    int minDomain = 1;
-    int maxDomain = 110;
+    int minDomain = 1; //TODO: hardcoded
+    int maxDomain = 110; //TODO: hardcoded
     size_t startCompositeParams = ChromosomeSubstitutionModel::getNumberOfNonCompositeParams();
-    std::vector<int> rateChangeType = {8, 0, 1, 1, 0};
+    std::vector<int> rateChangeType = {8, 0, 1, 1, 0}; //TODO: hardcoded
 
 
     // setting maps of parameter type and the corresponding parameters, and vice versa
@@ -371,9 +362,7 @@ int optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihood
 
     }
     delete optimizer;
-    return numOfEvaluations;
 }
-
 
 void updateMapsOfParamTypesAndNames(std::map<int, std::map<uint, std::vector<string>>> &typeWithParamNames, std::map<string, std::pair<int, uint>>* paramNameAndType, std::vector<std::string> namesAllParams, std::map<int, std::vector<std::pair<uint, int>>>* sharedParams, std::string suffix){
     std::map<string, vector<std::pair<uint, int>>> sharedParamsNames;
@@ -433,7 +422,7 @@ void updateWithTypeAndCorrespondingName(std::map<std::string, int> &typeGeneralN
     typeGeneralName["baseNum_"] = static_cast<int>(ChromosomeSubstitutionModel::BASENUM);
     
 }
-/**********************************************************************************/
+
 int getTypeOfParamFromParamName(string name){
     int type;
     std::map<std::string, int> typeGeneralName;
@@ -449,4 +438,15 @@ int getTypeOfParamFromParamName(string name){
         itParamType ++;
     }
     return type;
+}
+
+double getTreeScalingFactor(const VectorSiteContainer* container, PhyloTree* tree) {
+    int uniqueStateCount = 0;
+    // Iterate over all sites (columns)
+    for (size_t i = 0; i < container->getNumberOfSites(); i++) {
+        const Site site = container->getSite(i);
+        uniqueStateCount += countUniqueStates(site);
+    }
+    double avgUniqueStateCount = uniqueStateCount/container->getNumberOfSites();
+    return avgUniqueStateCount/tree->getTotalLength();
 }

@@ -5,7 +5,7 @@
 
 # File list
 set (CPP_FILES
-  ChrFasta.cpp
+  # ChrFasta.cpp
   ChromosomeSubstitutionModel.cpp
 #   StochasticMappingUtils.cpp
 #   TreeUtils.cpp
