@@ -292,7 +292,6 @@ int getGeneCountRange(const VectorSiteContainer* container) {
 int optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoodProcess, double tol, unsigned int maxNumOfIterations, bool mixed, unsigned curentIterNum)
 {
     // Initialize optimizer
-    string text;
     DerivableSecondOrder* f = likelihoodProcess;
     BrentOneDimension* optimizer = new BrentOneDimension(f);
     optimizer->setVerbose(1);
@@ -308,6 +307,11 @@ int optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihood
     double currentLikelihood = likelihoodProcess->getValue();
     double prevLikelihood;
     unsigned int numOfEvaluations = 0;
+    int minDomain = 1;
+    int maxDomain = 110;
+    size_t startCompositeParams = ChromosomeSubstitutionModel::getNumberOfNonCompositeParams();
+    std::vector<int> rateChangeType = {8, 0, 1, 1, 0};
+
 
     // setting maps of parameter type and the corresponding parameters, and vice versa
     std::map<int, std::map<uint, std::vector<string>>> typeWithParamNames;//parameter type, num of model, related parameters
@@ -315,7 +319,7 @@ int optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihood
 
     vector<string> parametersNames = likelihoodProcess->getSubstitutionModelParameters().getParameterNames();
     updateMapsOfParamTypesAndNames(typeWithParamNames, &paramNameAndType, parametersNames, 0, "");
-    ParameterList params;
+    ParameterList params = likelihoodProcess->getParameters();
     size_t nbParams = parametersNames.size();
 
     // starting iterations of optimization
@@ -324,18 +328,16 @@ int optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihood
         prevLikelihood = currentLikelihood;
         for (size_t j = 0; j < nbParams; j ++)
         {
-            params = likelihoodProcess->getParameters();
+            double lowerBound, upperBound;            
             const string nameOfParam = parametersNames[j];
+            int rateParamType = paramNameAndType[nameOfParam].first;
             std::cout << "Previous value of "+ nameOfParam + " is: "+ std::to_string(params.getParameter(nameOfParam).getValue()) << std::endl;
 
             // This checks if there's a param we don't need to optimize (==fixed param)
-            int rateParamType = paramNameAndType[nameOfParam].first;
             // if (std::count((*fixedParams)[paramNameAndType[nameOfParam].second].begin(), (*fixedParams)[paramNameAndType[nameOfParam].second].end(), rateParamType)){
             //     continue;
             // }
 
-            double lowerBound;
-            double upperBound;
             // param names corresponding to the parameter type
             std::vector<string> paramsNames = typeWithParamNames[rateParamType][paramNameAndType[nameOfParam].second];
             Parameter param = params.getParameter(nameOfParam);
@@ -344,57 +346,21 @@ int optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihood
                 throw Exception("ChromosomeNumberOptimizer::optimizeModelParametersOneDimension(): index out of range!");
             }
             size_t index = it - paramsNames.begin();
-            std::cout << index << std::endl;
-            // if (rateParamType != static_cast<int>(ChromosomeSubstitutionModel::BASENUM)){
-            std::vector<int> rateChangeType = {8, 0, 1, 1, 0};
-            ChromosomeNumberDependencyFunction::FunctionType funcType = static_cast<ChromosomeNumberDependencyFunction::FunctionType>(rateChangeType[rateParamType]);
+            ChromosomeNumberDependencyFunction::FunctionType funcType = static_cast<ChromosomeNumberDependencyFunction::FunctionType>(rateChangeType[rateParamType - startCompositeParams]);
             ChromosomeNumberDependencyFunction* functionOp;
             functionOp = compositeParameter::setDependencyFunction(funcType);
-            int minDomain = 1;
-            int maxDomain = 110;
+
             functionOp->setDomainsIfNeeded(minDomain, maxDomain);
-            if (rateChangeType[rateParamType] != 0) {
-                functionOp->updateBounds(params, paramsNames, index, &lowerBound, &upperBound, maxDomain);
-                functionOp->updateBounds(f, nameOfParam, lowerBound, upperBound);
-            }
+            functionOp->updateBounds(params, paramsNames, index, &lowerBound, &upperBound, maxDomain);
+            functionOp->updateBounds(f, nameOfParam, lowerBound, upperBound);
 
             delete functionOp;
-            std::cout << "Bla1" << std::endl;
-            // }
-
-            // }else{
-            //     // baseNumber parameter
-            //     if (baseNumOptimizationMethod_ != "Brent"){
-            //         if (!std::count((*fixedParams)[paramNameAndType[nameOfParam].second].begin(), (*fixedParams)[paramNameAndType[nameOfParam].second].end(), ChromosomeSubstitutionModel::BASENUM)){
-            //             optimizeBaseNum(likelihoodProcess, parametersNames, j, baseNumCandidates, &currentLikelihood, lowerBound, upperBound, nameOfParam, params, paramNameAndType[nameOfParam].second, baseNumberBounds);
-            //             //text = "parameter value after optimization "+ std::to_string(likelihoodProcess->getLikelihoodCalculation()->getParameter(param.getName()).getValue())+ "\n";
-            //             text = "parameter value after optimization "+ std::to_string(likelihoodProcess->getParameters().getParameter(param.getName()).getValue())+ "\n";
-            //             std::cout << text << std::endl;
-            //             continue;
-            //         }
-            //     }
-            // }
             std::cout << "Parameter name is: " + nameOfParam << std::endl;
-        
-            // if ((i == 1) & (maxNumOfIterations > 2)){
-            //     optimizer->getStopCondition()->setTolerance(tol* 2);
-            // }else{
-            //     optimizer->getStopCondition()->setTolerance(tol);
-            // }
             optimizer->getStopCondition()->setTolerance(tol);
-            // if (rateParamType != static_cast<int>(ChromosomeSubstitutionModel::BASENUM)){
-            //     optimizer->setInitialInterval(lowerBound + 1e-10, upperBound);
-            // }else{
-            //     optimizer->setInitialInterval(lowerBound, upperBound);
-            // }
             optimizer->setInitialInterval(lowerBound, upperBound);            
-            std::cout << "LowerBound" << std::endl;
-            std::cout << upperBound << std::endl;
-            std::cout << "upperBound" << std::endl;
-            std::cout << lowerBound << std::endl;
             optimizer->init(params.createSubList(param.getName()));
             currentLikelihood = optimizer->optimize();
-            //text = "parameter value after optimization "+ std::to_string(likelihoodProcess->getLikelihoodCalculation()->getParameter(param.getName()).getValue())+ "\n";
+            std::cout << "\nCurrent likelihood: " + std::to_string(currentLikelihood) << std::endl;
             std::cout << "parameter value after optimization "+ std::to_string(likelihoodProcess->getParameters().getParameter(param.getName()).getValue()) << std::endl;
         }
 

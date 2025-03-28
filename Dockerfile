@@ -11,4 +11,4 @@ RUN /app/genevol/script/build.sh --workdir /app
 
 # Default command to run when starting the container
 # (Modify as needed, e.g., "./myapp")
-CMD ["/bin/bash"]
+CMD ["./GenEvol/genEvol"]
