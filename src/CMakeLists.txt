@@ -7,6 +7,7 @@
 set (CPP_FILES
   # ChrFasta.cpp
   ChromosomeSubstitutionModel.cpp
+  ModelParameters.cpp
 #   StochasticMappingUtils.cpp
 #   TreeUtils.cpp
 #   LikelihoodUtils.cpp

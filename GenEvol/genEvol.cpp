@@ -19,16 +19,14 @@
 
 
 #include "ChromosomeSubstitutionModel.h"
+#include "ModelParameters.h"
 
 
 using namespace bpp;
 using namespace std;
 
 
-std::tuple<int, int> getAlphabetLimit(const std::string& filePath);
-int getGeneCountRange(const VectorSiteContainer* container);
 VectorSiteContainer* readGeneFamilyFile(const std::string& filePath, IntegerAlphabet* alphabet);
-std::vector<std::string> getSpeciesListFromFile(const std::string& filePath);
 std::map<uint, vector<uint>> getMapOfNodeIds(PhyloTree* tree);
 void updateMapsOfParamTypesAndNames(std::map<int, std::map<uint, std::vector<string>>> &typeWithParamNames, std::map<string, std::pair<int, uint>>* paramNameAndType, std::vector<std::string> namesAllParams, std::map<int, std::vector<std::pair<uint, int>>>* sharedParams, std::string suffix);
 void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoodProcess, double tol, unsigned int maxNumOfIterations, bool mixed=false, unsigned curentIterNum=0);
@@ -36,30 +34,28 @@ uint getModelFromParamName(string name);
 void updateWithTypeAndCorrespondingName(std::map<std::string, int> &typeGeneralName);
 int getTypeOfParamFromParamName(string name);
 double getTreeScalingFactor(const VectorSiteContainer* container, PhyloTree* tree);
-int countUniqueStates(const Site* site);
+int countUniqueStates(const Site site);
 
 int main(int args, char **argv) {
     // Get tree path and count path from args
     std::string treePath = "test_data/tree.newick";
     std::string dataPath = "test_data/data.fasta";
 
+    ModelParameters m = ModelParameters(treePath, dataPath);
+
     // Set Alphabet
-    int minState, maxState;
-    tie(minState, maxState) = getAlphabetLimit(dataPath);
     IntegerAlphabet* alphabet = new IntegerAlphabet(110, 1); // TODO: hardcoded
 
     // Get sequences
     VectorSiteContainer* container = readGeneFamilyFile(dataPath, alphabet);
-    std::vector<std::string> species = getSpeciesListFromFile(dataPath);
 
     // Get tree and rescale it
     Newick reader;
     PhyloTree* tree_ = reader.readPhyloTree(treePath);
-    int countRange = getGeneCountRange(container);
+    int countRange = m.countRange_;
     countRange = 50; // TODO: hardcoded
     double scale_tree_factor = getTreeScalingFactor(container, tree_);
-    std::cout << maxState << std::endl;
-    std::cout << countRange << std::endl;
+    std::cout << m.countRange_ << std::endl;
     std::cout << scale_tree_factor*tree_->getTotalLength() << std::endl;
     tree_->scaleTree(scale_tree_factor);
 
@@ -85,7 +81,6 @@ int main(int args, char **argv) {
 
     // Create substitution model
     std::shared_ptr<ChromosomeSubstitutionModel> chrModel = std::make_shared<ChromosomeSubstitutionModel>(alphabet, paramMap, baseNum, countRange, ChromosomeSubstitutionModel::rootFreqType::ROOT_LL, rateChangeType, false);
-    // std::cout << chrModel->getBaseNumR()->getParameterValues()[0] << std::endl;
     subProcesses->addModel(chrModel, mapOfNodeIds[1]);
     SubstitutionProcess* nsubPro = subProcesses->clone();
 
@@ -95,8 +90,6 @@ int main(int args, char **argv) {
     auto lik = std::make_shared<LikelihoodCalculationSingleProcess>(*context, *container->clone(), *nsubPro, weightedRootFreqs);
     SingleProcessPhyloLikelihood* newLik = new SingleProcessPhyloLikelihood(*context, lik, lik->getParameters());
     
-
-    std::vector<std::string> sequenceNames = container->getSequenceNames();
     std::cout << "Calculating likelihood" << std::endl;
     std::cout << newLik->getValue() << std::endl;
     auto substitutionModelParams = newLik->getSubstitutionModelParameters().getParameterNames();
@@ -163,37 +156,6 @@ VectorSiteContainer* readGeneFamilyFile(const std::string& filePath, IntegerAlph
     return container;
 }
 
-std::vector<std::string> getSpeciesListFromFile(const std::string& filePath) {
-
-    std::ifstream file(filePath);
-    if (!file.is_open()) {
-        throw std::runtime_error("Could not open file: " + filePath);
-    }
-
-    std::string line;
-
-    if (!std::getline(file, line)) {
-        throw std::runtime_error("File is empty or missing header: " + filePath);
-    }
-
-    // Parse the header
-    std::istringstream headerStream(line);
-    std::vector<std::string> speciesList;
-    std::string columnName;
-
-    // Skip the first two columns: "Desc" and "Family ID"
-    std::getline(headerStream, columnName, '\t'); 
-    std::getline(headerStream, columnName, '\t');
-
-    // Read the remaining column headers (species names)
-    while (std::getline(headerStream, columnName, '\t')) {
-        speciesList.push_back(columnName);
-    }
-
-    file.close();
-    return speciesList;
-}
-
 std::map<uint, vector<uint>> getMapOfNodeIds(PhyloTree* tree) {
     std::map<uint, vector<uint>> mapModelNodesIds;
     auto nodes = tree->getAllNodes();
@@ -208,49 +170,6 @@ std::map<uint, vector<uint>> getMapOfNodeIds(PhyloTree* tree) {
     return mapModelNodesIds;
 }
 
-std::tuple<int, int> getAlphabetLimit(const std::string& filePath) {
-    std::ifstream file(filePath);
-    if (!file.is_open()) {
-        throw std::runtime_error("Could not open file: " + filePath);
-    }
-
-    std::string line;
-    std::getline(file, line);
-    std::istringstream headerStream(line);
-    std::string columnName;
-
-    // Skip the first two columns ("Organizem" and "Desc")
-    std::getline(headerStream, columnName, '\t');  
-    std::getline(headerStream, columnName, '\t');  
-
-    int max = 1;
-    int min = 500;
-
-    while (std::getline(file, line)) {
-        std::string speciesName;
-        std::istringstream lineStream(line);
-
-        // Read species name
-        std::getline(lineStream, speciesName, '\t');
-
-        // Skip "Desc" column
-        std::getline(lineStream, columnName, '\t');
-
-        // Read gene counts
-        while (std::getline(lineStream, columnName, '\t')) {
-            int geneCount = std::stoi(columnName);
-            if (geneCount > max) {
-                max = geneCount;
-            }
-            if (geneCount < min) {
-                min = geneCount;
-            }
-        }
-    }
-    file.close();
-    return  std::make_tuple(min, max + 10);
-}
-
 int countUniqueStates(const Site site) {
     std::set<int> uniqueStates;
     // Iterate over all sequences (rows)
@@ -258,25 +177,6 @@ int countUniqueStates(const Site site) {
         uniqueStates.insert(site[j]); 
     }
     return uniqueStates.size();
-}
-
-int getGeneCountRange(const VectorSiteContainer* container) {
-    int min = 500;
-    int max = 1;
-
-    // Iterate over all sites (columns)
-    for (size_t i = 0; i < container->getNumberOfSites(); i++) {
-        const Site& site = container->getSite(i);
-        for (size_t j = 0; j < site.size(); j++) {
-            if (site[j] > max) {
-                max = site[j];
-            }
-            if (site[j] < min) {
-                min = site[j];
-            }
-        }
-    }
-    return max - min;
 }
 
 // Tol: 0.1, maxNumOfIterations: 2? 
@@ -297,7 +197,6 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
     // initializing the likelihood values
     double currentLikelihood = likelihoodProcess->getValue();
     double prevLikelihood;
-    unsigned int numOfEvaluations = 0;
     int minDomain = 1; //TODO: hardcoded
     int maxDomain = 110; //TODO: hardcoded
     size_t startCompositeParams = ChromosomeSubstitutionModel::getNumberOfNonCompositeParams();
@@ -358,7 +257,7 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
         if (std::abs(prevLikelihood-currentLikelihood) < tol){
             break;
         }
-        numOfEvaluations += optimizer->getNumberOfEvaluations();
+        optimizer->getNumberOfEvaluations();
 
     }
     delete optimizer;
