@@ -15,7 +15,6 @@
 #include <Bpp/Phyl/Model/RateDistribution/GammaDiscreteRateDistribution.h>
 #include <Bpp/Seq/Container/SiteContainerTools.h>
 #include <Bpp/Seq/Container/VectorSiteContainer.h>
-#include <Bpp/Seq/Container/VectorSequenceContainer.h>
 
 
 #include "ChromosomeSubstitutionModel.h"
@@ -25,8 +24,6 @@
 using namespace bpp;
 using namespace std;
 
-
-VectorSiteContainer* readGeneFamilyFile(const std::string& filePath, IntegerAlphabet* alphabet);
 std::map<uint, vector<uint>> getMapOfNodeIds(PhyloTree* tree);
 void updateMapsOfParamTypesAndNames(std::map<int, std::map<uint, std::vector<string>>> &typeWithParamNames, std::map<string, std::pair<int, uint>>* paramNameAndType, std::vector<std::string> namesAllParams, std::map<int, std::vector<std::pair<uint, int>>>* sharedParams, std::string suffix);
 void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoodProcess, double tol, unsigned int maxNumOfIterations, bool mixed=false, unsigned curentIterNum=0);
@@ -43,11 +40,8 @@ int main(int args, char **argv) {
 
     ModelParameters m = ModelParameters(treePath, dataPath);
 
-    // Set Alphabet
-    IntegerAlphabet* alphabet = new IntegerAlphabet(110, 1); // TODO: hardcoded
-
     // Get sequences
-    VectorSiteContainer* container = readGeneFamilyFile(dataPath, alphabet);
+    VectorSiteContainer* container = m.container_;
 
     // Get tree and rescale it
     Newick reader;
@@ -80,7 +74,7 @@ int main(int args, char **argv) {
     
 
     // Create substitution model
-    std::shared_ptr<ChromosomeSubstitutionModel> chrModel = std::make_shared<ChromosomeSubstitutionModel>(alphabet, paramMap, baseNum, countRange, ChromosomeSubstitutionModel::rootFreqType::ROOT_LL, rateChangeType, false);
+    std::shared_ptr<ChromosomeSubstitutionModel> chrModel = std::make_shared<ChromosomeSubstitutionModel>(m.alphabet_, paramMap, baseNum, countRange, ChromosomeSubstitutionModel::rootFreqType::ROOT_LL, rateChangeType, false);
     subProcesses->addModel(chrModel, mapOfNodeIds[1]);
     SubstitutionProcess* nsubPro = subProcesses->clone();
 
@@ -101,59 +95,6 @@ int main(int args, char **argv) {
     optimizeModelParametersOneDimension(newLik, 0.1, 2);
     std::cout << "Done" << std::endl;
     return 0;
-}
-
-
-
-VectorSiteContainer* readGeneFamilyFile(const std::string& filePath, IntegerAlphabet* alphabet) {
-    std::ifstream file(filePath);
-    if (!file.is_open()) {
-        throw std::runtime_error("Could not open file: " + filePath);
-    }
-
-    std::string line;
-    std::getline(file, line);
-    std::istringstream headerStream(line);
-    std::vector<std::string> familyIds;
-    std::string columnName;
-
-    // Skip the first two columns ("Organizem" and "Desc")
-    std::getline(headerStream, columnName, '\t');  
-    std::getline(headerStream, columnName, '\t');  
-
-    while (std::getline(headerStream, columnName, '\t')) {
-        familyIds.push_back(columnName);
-    }
-
-    // Create a sequence container
-    auto* container = new VectorSiteContainer(alphabet);
-
-    while (std::getline(file, line)) {
-        std::istringstream lineStream(line);
-        std::string speciesName;
-        std::vector<std::string> geneCounts;
-
-        // Read species name
-        std::getline(lineStream, speciesName, '\t');
-
-        // Skip "Desc" column
-        std::getline(lineStream, columnName, '\t');
-
-        // Read gene counts
-        while (std::getline(lineStream, columnName, '\t')) {
-            geneCounts.push_back(columnName);
-        }
-
-        // Verify the number of gene counts matches the number of families
-        if (geneCounts.size() != familyIds.size()) {
-            delete container;
-            throw std::runtime_error("Mismatch between family count and data columns in file.");
-        }
-
-        container->addSequence(BasicSequence(speciesName, geneCounts, alphabet), true);
-    }
-    file.close();
-    return container;
 }
 
 std::map<uint, vector<uint>> getMapOfNodeIds(PhyloTree* tree) {
@@ -251,7 +192,7 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
             optimizer->init(params.createSubList(param.getName()));
             currentLikelihood = optimizer->optimize();
             std::cout << "\nCurrent likelihood: " + std::to_string(currentLikelihood) << std::endl;
-            std::cout << "parameter value after optimization "+ std::to_string(likelihoodProcess->getParameters().getParameter(param.getName()).getValue()) << std::endl;
+            std::cout << nameOfParam + " parameter value after optimization "+ std::to_string(likelihoodProcess->getParameters().getParameter(param.getName()).getValue()) << std::endl;
         }
 
         if (std::abs(prevLikelihood-currentLikelihood) < tol){
