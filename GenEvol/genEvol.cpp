@@ -4,6 +4,7 @@
 
 #include <Bpp/Numeric/Function/BrentOneDimension.h>
 #include <Bpp/Numeric/AutoParameter.h>
+#include <Bpp/Numeric/Prob/GammaDiscreteDistribution.h>
 
 #include <Bpp/Phyl/Io/IoTree.h>
 #include <Bpp/Phyl/Io/Newick.h>
@@ -32,6 +33,8 @@ void updateWithTypeAndCorrespondingName(std::map<std::string, int> &typeGeneralN
 int getTypeOfParamFromParamName(string name);
 double getTreeScalingFactor(const VectorSiteContainer* container, PhyloTree* tree);
 int countUniqueStates(const Site site);
+SingleProcessPhyloLikelihood* createLikelihoodProcess(ModelParameters m, PhyloTree* tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType);
+std::map<std::string, std::vector<double>> generateMMValues(int gainRates, int lossRates, int categories, double alphaGain, double betaGain, double shapeLoss);
 
 int main(int args, char **argv) {
     // Get tree path and count path from args
@@ -57,33 +60,47 @@ int main(int args, char **argv) {
 
     // Define substitution parameters
     std::map<int, std::vector<double>> paramMap = {
-        {1, {-999}},
-        {2, {3.0}},
-        {3, {2.0, 0.1}},
-        {4, {2.0, 0.1}},
-        {5, {1.3}}
+        {1, {-999}}, // BaseNumR
+        {2, {3.0}}, // Dupl
+        {3, {2.0, 0.1}}, // Loss
+        {4, {2.0, 0.1}}, // Gain
+        {5, {1.3}} // Demi
     };
     std::vector<int> rateChangeType = {8, 0, 1, 1, 0};
     int baseNum = -999;
 
-    // Create substitution process
-    auto mapOfNodeIds = getMapOfNodeIds(tree_);
-    std::shared_ptr<DiscreteDistribution> gammaDist = std::shared_ptr<DiscreteDistribution>(new GammaDiscreteRateDistribution(1, 1.0));
-    auto parTree = std::make_shared<ParametrizablePhyloTree>(tree_);
-    std::shared_ptr<NonHomogeneousSubstitutionProcess> subProcesses = std::make_shared<NonHomogeneousSubstitutionProcess>(gammaDist, parTree);
+    // ************ Mixture model ************ //
+    int KGain = 4;
+    int KLoss = 4;
+    int categories = 4;
+    double alphaGain = 1;
+    double betaGain = 2;
+    double alphaBetaLoss = 1.5;
+    double probabilityPrior = 1 / double(KGain*KLoss);
+    double totalMMLikelihood = 0;
+    auto mmValues = generateMMValues(KGain, KLoss, categories, alphaGain, betaGain, alphaBetaLoss);
+    for (double gainValue: mmValues["gain"])
+    {
+        for (double lossValue: mmValues["loss"]) {
+            std::map<int, std::vector<double>> MMparamMap = {
+                {1, {-999}}, // BaseNumR
+                {2, {3.0}}, // Dupl
+                {3, {lossValue, 0.1}}, // Loss
+                {4, {gainValue, 0.1}}, // Gain
+                {5, {1.3}} // Demi
+            };
+            auto MMLikelihood = createLikelihoodProcess(m, tree_, MMparamMap, rateChangeType);
+            std::cout << "Calculating likelihood for MM " << gainValue << "," << lossValue << std::endl;
+            std::cout << MMLikelihood->getValue() << std::endl;
+            totalMMLikelihood += MMLikelihood->getValue() * probabilityPrior;
+        }
+    }
+    std::cout << "Overall likelihood for MM: " << totalMMLikelihood <<std::endl;
+    // ************ Mixture model ************ //
     
 
-    // Create substitution model
-    std::shared_ptr<ChromosomeSubstitutionModel> chrModel = std::make_shared<ChromosomeSubstitutionModel>(m.alphabet_, paramMap, baseNum, countRange, ChromosomeSubstitutionModel::rootFreqType::ROOT_LL, rateChangeType, false);
-    subProcesses->addModel(chrModel, mapOfNodeIds[1]);
-    SubstitutionProcess* nsubPro = subProcesses->clone();
-
-    // Create likelihood object
-    Context* context = new Context();
-    bool weightedRootFreqs = true;
-    auto lik = std::make_shared<LikelihoodCalculationSingleProcess>(*context, *container->clone(), *nsubPro, weightedRootFreqs);
-    SingleProcessPhyloLikelihood* newLik = new SingleProcessPhyloLikelihood(*context, lik, lik->getParameters());
-    
+    // Calculate likelihood
+    auto newLik = createLikelihoodProcess(m, tree_, paramMap, rateChangeType);
     std::cout << "Calculating likelihood" << std::endl;
     std::cout << newLik->getValue() << std::endl;
     auto substitutionModelParams = newLik->getSubstitutionModelParameters().getParameterNames();
@@ -289,4 +306,57 @@ double getTreeScalingFactor(const VectorSiteContainer* container, PhyloTree* tre
     }
     double avgUniqueStateCount = uniqueStateCount/container->getNumberOfSites();
     return avgUniqueStateCount/tree->getTotalLength();
+}
+
+SingleProcessPhyloLikelihood* createLikelihoodProcess(ModelParameters m, PhyloTree* tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType) {
+
+    // Create substitution process
+    int baseNum = -999;
+    bool demiOnlyForEven = false;
+    auto mapOfNodeIds = getMapOfNodeIds(tree);
+    std::shared_ptr<DiscreteDistribution> gammaDist = std::shared_ptr<DiscreteDistribution>(new GammaDiscreteRateDistribution(1, 1.0));
+    auto parTree = std::make_shared<ParametrizablePhyloTree>(tree);
+    std::shared_ptr<NonHomogeneousSubstitutionProcess> subProcesses = std::make_shared<NonHomogeneousSubstitutionProcess>(gammaDist, parTree);
+    
+    // Create substitution model
+    std::shared_ptr<ChromosomeSubstitutionModel> chrModel = std::make_shared<ChromosomeSubstitutionModel>(m.alphabet_, rateParams, baseNum, m.countRange_, ChromosomeSubstitutionModel::rootFreqType::ROOT_LL, rateChangeType, demiOnlyForEven);
+    subProcesses->addModel(chrModel, mapOfNodeIds[1]);
+    SubstitutionProcess* nsubPro = subProcesses->clone();
+
+    // Create likelihood object
+    Context* context = new Context();
+    bool weightedRootFreqs = true;
+    auto lik = std::make_shared<LikelihoodCalculationSingleProcess>(*context, *m.container_->clone(), *nsubPro, weightedRootFreqs);
+    SingleProcessPhyloLikelihood* newLik = new SingleProcessPhyloLikelihood(*context, lik, lik->getParameters());
+    return newLik;
+}
+
+std::map<std::string, std::vector<double>> generateMMValues(int gainRates, int lossRates, int categories, double alphaGain, double betaGain, double shapeLoss) {
+    
+    std::vector<double> gain_values;
+    std::vector<double> loss_values;
+    double val;
+    std::map<std::string, std::vector<double>> res;
+
+    // Define gamma distrbutions
+    auto gainGammaDist = new GammaDiscreteDistribution(categories, alphaGain, betaGain);
+    auto lossGammaDist = new GammaDiscreteDistribution(categories, shapeLoss, shapeLoss);
+
+    
+    // Sample values from each category
+    for (int i = 0; i < gainRates; i++)
+    {
+        val = gainGammaDist->getCategory(i);
+        gain_values.push_back(val);
+    }
+
+    for (int i = 0; i < lossRates; i++)
+    {
+        val = lossGammaDist->getCategory(i);
+        loss_values.push_back(val);
+    }
+
+    res["gain"] = gain_values;
+    res["loss"] = loss_values;
+    return res;
 }

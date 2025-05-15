@@ -67,6 +67,14 @@
         "print": "cpp",
         "set": "cpp",
         "variant": "cpp",
-        "__split_buffer": "cpp"
+        "__split_buffer": "cpp",
+        "__config": "cpp",
+        "__hash_table": "cpp",
+        "execution": "cpp",
+        "stack": "cpp",
+        "compare": "cpp",
+        "concepts": "cpp",
+        "queue": "cpp",
+        "__memory": "cpp"
     }
 }
