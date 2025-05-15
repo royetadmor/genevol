@@ -33,7 +33,7 @@ void updateWithTypeAndCorrespondingName(std::map<std::string, int> &typeGeneralN
 int getTypeOfParamFromParamName(string name);
 double getTreeScalingFactor(const VectorSiteContainer* container, PhyloTree* tree);
 int countUniqueStates(const Site site);
-SingleProcessPhyloLikelihood* createLikelihoodProcess(ModelParameters m, PhyloTree* tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType);
+SingleProcessPhyloLikelihood* createLikelihoodProcess(ModelParameters* m, PhyloTree* tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType);
 std::map<std::string, std::vector<double>> generateMMValues(int gainRates, int lossRates, int categories, double alphaGain, double betaGain, double shapeLoss);
 
 int main(int args, char **argv) {
@@ -41,18 +41,18 @@ int main(int args, char **argv) {
     std::string treePath = "test_data/tree.newick";
     std::string dataPath = "test_data/data.fasta";
 
-    ModelParameters m = ModelParameters(treePath, dataPath);
+    ModelParameters* m = new ModelParameters(treePath, dataPath);
 
     // Get sequences
-    VectorSiteContainer* container = m.container_;
+    VectorSiteContainer* container = m->container_;
 
     // Get tree and rescale it
     Newick reader;
     PhyloTree* tree_ = reader.readPhyloTree(treePath);
-    int countRange = m.countRange_;
+    int countRange = m->countRange_;
     countRange = 50; // TODO: hardcoded
     double scale_tree_factor = getTreeScalingFactor(container, tree_);
-    std::cout << m.countRange_ << std::endl;
+    std::cout << m->countRange_ << std::endl;
     std::cout << scale_tree_factor*tree_->getTotalLength() << std::endl;
     tree_->scaleTree(scale_tree_factor);
 
@@ -308,7 +308,7 @@ double getTreeScalingFactor(const VectorSiteContainer* container, PhyloTree* tre
     return avgUniqueStateCount/tree->getTotalLength();
 }
 
-SingleProcessPhyloLikelihood* createLikelihoodProcess(ModelParameters m, PhyloTree* tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType) {
+SingleProcessPhyloLikelihood* createLikelihoodProcess(ModelParameters* m, PhyloTree* tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType) {
 
     // Create substitution process
     int baseNum = -999;
@@ -319,14 +319,14 @@ SingleProcessPhyloLikelihood* createLikelihoodProcess(ModelParameters m, PhyloTr
     std::shared_ptr<NonHomogeneousSubstitutionProcess> subProcesses = std::make_shared<NonHomogeneousSubstitutionProcess>(gammaDist, parTree);
     
     // Create substitution model
-    std::shared_ptr<ChromosomeSubstitutionModel> chrModel = std::make_shared<ChromosomeSubstitutionModel>(m.alphabet_, rateParams, baseNum, m.countRange_, ChromosomeSubstitutionModel::rootFreqType::ROOT_LL, rateChangeType, demiOnlyForEven);
+    std::shared_ptr<ChromosomeSubstitutionModel> chrModel = std::make_shared<ChromosomeSubstitutionModel>(m->alphabet_, rateParams, baseNum, m->countRange_, ChromosomeSubstitutionModel::rootFreqType::ROOT_LL, rateChangeType, demiOnlyForEven);
     subProcesses->addModel(chrModel, mapOfNodeIds[1]);
     SubstitutionProcess* nsubPro = subProcesses->clone();
 
     // Create likelihood object
     Context* context = new Context();
     bool weightedRootFreqs = true;
-    auto lik = std::make_shared<LikelihoodCalculationSingleProcess>(*context, *m.container_->clone(), *nsubPro, weightedRootFreqs);
+    auto lik = std::make_shared<LikelihoodCalculationSingleProcess>(*context, *m->container_->clone(), *nsubPro, weightedRootFreqs);
     SingleProcessPhyloLikelihood* newLik = new SingleProcessPhyloLikelihood(*context, lik, lik->getParameters());
     return newLik;
 }
