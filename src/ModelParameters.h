@@ -23,10 +23,11 @@ public: // Variables
     VectorSiteContainer* container_;
     
 public:
-    ModelParameters(const string& treePath, const string& dataPath);
+    ModelParameters();
     ~ModelParameters(){};
 
 private:
     void setAlphabetLimit();
     VectorSiteContainer* readGeneFamilyFile(const std::string& filePath, IntegerAlphabet* alphabet);
+    std::string getEnvVar(const std::string& key, const bool failOnNotFound);
 };

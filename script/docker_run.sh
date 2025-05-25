@@ -2,6 +2,4 @@
 
 set -e
 
-docker build -t genevol -f Dockerfile .
-
-docker run --rm -it genevol   
+docker run --env-file ./param_file.env --rm -it genevol

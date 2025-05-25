@@ -37,18 +37,15 @@ SingleProcessPhyloLikelihood* createLikelihoodProcess(ModelParameters* m, PhyloT
 std::map<std::string, std::vector<double>> generateMMValues(int gainRates, int lossRates, int categories, double alphaGain, double betaGain, double shapeLoss);
 
 int main(int args, char **argv) {
-    // Get tree path and count path from args
-    std::string treePath = "test_data/tree.newick";
-    std::string dataPath = "test_data/data.fasta";
-
-    ModelParameters* m = new ModelParameters(treePath, dataPath);
+    // Set model data and parameters
+    ModelParameters* m = new ModelParameters();
 
     // Get sequences
     VectorSiteContainer* container = m->container_;
 
     // Get tree and rescale it
     Newick reader;
-    PhyloTree* tree_ = reader.readPhyloTree(treePath);
+    PhyloTree* tree_ = reader.readPhyloTree(m->treeFilePath_);
     int countRange = m->countRange_;
     countRange = 50; // TODO: hardcoded
     double scale_tree_factor = getTreeScalingFactor(container, tree_);

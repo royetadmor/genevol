@@ -11,10 +11,10 @@
 using namespace std;
 
 
-ModelParameters::ModelParameters(const string& treePath, const string& dataPath)
+ModelParameters::ModelParameters()
 {
-    ModelParameters::treeFilePath_ = treePath;
-    ModelParameters::dataFilePath_ = dataPath;
+    ModelParameters::treeFilePath_ = ModelParameters::getEnvVar("TREE_PATH", true);
+    ModelParameters::dataFilePath_ = ModelParameters::getEnvVar("DATA_PATH", true);
     setAlphabetLimit();
     ModelParameters::countRange_ = ModelParameters::maxState_ - 10 - ModelParameters::minState_;
     ModelParameters::alphabet_ = new IntegerAlphabet(110,1);//(ModelParameters::maxState_, ModelParameters::minState_); // Set to hardcoded if needed
@@ -117,3 +117,11 @@ VectorSiteContainer* ModelParameters::readGeneFamilyFile(const std::string& file
     return container;
 }
 
+std::string ModelParameters::getEnvVar(const std::string& key, const bool failOnNotFound) {
+    const char* val = std::getenv(key.c_str());
+    if (val == nullptr && failOnNotFound) {
+        const std::string err = "Failed to find parameter " + key +". Exiting.";
+        throw Exception(err);
+    }
+    return std::string(val);
+}
