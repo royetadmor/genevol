@@ -47,23 +47,18 @@ int main(int args, char **argv) {
     Newick reader;
     PhyloTree* tree_ = reader.readPhyloTree(m->treeFilePath_);
     int countRange = m->countRange_;
-    countRange = 50; // TODO: hardcoded
     double scale_tree_factor = getTreeScalingFactor(container, tree_);
-    std::cout << m->countRange_ << std::endl;
     std::cout << scale_tree_factor*tree_->getTotalLength() << std::endl;
     tree_->scaleTree(scale_tree_factor);
 
 
 
     // Define substitution parameters
-    std::map<int, std::vector<double>> paramMap = {
-        {1, {-999}}, // BaseNumR
-        {2, {3.0}}, // Dupl
-        {3, {2.0, 0.1}}, // Loss
-        {4, {2.0, 0.1}}, // Gain
-        {5, {1.3}} // Demi
-    };
-    std::vector<int> rateChangeType = {8, 0, 1, 1, 0};
+    auto paramMap = m->paramMap_;
+    std::vector<int> rateChangeType = m->rateChangeType_;
+    for (int s : m->rateChangeType_) {
+        std::cout << s << ' ';
+    }
     int baseNum = -999;
 
     // ************ Mixture model ************ //

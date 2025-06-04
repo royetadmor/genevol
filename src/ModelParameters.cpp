@@ -5,6 +5,7 @@
 #include <iostream>
 #include <string> 
 #include <tuple>
+#include <stdexcept>
 
 
 
@@ -13,12 +14,14 @@ using namespace std;
 
 ModelParameters::ModelParameters()
 {
-    ModelParameters::treeFilePath_ = ModelParameters::getEnvVar("TREE_PATH", true);
-    ModelParameters::dataFilePath_ = ModelParameters::getEnvVar("DATA_PATH", true);
+    ModelParameters::treeFilePath_ = ModelParameters::getEnvVar("TREE_PATH");
+    ModelParameters::dataFilePath_ = ModelParameters::getEnvVar("DATA_PATH");
     setAlphabetLimit();
-    ModelParameters::countRange_ = ModelParameters::maxState_ - 10 - ModelParameters::minState_;
-    ModelParameters::alphabet_ = new IntegerAlphabet(110,1);//(ModelParameters::maxState_, ModelParameters::minState_); // Set to hardcoded if needed
+    ModelParameters::countRange_ = ModelParameters::getIntVar("COUNT_RANGE", ModelParameters::maxState_ - 10 - ModelParameters::minState_);
+    ModelParameters::alphabet_ = new IntegerAlphabet(ModelParameters::maxState_, ModelParameters::minState_);
     ModelParameters::container_ = readGeneFamilyFile(ModelParameters::dataFilePath_, ModelParameters::alphabet_);
+    setBaseModelParameters();
+    setRateFunctionTypes();
 
 }
 
@@ -62,8 +65,31 @@ void ModelParameters::setAlphabetLimit() {
         }
     }
     file.close();
-    ModelParameters::minState_ = min;
-    ModelParameters::maxState_ = max + 10;
+    ModelParameters::minState_ = ModelParameters::getIntVar("MIN_STATE", min);
+    ModelParameters::maxState_ = ModelParameters::getIntVar("MAX_STATE", max + 10);
+}
+
+void ModelParameters::setBaseModelParameters() {
+    ModelParameters::paramMap_ = {
+        {1, ModelParameters::getVectorVar("BASE_NUM_R", -999)},
+        {2, ModelParameters::getVectorVar("DUPL", 0)},
+        {3, ModelParameters::getVectorVar("GAIN", 0)},
+        {4, ModelParameters::getVectorVar("LOSS", 0)},
+        {5, ModelParameters::getVectorVar("DEMI", 0)}
+    };
+}
+
+void ModelParameters::setRateFunctionTypes() {
+    const int gainFunc = ModelParameters::func_string_to_enum.at(ModelParameters::getEnvVar("GAIN_FUNC"));
+    const int lossFunc = ModelParameters::func_string_to_enum.at(ModelParameters::getEnvVar("LOSS_FUNC"));
+    const int duplFunc = ModelParameters::func_string_to_enum.at(ModelParameters::getEnvVar("DUPL_FUNC"));
+    const int demiDuplFunc = ModelParameters::func_string_to_enum.at(ModelParameters::getEnvVar("DEMI_DUPL_FUNC"));
+    const int baseNumRFunc = ModelParameters::func_string_to_enum.at(ModelParameters::getEnvVar("BASE_NUM_R_FUNC"));
+    ModelParameters::rateChangeType_.push_back(baseNumRFunc);
+    ModelParameters::rateChangeType_.push_back(duplFunc);
+    ModelParameters::rateChangeType_.push_back(lossFunc);
+    ModelParameters::rateChangeType_.push_back(gainFunc);
+    ModelParameters::rateChangeType_.push_back(demiDuplFunc);
 }
 
 VectorSiteContainer* ModelParameters::readGeneFamilyFile(const std::string& filePath, IntegerAlphabet* alphabet) {
@@ -117,11 +143,43 @@ VectorSiteContainer* ModelParameters::readGeneFamilyFile(const std::string& file
     return container;
 }
 
-std::string ModelParameters::getEnvVar(const std::string& key, const bool failOnNotFound) {
+std::string ModelParameters::getEnvVar(const std::string& key) {
     const char* val = std::getenv(key.c_str());
-    if (val == nullptr && failOnNotFound) {
+    if (val == nullptr) {
         const std::string err = "Failed to find parameter " + key +". Exiting.";
         throw Exception(err);
     }
     return std::string(val);
+}
+
+int ModelParameters::getIntVar(const std::string& key, const int defaultVal) {
+    int val;
+    try {
+        val = std::stoi(ModelParameters::getEnvVar(key));
+    } catch (bpp::Exception& e) {
+        val = defaultVal;
+    }
+    return val;
+}
+
+std::vector<double> ModelParameters::getVectorVar(const std::string& key, const double defaultVal) {
+    std::vector<double> val;
+    try {
+        const std::string envVarValue = ModelParameters::getEnvVar(key);
+        std::stringstream ss(envVarValue);
+        std::string token;
+        while (std::getline(ss, token, ',')) {
+            try {
+                val.push_back(std::stod(token));
+            } catch (const std::invalid_argument& e) {
+                throw std::runtime_error("Invalid double value: '" + token + "'");
+            }
+        }
+
+    } catch (bpp::Exception& e) {
+        std::cout << "Caught an exception while parsing " + key << std::endl;
+        std::cout << e.what() << std::endl;
+        val.push_back(defaultVal);
+    }
+    return val;
 }
