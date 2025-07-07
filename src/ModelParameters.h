@@ -1,3 +1,6 @@
+#ifndef GENEVOL_MODELPARAMETERS_H
+#define GENEVOL_MODELPARAMETERS_H
+
 #include <string> 
 #include <tuple>
 
@@ -41,3 +44,6 @@ private:
     std::vector<double> getVectorVar(const std::string& key, const double defaultVal);
     void setRateFunctionTypes();
 };
+
+
+#endif // GENEVOL_MODELPARAMETERS_H

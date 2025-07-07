@@ -5,9 +5,10 @@
 
 # File list
 set (CPP_FILES
-  # ChrFasta.cpp
   ChromosomeSubstitutionModel.cpp
   ModelParameters.cpp
+  LikelihoodUtils.cpp
+  MixtureModelLikelihoodFunction.cpp
 #   StochasticMappingUtils.cpp
 #   TreeUtils.cpp
 #   LikelihoodUtils.cpp
