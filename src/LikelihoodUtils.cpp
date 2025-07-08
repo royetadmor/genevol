@@ -41,3 +41,13 @@ std::map<uint, vector<uint>> LikelihoodUtils::getMapOfNodeIds(PhyloTree* tree) {
     // mapModelNodesIds[1].push_back(tree->getRootIndex());
     return mapModelNodesIds;
 }
+
+void LikelihoodUtils::deleteLikelihoodProcess(SingleProcessPhyloLikelihood* lik) {
+    auto sequenceData = lik->getData();
+    auto process = &(lik->getSubstitutionProcess());
+    auto context = &(lik->getContext());
+    delete process;
+    delete sequenceData;
+    delete context;
+    delete lik;
+}

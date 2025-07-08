@@ -1,7 +1,7 @@
 #include "MixtureModelLikelihoodFunction.h"
 
 
-double AlphaLikelihoodFunction::getValue() const {
+double AlphaLikelihoodFunction::calculateFunctionValue() const {
     double alpha_gain = getParameterValue("alphaGain0_1");
     double alpha_loss = getParameterValue("alphaLoss0_1");
     double dupl = getParameterValue("dupl0_1");
@@ -9,9 +9,6 @@ double AlphaLikelihoodFunction::getValue() const {
     double probabilityPrior = 1/double(categories_*categories_);
     double totalMMLikelihood = 0;
 
-    std::cout << alpha_gain << std::endl;
-    std::cout << alpha_loss << std::endl;
-    std::cout << dupl << std::endl;
     auto mmValues = generateMMValues(categories_, alpha_gain, beta_gain, alpha_loss);
     for (double gainValue: mmValues["gain"])
     {
@@ -26,41 +23,25 @@ double AlphaLikelihoodFunction::getValue() const {
             };
             std::vector<int> rateChangeType = m_->rateChangeType_;
             auto MMLikelihood = LikelihoodUtils::createLikelihoodProcess(m_, tree_, MMparamMap, rateChangeType);
-            std::cout << MMLikelihood->getValue() << std::endl;
             totalMMLikelihood += MMLikelihood->getValue() * probabilityPrior;
-            delete MMLikelihood;
+            LikelihoodUtils::deleteLikelihoodProcess(MMLikelihood);
         }
     }
-    std::cout << "Overall likelihood for MM: " << totalMMLikelihood <<std::endl;
     return totalMMLikelihood;
 }
 
 std::map<std::string, std::vector<double>> AlphaLikelihoodFunction::generateMMValues(int categories, double alphaGain, double betaGain, double shapeLoss) const {
-    
     std::vector<double> gain_values;
     std::vector<double> loss_values;
-    double val;
-    std::map<std::string, std::vector<double>> res;
 
-    // Define gamma distrbutions
-    auto gainGammaDist = new GammaDiscreteDistribution(categories, alphaGain, betaGain);
-    auto lossGammaDist = new GammaDiscreteDistribution(categories, shapeLoss, shapeLoss);
-
-    
-    // Sample values from each category
-    for (int i = 0; i < categories; i++)
-    {
-        val = gainGammaDist->getCategory(i);
-        gain_values.push_back(val);
-    }
+    GammaDiscreteDistribution gainGammaDist(categories, alphaGain, betaGain);
+    GammaDiscreteDistribution lossGammaDist(categories, shapeLoss, shapeLoss);
 
     for (int i = 0; i < categories; i++)
-    {
-        val = lossGammaDist->getCategory(i);
-        loss_values.push_back(val);
-    }
+        gain_values.push_back(gainGammaDist.getCategory(i));
 
-    res["gain"] = gain_values;
-    res["loss"] = loss_values;
-    return res;
+    for (int i = 0; i < categories; i++)
+        loss_values.push_back(lossGammaDist.getCategory(i));
+
+    return { {"gain", gain_values}, {"loss", loss_values} };
 }

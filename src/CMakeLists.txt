@@ -9,18 +9,6 @@ set (CPP_FILES
   ModelParameters.cpp
   LikelihoodUtils.cpp
   MixtureModelLikelihoodFunction.cpp
-#   StochasticMappingUtils.cpp
-#   TreeUtils.cpp
-#   LikelihoodUtils.cpp
-#   ChromEvolOptions.cpp
-#   UndirectedGraph.cpp
-#   ChromosomeNumberOptimizer.cpp
-#   ComputeChromosomeTransitionsExp.cpp
-#   ChromosomeNumberMng.cpp
-#   BaseNumberOptimizer.cpp
-#   TraitOptimizer.cpp
-#   JointTraitChromosomeLikelihood.cpp
-#   ChromosomeTraitOptimizer.cpp
   )
 
 IF(BUILD_STATIC)

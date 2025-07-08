@@ -25,8 +25,10 @@ namespace bpp {
             ModelParameters* m_;
             PhyloTree* tree_;
             int categories_;
+            double fval_;
         private:
             std::map<std::string, std::vector<double>> generateMMValues(int categories, double alphaGain, double betaGain, double shapeLoss) const;
+            double calculateFunctionValue() const;
         public:
             AlphaLikelihoodFunction(ModelParameters* m, PhyloTree* tree, int categories) : AbstractParametrizable("") {
                 m_ = m;
@@ -35,18 +37,17 @@ namespace bpp {
                 addParameter_(new Parameter("alphaGain0_1", 1, make_shared<IntervalConstraint>(0.5, 3, false, true)));
                 addParameter_(new Parameter("alphaLoss0_1", 1, make_shared<IntervalConstraint>(0.5, 3, false, true)));
                 addParameter_(new Parameter("dupl0_1", 3, make_shared<IntervalConstraint>(0.1, 10, false, true)));
+                fireParameterChanged(getParameters());
             }
-            double getValue() const;
+            double getValue() const {return fval_;}
             Clonable* clone() const { return new AlphaLikelihoodFunction(*this); }
-            void fireParameterChanged(const ParameterList& parameters) {}
+            void fireParameterChanged(const ParameterList& parameters) {
+                setParameters(getParameters());
+                fval_ = calculateFunctionValue();
+            }
             void setParameters(const ParameterList& parameters)
             {
                 matchParametersValues(parameters);
-            }
-            double f(const ParameterList& params)
-            {
-                setParameters(params);
-                return getValue();
             }
 
 

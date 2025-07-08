@@ -47,7 +47,6 @@ int main(int args, char **argv) {
     PhyloTree* tree_ = reader.readPhyloTree(m->treeFilePath_);
     int countRange = m->countRange_;
     double scale_tree_factor = getTreeScalingFactor(container, tree_);
-    std::cout << scale_tree_factor*tree_->getTotalLength() << std::endl;
     tree_->scaleTree(scale_tree_factor);
 
 
@@ -56,13 +55,13 @@ int main(int args, char **argv) {
 
     // Define substitution parameters
     auto paramMap = m->paramMap_;
-    std::vector<int> rateChangeType = m->rateChangeType_;
-    int baseNum = -999;
+    auto rateChangeType = m->rateChangeType_;
 
     // Calculate likelihood
     auto newLik = LikelihoodUtils::createLikelihoodProcess(m, tree_, paramMap, rateChangeType);
     std::cout << "Calculating likelihood" << std::endl;
     std::cout << newLik->getValue() << std::endl;
+    
     auto substitutionModelParams = newLik->getSubstitutionModelParameters().getParameterNames();
     for (int i = 0; i < (int)(substitutionModelParams.size()); i++){
         std::cout << substitutionModelParams[i] << std::endl;
@@ -70,7 +69,7 @@ int main(int args, char **argv) {
     }
     std::cout << "Starting optimization" << std::endl;
     // optimizeModelParametersOneDimension(newLik, m, 0.1, 2);
-    optimizeMixtureModelParametersOneDimension(newFunc.get(), m, 0.3, 2);
+    optimizeMixtureModelParametersOneDimension(newFunc.get(), m, 0.1, 2);
     std::cout << "Done" << std::endl;
     return 0;
 }
@@ -261,7 +260,7 @@ double getTreeScalingFactor(const VectorSiteContainer* container, PhyloTree* tre
 }
 
 void optimizeMixtureModelParametersOneDimension(AlphaLikelihoodFunction* f, ModelParameters* m,double tol, unsigned int maxNumOfIterations, bool mixed, unsigned curentIterNum) {
-        // Initialize optimizer
+    // Initialize optimizer
     BrentOneDimension* optimizer = new BrentOneDimension(f);
     optimizer->setVerbose(1);
     optimizer->setProfiler(0);
@@ -285,11 +284,7 @@ void optimizeMixtureModelParametersOneDimension(AlphaLikelihoodFunction* f, Mode
     std::map<string, std::pair<int, uint>> paramNameAndType; // parameter name, its type and number of model
 
     vector<string> parametersNames = f->getParameters().getParameterNames();
-    
-
-    // Big Problem!
     updateMapsOfParamTypesAndNames(typeWithParamNames, &paramNameAndType, parametersNames, 0, "");
-
     ParameterList params = f->getParameters();
     size_t nbParams = parametersNames.size();
 
