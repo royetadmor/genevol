@@ -1,0 +1,15 @@
+_treePath = test_data/tree.newick
+_dataPath = test_data/data.fasta
+#_countRange = 50
+#_minState = 1
+#_maxState = 110
+_baseNumR = -999
+_dupl=3
+_gain=2,0.1
+_loss=2,0.1
+_demi=-999
+_gainFunc = LINEAR
+_lossFunc = LINEAR
+_duplFunc = CONST
+_demiDuplFunc = IGNORE
+_baseNumRFunc = IGNORE

@@ -2,10 +2,13 @@
 #include <string> 
 #include <set>
 
+// From bpp-core
 #include <Bpp/Numeric/Function/BrentOneDimension.h>
 #include <Bpp/Numeric/AutoParameter.h>
 #include <Bpp/Numeric/Prob/GammaDiscreteDistribution.h>
+#include <Bpp/App/BppApplication.h>
 
+// From bpp-phyl
 #include <Bpp/Phyl/Io/IoTree.h>
 #include <Bpp/Phyl/Io/Newick.h>
 #include <Bpp/Phyl/Likelihood/DataFlow/LikelihoodCalculationSingleProcess.h>
@@ -14,10 +17,12 @@
 #include <Bpp/Phyl/Likelihood/ParametrizablePhyloTree.h>
 #include <Bpp/Phyl/Likelihood/NonHomogeneousSubstitutionProcess.h>
 #include <Bpp/Phyl/Model/RateDistribution/GammaDiscreteRateDistribution.h>
+
+// From bpp-seq
 #include <Bpp/Seq/Container/SiteContainerTools.h>
 #include <Bpp/Seq/Container/VectorSiteContainer.h>
 
-
+// Local modules
 #include "ChromosomeSubstitutionModel.h"
 #include "ModelParameters.h"
 #include "LikelihoodUtils.h"
@@ -37,7 +42,8 @@ void optimizeMixtureModelParametersOneDimension(AlphaLikelihoodFunction* f, Mode
 
 int main(int args, char **argv) {
     // Set model data and parameters
-    ModelParameters* m = new ModelParameters();
+    BppApplication GenEvol(args, argv, "GenEvol");
+    ModelParameters* m = new ModelParameters(GenEvol);
 
     // Get sequences
     VectorSiteContainer* container = m->container_;
@@ -68,7 +74,7 @@ int main(int args, char **argv) {
         std::cout << newLik->getParameters().getParameter(substitutionModelParams[i]).getValue() << std::endl;
     }
     std::cout << "Starting optimization" << std::endl;
-    // optimizeModelParametersOneDimension(newLik, m, 0.1, 2);
+    optimizeModelParametersOneDimension(newLik, m, 0.1, 2);
     optimizeMixtureModelParametersOneDimension(newFunc.get(), m, 0.1, 2);
     std::cout << "Done" << std::endl;
     return 0;
@@ -76,7 +82,6 @@ int main(int args, char **argv) {
 
 int countUniqueStates(const Site site) {
     std::set<int> uniqueStates;
-    // Iterate over all sequences (rows)
     for (size_t j = 0; j < site.size(); j++) {
         uniqueStates.insert(site[j]); 
     }
@@ -186,7 +191,8 @@ void updateMapsOfParamTypesAndNames(std::map<int, std::map<uint, std::vector<str
         uint modelId = getModelFromParamName(cleanParamName);
         int type = getTypeOfParamFromParamName(cleanParamName);
         //should get the type
-
+        std::cout << cleanParamName << std::endl;
+        std::cout << type << std::endl;
         
         typeWithParamNames[type][modelId].push_back(namesAllParams[i]);
         if (paramNameAndType){
@@ -226,9 +232,6 @@ void updateWithTypeAndCorrespondingName(std::map<std::string, int> &typeGeneralN
     typeGeneralName["demi"] = static_cast<int>(ChromosomeSubstitutionModel::DEMIDUPL);
     typeGeneralName["baseNumR"] = static_cast<int>(ChromosomeSubstitutionModel::BASENUMR);
     typeGeneralName["baseNum_"] = static_cast<int>(ChromosomeSubstitutionModel::BASENUM);
-    typeGeneralName["alphaGain"] = 7;
-    typeGeneralName["alphaLoss"] = 8;
-    
 }
 
 int getTypeOfParamFromParamName(string name){

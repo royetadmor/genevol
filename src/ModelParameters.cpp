@@ -12,20 +12,32 @@
 using namespace std;
 
 
-ModelParameters::ModelParameters()
+ModelParameters::ModelParameters(BppApplication GenEvol)
 {
-    ModelParameters::treeFilePath_ = ModelParameters::getEnvVar("TREE_PATH");
-    ModelParameters::dataFilePath_ = ModelParameters::getEnvVar("DATA_PATH");
-    setAlphabetLimit();
-    ModelParameters::countRange_ = ModelParameters::getIntVar("COUNT_RANGE", ModelParameters::maxState_ - 10 - ModelParameters::minState_);
+    ModelParameters::treeFilePath_ = ApplicationTools::getAFilePath("_treePath", GenEvol.getParams(), true, true, "", true, "none", 1);
+    ModelParameters::dataFilePath_ = ApplicationTools::getAFilePath("_dataPath", GenEvol.getParams(), true, true, "", true, "none", 1);
+    ModelParameters::stateOverhead_ = ApplicationTools::getIntParameter("_stateOverhead", GenEvol.getParams(), STATE_OVERHEAD, "", true, -1);
+    setAlphabetLimit(GenEvol);
+    std::cout << ModelParameters::minState_ << ", " << ModelParameters::maxState_ << ", " << ModelParameters::stateOverhead_ << std::endl;
+    ModelParameters::countRange_ = ApplicationTools::getIntParameter("_countRange", GenEvol.getParams(), ModelParameters::maxState_ - ModelParameters::minState_ + 1, "", true, 1);
     ModelParameters::alphabet_ = new IntegerAlphabet(ModelParameters::maxState_, ModelParameters::minState_);
     ModelParameters::container_ = readGeneFamilyFile(ModelParameters::dataFilePath_, ModelParameters::alphabet_);
-    setBaseModelParameters();
-    setRateFunctionTypes();
+    setBaseModelParameters(GenEvol);
+    setRateFunctionTypes(GenEvol);
 
 }
 
-void ModelParameters::setAlphabetLimit() {
+void ModelParameters::setAlphabetLimit(BppApplication GenEvol) {
+
+    int minState = ApplicationTools::getIntParameter("_minState", GenEvol.getParams(), -1, "", true, 1);
+    int maxState = ApplicationTools::getIntParameter("_maxState", GenEvol.getParams(), -1, "", true, 1);
+
+    // Both are given by the user
+    if (minState != -1 && maxState != -1) {
+        ModelParameters::minState_ = minState;
+        ModelParameters::maxState_ = maxState;
+        return;
+    }
     std::ifstream file(ModelParameters::dataFilePath_);
     if (!file.is_open()) {
         throw std::runtime_error("Could not open file: " + ModelParameters::dataFilePath_);
@@ -65,26 +77,30 @@ void ModelParameters::setAlphabetLimit() {
         }
     }
     file.close();
-    ModelParameters::minState_ = ModelParameters::getIntVar("MIN_STATE", min);
-    ModelParameters::maxState_ = ModelParameters::getIntVar("MAX_STATE", max + 10);
+    if (minState == -1) {
+        ModelParameters::minState_ = min;    
+    }
+    if (maxState == -1) {
+        ModelParameters::maxState_ = max + ModelParameters::stateOverhead_;    
+    }
 }
 
-void ModelParameters::setBaseModelParameters() {
+void ModelParameters::setBaseModelParameters(BppApplication GenEvol) {
     ModelParameters::paramMap_ = {
-        {1, ModelParameters::getVectorVar("BASE_NUM_R", -999)},
-        {2, ModelParameters::getVectorVar("DUPL", 0)},
-        {3, ModelParameters::getVectorVar("GAIN", 0)},
-        {4, ModelParameters::getVectorVar("LOSS", 0)},
-        {5, ModelParameters::getVectorVar("DEMI", 0)}
+        {1, ApplicationTools::getVectorParameter<double>("_baseNumR", GenEvol.getParams(), ',', "-999", "", true, -1)},
+        {2, ApplicationTools::getVectorParameter<double>("_dupl", GenEvol.getParams(), ',', "1", "", true, -1)},
+        {3, ApplicationTools::getVectorParameter<double>("_loss", GenEvol.getParams(), ',', "1,0.1", "", true, -1)},
+        {4, ApplicationTools::getVectorParameter<double>("_gain", GenEvol.getParams(), ',', "1,0.1", "", true, -1)},
+        {5, ApplicationTools::getVectorParameter<double>("_demi", GenEvol.getParams(), ',', "-999", "", true, -1)}
     };
 }
 
-void ModelParameters::setRateFunctionTypes() {
-    const int gainFunc = ModelParameters::func_string_to_enum.at(ModelParameters::getEnvVar("GAIN_FUNC"));
-    const int lossFunc = ModelParameters::func_string_to_enum.at(ModelParameters::getEnvVar("LOSS_FUNC"));
-    const int duplFunc = ModelParameters::func_string_to_enum.at(ModelParameters::getEnvVar("DUPL_FUNC"));
-    const int demiDuplFunc = ModelParameters::func_string_to_enum.at(ModelParameters::getEnvVar("DEMI_DUPL_FUNC"));
-    const int baseNumRFunc = ModelParameters::func_string_to_enum.at(ModelParameters::getEnvVar("BASE_NUM_R_FUNC"));
+void ModelParameters::setRateFunctionTypes(BppApplication GenEvol) {
+    const int gainFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_gainFunc", GenEvol.getParams(), "LINEAR", "", true, -1));
+    const int lossFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_lossFunc", GenEvol.getParams(), "LINEAR", "", true, -1));
+    const int duplFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_duplFunc", GenEvol.getParams(), "CONST", "", true, -1));
+    const int demiDuplFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_demiDuplFunc", GenEvol.getParams(), "IGNORE", "", true, -1));
+    const int baseNumRFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_baseNumRFunc", GenEvol.getParams(), "IGNORE", "", true, -1));
     ModelParameters::rateChangeType_.push_back(baseNumRFunc);
     ModelParameters::rateChangeType_.push_back(duplFunc);
     ModelParameters::rateChangeType_.push_back(lossFunc);
@@ -141,45 +157,4 @@ VectorSiteContainer* ModelParameters::readGeneFamilyFile(const std::string& file
     }
     file.close();
     return container;
-}
-
-std::string ModelParameters::getEnvVar(const std::string& key) {
-    const char* val = std::getenv(key.c_str());
-    if (val == nullptr) {
-        const std::string err = "Failed to find parameter " + key +". Exiting.";
-        throw Exception(err);
-    }
-    return std::string(val);
-}
-
-int ModelParameters::getIntVar(const std::string& key, const int defaultVal) {
-    int val;
-    try {
-        val = std::stoi(ModelParameters::getEnvVar(key));
-    } catch (bpp::Exception& e) {
-        val = defaultVal;
-    }
-    return val;
-}
-
-std::vector<double> ModelParameters::getVectorVar(const std::string& key, const double defaultVal) {
-    std::vector<double> val;
-    try {
-        const std::string envVarValue = ModelParameters::getEnvVar(key);
-        std::stringstream ss(envVarValue);
-        std::string token;
-        while (std::getline(ss, token, ',')) {
-            try {
-                val.push_back(std::stod(token));
-            } catch (const std::invalid_argument& e) {
-                throw std::runtime_error("Invalid double value: '" + token + "'");
-            }
-        }
-
-    } catch (bpp::Exception& e) {
-        std::cout << "Caught an exception while parsing " + key << std::endl;
-        std::cout << e.what() << std::endl;
-        val.push_back(defaultVal);
-    }
-    return val;
 }
