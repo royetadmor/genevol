@@ -15,7 +15,7 @@ SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelPara
     std::shared_ptr<NonHomogeneousSubstitutionProcess> subProcesses = std::make_shared<NonHomogeneousSubstitutionProcess>(gammaDist, parTree);
     
     // Create substitution model
-    std::shared_ptr<ChromosomeSubstitutionModel> chrModel = std::make_shared<ChromosomeSubstitutionModel>(m->alphabet_, rateParams, baseNum, m->countRange_, ChromosomeSubstitutionModel::rootFreqType::ROOT_LL, rateChangeType, demiOnlyForEven);
+    std::shared_ptr<ChromosomeSubstitutionModel> chrModel = std::make_shared<ChromosomeSubstitutionModel>(m->alphabet_, m->paramMap_, baseNum, m->countRange_, ChromosomeSubstitutionModel::rootFreqType::ROOT_LL, m->rateChangeType_, demiOnlyForEven);
     subProcesses->addModel(chrModel, mapOfNodeIds[1]);
     SubstitutionProcess* nsubPro = subProcesses->clone();
 
