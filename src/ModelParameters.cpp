@@ -20,11 +20,12 @@ ModelParameters::ModelParameters(BppApplication GenEvol)
     setAlphabetLimit(GenEvol);
     std::cout << ModelParameters::minState_ << ", " << ModelParameters::maxState_ << ", " << ModelParameters::stateOverhead_ << std::endl;
     ModelParameters::countRange_ = ApplicationTools::getIntParameter("_countRange", GenEvol.getParams(), ModelParameters::maxState_ - ModelParameters::minState_ + 1, "", true, 1);
+    ModelParameters::branchMul_ = ApplicationTools::getDoubleParameter("_branchMul", GenEvol.getParams(), -999.0);
     ModelParameters::alphabet_ = new IntegerAlphabet(ModelParameters::maxState_, ModelParameters::minState_);
     ModelParameters::container_ = readGeneFamilyFile(ModelParameters::dataFilePath_, ModelParameters::alphabet_);
     setBaseModelParameters(GenEvol);
     setRateFunctionTypes(GenEvol);
-
+    validateRateFunctionParameters();
 }
 
 void ModelParameters::setAlphabetLimit(BppApplication GenEvol) {
@@ -106,6 +107,30 @@ void ModelParameters::setRateFunctionTypes(BppApplication GenEvol) {
     ModelParameters::rateChangeType_.push_back(lossFunc);
     ModelParameters::rateChangeType_.push_back(gainFunc);
     ModelParameters::rateChangeType_.push_back(demiDuplFunc);
+}
+
+void ModelParameters::validateRateFunctionParameters() {
+    // For each rate category (in order)
+    for (size_t i = 0; i < ModelParameters::rateChangeType_.size(); ++i) {
+        int funcType = rateChangeType_[i];
+        int paramCategoryId = static_cast<int>(i+1); // paramMap_ uses keys 1..5
+
+        auto it = expectedNumOfParams.find(funcType);
+        if (it == expectedNumOfParams.end()) {
+            throw std::runtime_error("Unknown function type enum: " + std::to_string(funcType));
+        }
+
+        size_t requiredParams = it->second;
+        size_t actualParams = ModelParameters::paramMap_.at(paramCategoryId).size();
+
+        if (actualParams != requiredParams) {
+            throw std::runtime_error(
+                "Parameter validation failed for category id " + std::to_string(paramCategoryId) +
+                ": function type requires " + std::to_string(requiredParams) +
+                " parameters, but got " + std::to_string(actualParams)
+            );
+        }
+    }
 }
 
 VectorSiteContainer* ModelParameters::readGeneFamilyFile(const std::string& filePath, IntegerAlphabet* alphabet) {

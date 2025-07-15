@@ -13,7 +13,7 @@
 #include <Bpp/Seq/Alphabet/IntegerAlphabet.h>
 #include <Bpp/Seq/Container/VectorSiteContainer.h>
 
-
+#include "ChromosomeSubstitutionModel.h"
 
 using namespace std;
 using namespace bpp;
@@ -27,14 +27,24 @@ public: // Variables
     int maxState_;
     int stateOverhead_;
     int countRange_;
+    double branchMul_;
     IntegerAlphabet* alphabet_;
     VectorSiteContainer* container_;
     std::map<int, std::vector<double>> paramMap_;
     std::vector<int> rateChangeType_;
+
+    // Translates rate functions from string to int
     const std::map<std::string, int> func_string_to_enum = {
-        {"CONST", 0},
-        {"LINEAR", 1},
-        {"IGNORE", 8} // Can add more according to enum at ChromosomeSubModel.h
+        {"CONST", ChromosomeNumberDependencyFunction::FunctionType::CONSTANT},
+        {"LINEAR", ChromosomeNumberDependencyFunction::FunctionType::LINEAR},
+        {"IGNORE", ChromosomeNumberDependencyFunction::FunctionType::IGNORE} // Can add more according to enum at ChromosomeSubModel.h
+    };
+
+    // Expected number of parameters for each rate function
+    const std::map<int, int> expectedNumOfParams = {
+        {ChromosomeNumberDependencyFunction::FunctionType::CONSTANT, 1},
+        {ChromosomeNumberDependencyFunction::FunctionType::LINEAR, 2},
+        {ChromosomeNumberDependencyFunction::FunctionType::IGNORE, 1}
     };
     
 public:
@@ -46,6 +56,7 @@ private:
     void setBaseModelParameters(BppApplication GenEvol);
     VectorSiteContainer* readGeneFamilyFile(const std::string& filePath, IntegerAlphabet* alphabet);
     void setRateFunctionTypes(BppApplication GenEvol);
+    void validateRateFunctionParameters();
 };
 
 

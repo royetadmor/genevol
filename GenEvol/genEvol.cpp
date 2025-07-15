@@ -36,7 +36,7 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
 uint getModelFromParamName(string name);
 void updateWithTypeAndCorrespondingName(std::map<std::string, int> &typeGeneralName);
 int getTypeOfParamFromParamName(string name);
-double getTreeScalingFactor(const VectorSiteContainer* container, PhyloTree* tree);
+double getTreeScalingFactor(ModelParameters* m, PhyloTree* tree);
 int countUniqueStates(const Site site);
 void optimizeMixtureModelParametersOneDimension(AlphaLikelihoodFunction* f, ModelParameters* m,double tol, unsigned int maxNumOfIterations, bool mixed=false, unsigned curentIterNum=0);
 
@@ -52,7 +52,7 @@ int main(int args, char **argv) {
     Newick reader;
     PhyloTree* tree_ = reader.readPhyloTree(m->treeFilePath_);
     int countRange = m->countRange_;
-    double scale_tree_factor = getTreeScalingFactor(container, tree_);
+    double scale_tree_factor = getTreeScalingFactor(m, tree_);
     tree_->scaleTree(scale_tree_factor);
 
 
@@ -251,7 +251,11 @@ int getTypeOfParamFromParamName(string name){
     return type;
 }
 
-double getTreeScalingFactor(const VectorSiteContainer* container, PhyloTree* tree) {
+double  getTreeScalingFactor(ModelParameters* m, PhyloTree* tree) {
+    VectorSiteContainer* container = m->container_;
+    if (m->branchMul_ != -999) {
+        return m->branchMul_;
+    }
     int uniqueStateCount = 0;
     // Iterate over all sites (columns)
     for (size_t i = 0; i < container->getNumberOfSites(); i++) {
