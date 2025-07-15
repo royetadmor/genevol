@@ -64,7 +64,7 @@ int main(int args, char **argv) {
     auto rateChangeType = m->rateChangeType_;
 
     // Calculate likelihood
-    auto newLik = LikelihoodUtils::createLikelihoodProcess(m, tree_, paramMap, rateChangeType);
+    auto newLik = LikelihoodUtils::createLikelihoodProcess(m, tree_, paramMap);
     std::cout << "Calculating likelihood" << std::endl;
     std::cout << newLik->getValue() << std::endl;
     

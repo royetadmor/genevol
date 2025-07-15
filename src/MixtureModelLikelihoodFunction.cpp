@@ -22,7 +22,7 @@ double AlphaLikelihoodFunction::calculateFunctionValue() const {
                 {5, {-999}} // Demi
             };
             std::vector<int> rateChangeType = m_->rateChangeType_;
-            auto MMLikelihood = LikelihoodUtils::createLikelihoodProcess(m_, tree_, MMparamMap, rateChangeType);
+            auto MMLikelihood = LikelihoodUtils::createLikelihoodProcess(m_, tree_, MMparamMap);
             totalMMLikelihood += MMLikelihood->getValue() * probabilityPrior;
             LikelihoodUtils::deleteLikelihoodProcess(MMLikelihood);
         }
