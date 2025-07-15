@@ -45,13 +45,9 @@ int main(int args, char **argv) {
     BppApplication GenEvol(args, argv, "GenEvol");
     ModelParameters* m = new ModelParameters(GenEvol);
 
-    // Get sequences
-    VectorSiteContainer* container = m->container_;
-
     // Get tree and rescale it
     Newick reader;
     PhyloTree* tree_ = reader.readPhyloTree(m->treeFilePath_);
-    int countRange = m->countRange_;
     double scale_tree_factor = getTreeScalingFactor(m, tree_);
     tree_->scaleTree(scale_tree_factor);
 
@@ -61,22 +57,15 @@ int main(int args, char **argv) {
 
     // Define substitution parameters
     auto paramMap = m->paramMap_;
-    auto rateChangeType = m->rateChangeType_;
 
     // Calculate likelihood
     auto newLik = LikelihoodUtils::createLikelihoodProcess(m, tree_, paramMap);
-    std::cout << "Calculating likelihood" << std::endl;
-    std::cout << newLik->getValue() << std::endl;
+    std::cout << "Likelihood: " << newLik->getValue() << std::endl;
     
-    auto substitutionModelParams = newLik->getSubstitutionModelParameters().getParameterNames();
-    for (int i = 0; i < (int)(substitutionModelParams.size()); i++){
-        std::cout << substitutionModelParams[i] << std::endl;
-        std::cout << newLik->getParameters().getParameter(substitutionModelParams[i]).getValue() << std::endl;
-    }
     std::cout << "Starting optimization" << std::endl;
     optimizeModelParametersOneDimension(newLik, m, 0.1, 2);
     optimizeMixtureModelParametersOneDimension(newFunc.get(), m, 0.1, 2);
-    std::cout << "Done" << std::endl;
+    GenEvol.done();
     return 0;
 }
 
