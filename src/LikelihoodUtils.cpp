@@ -51,3 +51,80 @@ void LikelihoodUtils::deleteLikelihoodProcess(SingleProcessPhyloLikelihood* lik)
     delete context;
     delete lik;
 }
+
+void LikelihoodUtils::updateMapsOfParamTypesAndNames(std::map<int, std::map<uint, std::vector<string>>> &typeWithParamNames, std::map<string, std::pair<int, uint>>* paramNameAndType, std::vector<std::string> namesAllParams, std::map<int, std::vector<std::pair<uint, int>>>* sharedParams, std::string suffix){
+    std::map<string, vector<std::pair<uint, int>>> sharedParamsNames;
+    if (sharedParams){
+        // LikelihoodUtils::createMapOfSharedParameterNames(*sharedParams, sharedParamsNames);
+        std::cout << "Hi" << std::endl; 
+    }
+    for (size_t i = 0; i < namesAllParams.size(); i++){
+        string cleanParamName;
+        if (suffix != ""){
+            cleanParamName = namesAllParams[i].substr(0, namesAllParams[i].length() - suffix.length());
+        }else{
+            cleanParamName = namesAllParams[i];
+        }
+        uint modelId = getModelFromParamName(cleanParamName);
+        int type = getTypeOfParamFromParamName(cleanParamName);
+        //should get the type
+        std::cout << cleanParamName << std::endl;
+        std::cout << type << std::endl;
+        
+        typeWithParamNames[type][modelId].push_back(namesAllParams[i]);
+        if (paramNameAndType){
+            (*paramNameAndType)[namesAllParams[i]] = std::pair<int, uint>(type, modelId);
+        }
+        if (sharedParams){
+            if (sharedParamsNames.find(namesAllParams[i]) != sharedParamsNames.end()){
+                for (size_t k = 0; k < sharedParamsNames[namesAllParams[i]].size(); k++ ){
+                    uint model = sharedParamsNames[namesAllParams[i]][k].first;
+                    int typeOfSharedParam = sharedParamsNames[namesAllParams[i]][k].second;
+                    typeWithParamNames[typeOfSharedParam][model].push_back(namesAllParams[i]);
+
+                }
+
+            }
+
+        }
+
+    }
+
+}
+
+uint LikelihoodUtils::getModelFromParamName(string name){
+    std::regex modelPattern ("_([\\d]+)");
+    std::smatch sm;
+    std::regex_search(name, sm, modelPattern);
+    std::string modelSuffix = sm[sm.size()-1];
+    uint modelId = static_cast<uint>(stoi(modelSuffix));
+    return modelId;
+
+}
+
+int LikelihoodUtils::getTypeOfParamFromParamName(string name){
+    int type;
+    std::map<std::string, int> typeGeneralName;
+    updateWithTypeAndCorrespondingName(typeGeneralName);
+    auto itParamType = typeGeneralName.begin();
+    while(itParamType != typeGeneralName.end()){
+        string pattern = itParamType->first;
+        if (name.find(pattern) != string::npos){
+            type = typeGeneralName[pattern];
+            break;
+
+        }
+        itParamType ++;
+    }
+    return type;
+}
+
+void LikelihoodUtils::updateWithTypeAndCorrespondingName(std::map<std::string, int> &typeGeneralName){
+    typeGeneralName["gain"] = static_cast<int>(ChromosomeSubstitutionModel::GAIN);
+    typeGeneralName["loss"] = static_cast<int>(ChromosomeSubstitutionModel::LOSS);
+    typeGeneralName["dupl"] = static_cast<int>(ChromosomeSubstitutionModel::DUPL);
+    typeGeneralName["demi"] = static_cast<int>(ChromosomeSubstitutionModel::DEMIDUPL);
+    typeGeneralName["baseNumR"] = static_cast<int>(ChromosomeSubstitutionModel::BASENUMR);
+    typeGeneralName["baseNum_"] = static_cast<int>(ChromosomeSubstitutionModel::BASENUM);
+}
+

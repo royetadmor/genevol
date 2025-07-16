@@ -14,15 +14,24 @@ using namespace std;
 
 ModelParameters::ModelParameters(BppApplication GenEvol)
 {
+    // Load general params
     ModelParameters::treeFilePath_ = ApplicationTools::getAFilePath("_treePath", GenEvol.getParams(), true, true, "", true, "none", 1);
     ModelParameters::dataFilePath_ = ApplicationTools::getAFilePath("_dataPath", GenEvol.getParams(), true, true, "", true, "none", 1);
     ModelParameters::stateOverhead_ = ApplicationTools::getIntParameter("_stateOverhead", GenEvol.getParams(), STATE_OVERHEAD, "", true, -1);
     setAlphabetLimit(GenEvol);
-    std::cout << ModelParameters::minState_ << ", " << ModelParameters::maxState_ << ", " << ModelParameters::stateOverhead_ << std::endl;
-    ModelParameters::countRange_ = ApplicationTools::getIntParameter("_countRange", GenEvol.getParams(), ModelParameters::maxState_ - ModelParameters::minState_ + 1, "", true, 1);
-    ModelParameters::branchMul_ = ApplicationTools::getDoubleParameter("_branchMul", GenEvol.getParams(), -999.0);
     ModelParameters::alphabet_ = new IntegerAlphabet(ModelParameters::maxState_, ModelParameters::minState_);
     ModelParameters::container_ = readGeneFamilyFile(ModelParameters::dataFilePath_, ModelParameters::alphabet_);
+
+    // Load customization params
+    ModelParameters::countRange_ = ApplicationTools::getIntParameter("_countRange", GenEvol.getParams(), ModelParameters::maxState_ - ModelParameters::minState_ + 1, "", true, 1);
+    ModelParameters::branchMul_ = ApplicationTools::getDoubleParameter("_branchMul", GenEvol.getParams(), -999.0);
+
+    // Load MM params
+    ModelParameters::alphaGain_ = ApplicationTools::getDoubleParameter("_alphaGain", GenEvol.getParams(), 1.0);
+    ModelParameters::alphaLoss_ = ApplicationTools::getDoubleParameter("_alphaLoss", GenEvol.getParams(), 1.0);
+    ModelParameters::categories_ = ApplicationTools::getIntParameter("_numCategories", GenEvol.getParams(), 4, "", true, -1);
+    std::cout << "MM Values: " << ModelParameters::alphaGain_ << ", " << ModelParameters::alphaLoss_ << ", " << ModelParameters::categories_ << std::endl;
+    // Load parameters and rate functions
     setBaseModelParameters(GenEvol);
     setRateFunctionTypes(GenEvol);
     validateRateFunctionParameters();

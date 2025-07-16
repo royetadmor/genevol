@@ -27,7 +27,10 @@ public: // Variables
     int maxState_;
     int stateOverhead_;
     int countRange_;
+    int categories_;
     double branchMul_;
+    double alphaGain_;
+    double alphaLoss_;
     IntegerAlphabet* alphabet_;
     VectorSiteContainer* container_;
     std::map<int, std::vector<double>> paramMap_;

@@ -14,3 +14,6 @@ _lossFunc = LINEAR
 _duplFunc = CONST
 _demiDuplFunc = IGNORE
 _baseNumRFunc = IGNORE
+_alphaGain = 1
+_alphaLoss = 1
+_numCategories = 4

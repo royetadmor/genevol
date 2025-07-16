@@ -8,6 +8,7 @@
 #include <Bpp/Phyl/Io/IoTree.h>
 #include <Bpp/Phyl/Io/Newick.h>
 #include <Bpp/Phyl/Likelihood/ParametrizablePhyloTree.h>
+#include <Bpp/Phyl/Likelihood/PhyloLikelihoods/SingleProcessPhyloLikelihood.h>
 
 
 
@@ -30,12 +31,12 @@ namespace bpp {
             std::map<std::string, std::vector<double>> generateMMValues(int categories, double alphaGain, double betaGain, double shapeLoss) const;
             double calculateFunctionValue() const;
         public:
-            AlphaLikelihoodFunction(ModelParameters* m, PhyloTree* tree, int categories) : AbstractParametrizable("") {
+            AlphaLikelihoodFunction(ModelParameters* m, PhyloTree* tree) : AbstractParametrizable("") {
                 m_ = m;
                 tree_ = tree;
-                categories_ = categories;
-                addParameter_(new Parameter("alphaGain0_1", 1, make_shared<IntervalConstraint>(0.5, 3, false, true)));
-                addParameter_(new Parameter("alphaLoss0_1", 1, make_shared<IntervalConstraint>(0.5, 3, false, true)));
+                categories_ = m->categories_;
+                addParameter_(new Parameter("alphaGain0_1", m->alphaGain_, make_shared<IntervalConstraint>(0.5, 3, false, true)));
+                addParameter_(new Parameter("alphaLoss0_1", m->alphaLoss_, make_shared<IntervalConstraint>(0.5, 3, false, true)));
                 addParameter_(new Parameter("dupl0_1", 3, make_shared<IntervalConstraint>(0.1, 10, false, true)));
                 fireParameterChanged(getParameters());
             }
@@ -45,11 +46,9 @@ namespace bpp {
                 setParameters(getParameters());
                 fval_ = calculateFunctionValue();
             }
-            void setParameters(const ParameterList& parameters)
-            {
-                matchParametersValues(parameters);
-            }
-
+            void setParameters(const ParameterList& parameters) { matchParametersValues(parameters); }
+            double getParameterValueByName(string name) { return getParameterValue(name); }
+            std::vector<SingleProcessPhyloLikelihood*> getLikelihoodProcesses() const;
 
     };
 }
