@@ -14,12 +14,12 @@ double AlphaLikelihoodFunction::calculateFunctionValue() const {
     return totalMMLikelihood;
 }
 
-std::map<std::string, std::vector<double>> AlphaLikelihoodFunction::generateMMValues(int categories, double alphaGain, double betaGain, double shapeLoss) const {
+std::map<std::string, std::vector<double>> AlphaLikelihoodFunction::generateMMValues(int categories, double alphaGain, double betaGain, double alphaLoss, double betaLoss) const {
     std::vector<double> gainValues;
     std::vector<double> lossValues;
 
     GammaDiscreteDistribution gainGammaDist(categories, alphaGain, betaGain);
-    GammaDiscreteDistribution lossGammaDist(categories, shapeLoss, shapeLoss);
+    GammaDiscreteDistribution lossGammaDist(categories, alphaLoss, betaLoss);
 
     for (int i = 0; i < categories; i++)
         gainValues.push_back(gainGammaDist.getCategory(i));
@@ -34,18 +34,19 @@ std::vector<SingleProcessPhyloLikelihood*> AlphaLikelihoodFunction::getLikelihoo
     double alphaGain = getParameterValue("alphaGain0_1");
     double alphaLoss = getParameterValue("alphaLoss0_1");
     double dupl = getParameterValue("dupl0_1");
-    double betaGain = 1.0 / alphaGain;
+    double betaGain = getParameterValue("betaGain0_1");
+    double betaLoss = getParameterValue("betaLoss0_1");
     std::vector<SingleProcessPhyloLikelihood*> likelihoodProcesses;
     
     // Generate gain/loss values per category
-    auto mmValues = generateMMValues(categories_, alphaGain, betaGain, alphaLoss);
+    auto mmValues = generateMMValues(categories_, alphaGain, betaGain, alphaLoss, betaLoss);
     for (double gainValue : mmValues["gain"]) {
         for (double lossValue : mmValues["loss"]) {
             std::map<int, std::vector<double>> MMparamMap = {
                 {1, {-999}},               // BaseNumR
                 {2, {dupl}},               // Dupl
-                {3, {lossValue, 0.1}},     // Loss
-                {4, {gainValue, 0.1}},     // Gain
+                {3, {lossValue}},          // Loss
+                {4, {gainValue}},          // Gain
                 {5, {-999}}                // Demi
             };
 

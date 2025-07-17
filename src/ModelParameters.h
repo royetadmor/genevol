@@ -30,7 +30,9 @@ public: // Variables
     int categories_;
     double branchMul_;
     double alphaGain_;
+    double betaGain_;
     double alphaLoss_;
+    double betaLoss_;
     IntegerAlphabet* alphabet_;
     VectorSiteContainer* container_;
     std::map<int, std::vector<double>> paramMap_;

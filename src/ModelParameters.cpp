@@ -28,9 +28,10 @@ ModelParameters::ModelParameters(BppApplication GenEvol)
 
     // Load MM params
     ModelParameters::alphaGain_ = ApplicationTools::getDoubleParameter("_alphaGain", GenEvol.getParams(), 1.0);
+    ModelParameters::betaGain_ = ApplicationTools::getDoubleParameter("_betaGain", GenEvol.getParams(), 1.0);
     ModelParameters::alphaLoss_ = ApplicationTools::getDoubleParameter("_alphaLoss", GenEvol.getParams(), 1.0);
+    ModelParameters::betaLoss_ = ApplicationTools::getDoubleParameter("_betaLoss", GenEvol.getParams(), 1.0);
     ModelParameters::categories_ = ApplicationTools::getIntParameter("_numCategories", GenEvol.getParams(), 4, "", true, -1);
-    std::cout << "MM Values: " << ModelParameters::alphaGain_ << ", " << ModelParameters::alphaLoss_ << ", " << ModelParameters::categories_ << std::endl;
     // Load parameters and rate functions
     setBaseModelParameters(GenEvol);
     setRateFunctionTypes(GenEvol);

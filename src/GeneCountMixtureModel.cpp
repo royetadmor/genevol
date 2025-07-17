@@ -20,8 +20,8 @@ void GeneCountMixtureModel::optimizeMixtureModelParametersOneDimension(double to
     // initializing the likelihood values
     double currentLikelihood = f->getValue();
     double prevLikelihood;
-    int minDomain = 0; // TODO: hardcoded
-    int maxDomain = 10; // TODO: hardcoded
+    int minDomain = m_->alphabet_->getMin();
+    int maxDomain = m_->alphabet_->getMax();
     size_t startCompositeParams = ChromosomeSubstitutionModel::getNumberOfNonCompositeParams();
     std::vector<int> rateChangeType = m_->rateChangeType_;
 
@@ -60,7 +60,6 @@ void GeneCountMixtureModel::optimizeMixtureModelParametersOneDimension(double to
                 throw Exception("ChromosomeNumberOptimizer::optimizeModelParametersOneDimension(): index out of range!");
             }
             size_t index = it - paramsNames.begin();
-            // ChromosomeNumberDependencyFunction::FunctionType funcType = static_cast<ChromosomeNumberDependencyFunction::FunctionType>(rateChangeType[rateParamType - startCompositeParams]);
             ChromosomeNumberDependencyFunction::FunctionType funcType = static_cast<ChromosomeNumberDependencyFunction::FunctionType>(0); // TODO: hardcoded
             ChromosomeNumberDependencyFunction* functionOp;
             functionOp = compositeParameter::setDependencyFunction(funcType);
@@ -71,7 +70,7 @@ void GeneCountMixtureModel::optimizeMixtureModelParametersOneDimension(double to
 
             delete functionOp;
             std::cout << "Parameter name is: " + nameOfParam << std::endl;
-            optimizer->getStopCondition()->setTolerance(tol);
+            optimizer->getStopCondition()->setTolerance(tol); // TODO: move outside the for loop
             optimizer->setInitialInterval(lowerBound, upperBound);            
             optimizer->init(params.createSubList(param.getName()));
             currentLikelihood = optimizer->optimize();
