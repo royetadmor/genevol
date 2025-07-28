@@ -18,7 +18,7 @@
 using namespace std;
 
 namespace bpp {
-    class AlphaLikelihoodFunction : 
+    class MixtureModelLikelihoodFunction : 
         public Function,
         public AbstractParametrizable
     {
@@ -31,7 +31,7 @@ namespace bpp {
             std::map<std::string, std::vector<double>> generateMMValues(int categories, double alphaGain, double betaGain, double alphaLoss, double betaLoss) const;
             double calculateFunctionValue() const;
         public:
-            AlphaLikelihoodFunction(ModelParameters* m, PhyloTree* tree) : AbstractParametrizable("") {
+            MixtureModelLikelihoodFunction(ModelParameters* m, PhyloTree* tree) : AbstractParametrizable("") {
                 m_ = m;
                 tree_ = tree;
                 categories_ = m->categories_;
@@ -43,7 +43,7 @@ namespace bpp {
                 fireParameterChanged(getParameters());
             }
             double getValue() const {return fval_;}
-            Clonable* clone() const { return new AlphaLikelihoodFunction(*this); }
+            Clonable* clone() const { return new MixtureModelLikelihoodFunction(*this); }
             void fireParameterChanged(const ParameterList& parameters) {
                 setParameters(getParameters());
                 fval_ = calculateFunctionValue();

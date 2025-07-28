@@ -9,7 +9,7 @@ set (CPP_FILES
   ModelParameters.cpp
   LikelihoodUtils.cpp
   MixtureModelLikelihoodFunction.cpp
-  GeneCountMixtureModel.cpp
+  GeneCountManager.cpp
   )
 
 IF(BUILD_STATIC)

@@ -1,7 +1,7 @@
 #include "MixtureModelLikelihoodFunction.h"
 
 
-double AlphaLikelihoodFunction::calculateFunctionValue() const {
+double MixtureModelLikelihoodFunction::calculateFunctionValue() const {
     double totalMMLikelihood = 0;
     double probabilityPrior = 1 / double(categories_*categories_);
     auto likelihoods = getLikelihoodProcesses();
@@ -14,7 +14,7 @@ double AlphaLikelihoodFunction::calculateFunctionValue() const {
     return totalMMLikelihood;
 }
 
-std::map<std::string, std::vector<double>> AlphaLikelihoodFunction::generateMMValues(int categories, double alphaGain, double betaGain, double alphaLoss, double betaLoss) const {
+std::map<std::string, std::vector<double>> MixtureModelLikelihoodFunction::generateMMValues(int categories, double alphaGain, double betaGain, double alphaLoss, double betaLoss) const {
     std::vector<double> gainValues;
     std::vector<double> lossValues;
 
@@ -30,7 +30,7 @@ std::map<std::string, std::vector<double>> AlphaLikelihoodFunction::generateMMVa
     return { {"gain", gainValues}, {"loss", lossValues} };
 }
 
-std::vector<SingleProcessPhyloLikelihood*> AlphaLikelihoodFunction::getLikelihoodProcesses() const {
+std::vector<SingleProcessPhyloLikelihood*> MixtureModelLikelihoodFunction::getLikelihoodProcesses() const {
     double alphaGain = getParameterValue("alphaGain0_1");
     double alphaLoss = getParameterValue("alphaLoss0_1");
     double dupl = getParameterValue("dupl0_1");

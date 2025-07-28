@@ -27,7 +27,7 @@
 #include "ModelParameters.h"
 #include "LikelihoodUtils.h"
 #include "MixtureModelLikelihoodFunction.h"
-#include "GeneCountMixtureModel.h"
+#include "GeneCountManager.h"
 
 using namespace bpp;
 using namespace std;
@@ -35,7 +35,7 @@ using namespace std;
 void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoodProcess, ModelParameters* m,double tol, unsigned int maxNumOfIterations, bool mixed=false, unsigned curentIterNum=0);
 double getTreeScalingFactor(ModelParameters* m, PhyloTree* tree);
 int countUniqueStates(const Site site);
-// void optimizeMixtureModelParametersOneDimension(AlphaLikelihoodFunction* f, ModelParameters* m,double tol, unsigned int maxNumOfIterations, bool mixed=false, unsigned curentIterNum=0);
+// void optimizeMixtureModelParametersOneDimension(MixtureModelLikelihoodFunction* f, ModelParameters* m,double tol, unsigned int maxNumOfIterations, bool mixed=false, unsigned curentIterNum=0);
 
 int main(int args, char **argv) {
     // Set model data and parameters
@@ -58,11 +58,11 @@ int main(int args, char **argv) {
     optimizeModelParametersOneDimension(newLik, m, 0.1, 2);
 
     // Create mixture model, calculate likelihood and optimize
-    auto gcMM = std::make_shared<GeneCountMixtureModel>(m, tree_);
-    std::cout << gcMM->getLikelihood() << std::endl;
-    gcMM->optimizeMixtureModelParametersOneDimension(0.1, 2);
-    std::cout << gcMM->getLikelihood() << std::endl;
-    std::cout << gcMM->getParameterValueByName("alphaGain0_1") << std::endl;
+    auto geneCountManager = std::make_shared<GeneCountManager>(m, tree_);
+    std::cout << geneCountManager->getLikelihood() << std::endl;
+    geneCountManager->optimizeMixtureModelParametersOneDimension(0.1, 2);
+    std::cout << geneCountManager->getLikelihood() << std::endl;
+    std::cout << geneCountManager->getParameterValueByName("alphaGain0_1") << std::endl;
 
     GenEvol.done();
     return 0;

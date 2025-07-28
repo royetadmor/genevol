@@ -1,5 +1,5 @@
-#ifndef GENEVOL_GENECOUNTMIXTUREMODEL_H
-#define GENEVOL_GENECOUNTMIXTUREMODEL_H
+#ifndef GENEVOL_GENECOUNTMANAGER_H
+#define GENEVOL_GENECOUNTMANAGER_H
 
 #include <memory>
 
@@ -7,18 +7,18 @@
 
 
 #include "ModelParameters.h"
-#include "MixtureModelLikelihoodFunction.h" // for AlphaLikelihoodFunction
+#include "MixtureModelLikelihoodFunction.h" // for MixtureModelLikelihoodFunction
 #include "LikelihoodUtils.h"
 
 namespace bpp {
 
-class GeneCountMixtureModel {
+class GeneCountManager {
 public:
     // Constructor
-    GeneCountMixtureModel(ModelParameters* m, PhyloTree* tree) {
+    GeneCountManager(ModelParameters* m, PhyloTree* tree) {
         m_ = m;
         tree_ = tree;
-        likelihoodFunction_ = std::make_shared<AlphaLikelihoodFunction>(m, tree_);
+        likelihoodFunction_ = std::make_shared<MixtureModelLikelihoodFunction>(m, tree_);
         vectorOfLikelihoods = likelihoodFunction_->getLikelihoodProcesses();
     }
 
@@ -33,7 +33,7 @@ private:
     ModelParameters* m_;
     PhyloTree* tree_;
     std::vector<SingleProcessPhyloLikelihood*> vectorOfLikelihoods;
-    std::shared_ptr<AlphaLikelihoodFunction> likelihoodFunction_;
+    std::shared_ptr<MixtureModelLikelihoodFunction> likelihoodFunction_;
 };
 
 } // namespace bpp

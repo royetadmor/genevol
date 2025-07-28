@@ -1,10 +1,10 @@
-#include "GeneCountMixtureModel.h"
+#include "GeneCountManager.h"
 #include <iostream>
 
 using namespace bpp;
 using namespace std;
 
-void GeneCountMixtureModel::optimizeMixtureModelParametersOneDimension(double tol, unsigned int maxNumOfIterations, bool mixed, unsigned curentIterNum)
+void GeneCountManager::optimizeMixtureModelParametersOneDimension(double tol, unsigned int maxNumOfIterations, bool mixed, unsigned curentIterNum)
 {
     // Initialize optimizer
     auto f = likelihoodFunction_.get();
