@@ -5,11 +5,16 @@ double MixtureModelLikelihoodFunction::calculateFunctionValue() const {
     double totalMMLikelihood = 0;
     double probabilityPrior = 1 / double(categories_*categories_);
     auto likelihoods = getLikelihoodProcesses();
-
-    for (const auto& lik : likelihoods) {
-        double value = lik->getValue() * probabilityPrior;
-        totalMMLikelihood += value;
-        LikelihoodUtils::deleteLikelihoodProcess(lik);
+    size_t numberOfSites = m_->container_->getNumberOfSites();
+    for (size_t i = 0; i < numberOfSites; i++) {
+        double familyLikelihood = 0;
+        for (const auto& lik : likelihoods) {
+            familyLikelihood += double((lik->getLikelihoodPerSite()[i])->toDouble() * probabilityPrior);
+            double value = lik->getValue() * probabilityPrior;
+            totalMMLikelihood += value;
+            LikelihoodUtils::deleteLikelihoodProcess(lik);
+        }
+        std::cout << "Family Likelihood: " << familyLikelihood << std::endl;
     }
     return totalMMLikelihood;
 }
@@ -32,10 +37,12 @@ std::map<std::string, std::vector<double>> MixtureModelLikelihoodFunction::gener
 
 std::vector<SingleProcessPhyloLikelihood*> MixtureModelLikelihoodFunction::getLikelihoodProcesses() const {
     double alphaGain = getParameterValue("alphaGain0_1");
-    double alphaLoss = getParameterValue("alphaLoss0_1");
-    double dupl = getParameterValue("dupl0_1");
     double betaGain = getParameterValue("betaGain0_1");
+    double linearGain = getParameterValue("linearGain0_1");
+    double dupl = -999; //getParameterValue("dupl0_1");
+    double alphaLoss = getParameterValue("alphaLoss0_1");
     double betaLoss = getParameterValue("betaLoss0_1");
+    double linearLoss = getParameterValue("linearLoss0_1");
     std::vector<SingleProcessPhyloLikelihood*> likelihoodProcesses;
     
     // Generate gain/loss values per category
@@ -43,11 +50,11 @@ std::vector<SingleProcessPhyloLikelihood*> MixtureModelLikelihoodFunction::getLi
     for (double gainValue : mmValues["gain"]) {
         for (double lossValue : mmValues["loss"]) {
             std::map<int, std::vector<double>> MMparamMap = {
-                {1, {-999}},               // BaseNumR
-                {2, {dupl}},               // Dupl
-                {3, {lossValue}},          // Loss
-                {4, {gainValue}},          // Gain
-                {5, {-999}}                // Demi
+                {1, {-999}},                    // BaseNumR
+                {2, {dupl}},                    // Dupl
+                {3, {lossValue, linearLoss}},   // Loss
+                {4, {gainValue, linearGain}},   // Gain
+                {5, {-999}}                     // Demi
             };
 
             // Build likelihood process
