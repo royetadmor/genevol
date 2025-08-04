@@ -41,7 +41,6 @@ namespace bpp {
                 addParameter_(new Parameter("alphaLoss0_1", m->alphaLoss_, make_shared<IntervalConstraint>(0.5, 10, false, true)));
                 addParameter_(new Parameter("betaLoss0_1", m->betaLoss_, make_shared<IntervalConstraint>(0.5, 10, false, true)));
                 addParameter_(new Parameter("linearLoss0_1", 0.1, make_shared<IntervalConstraint>(-0.5, 5, false, true)));
-                // addParameter_(new Parameter("dupl0_1", 3, make_shared<IntervalConstraint>(0, 10, false, true)));
                 fireParameterChanged(getParameters());
             }
             double getValue() const {return fval_;}
@@ -53,7 +52,6 @@ namespace bpp {
             void setParameters(const ParameterList& parameters) { matchParametersValues(parameters); }
             double getParameterValueByName(string name) { return getParameterValue(name); }
             std::vector<SingleProcessPhyloLikelihood*> getLikelihoodProcesses() const;
-            // std::shared_ptr<Constraint> getIntervalByParamName(string name) { return getParameter(name).get }
 
     };
 }

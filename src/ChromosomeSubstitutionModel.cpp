@@ -50,7 +50,7 @@ void LinearDependencyFunction::updateBounds(ParameterList& params, std::vector<s
     
   }else if (index == 1){
     *lowerBound = -params.getParameter(paramsNames[0]).getValue()/(maxChrNum-1);
-    *upperBound = upperBoundLinearRateParam;       
+    *upperBound = upperBoundLinearRateParam;   
   }else{
     throw Exception("LinearDependencyFunction::updateBounds(): index out of bounds!!");
     
@@ -707,7 +707,9 @@ void ChromosomeSubstitutionModel::updateMatrices(){
         if (i + 1 < maxChrNum+1){
             updateQWithGain(i, minChrNum);
         //loss
-        }if (i-1 >= minChrNum){
+        // Condition on positive i is required to avoid negative values
+        // when data contains a 0
+        }if (i > 0 && i-1 >= minChrNum){
             updateQWithLoss(i, minChrNum);
         //duplication         
         }if (2*i <= maxChrNum){

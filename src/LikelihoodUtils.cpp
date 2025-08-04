@@ -18,7 +18,7 @@ SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelPara
     std::shared_ptr<ChromosomeSubstitutionModel> chrModel = std::make_shared<ChromosomeSubstitutionModel>(m->alphabet_, rateParams, baseNum, m->countRange_, ChromosomeSubstitutionModel::rootFreqType::ROOT_LL, m->rateChangeType_, demiOnlyForEven);
     subProcesses->addModel(chrModel, mapOfNodeIds[1]);
     SubstitutionProcess* nsubPro = subProcesses->clone();
-
+    
     // Create likelihood object
     Context* context = new Context();
     bool weightedRootFreqs = true;
@@ -66,10 +66,8 @@ void LikelihoodUtils::updateMapsOfParamTypesAndNames(std::map<int, std::map<uint
             cleanParamName = namesAllParams[i];
         }
         uint modelId = getModelFromParamName(cleanParamName);
-        int type = getTypeOfParamFromParamName(cleanParamName);
+        int type = getTypeOfParamFromParamName(cleanParamName); // TODO: fix type for all models
         //should get the type
-        std::cout << cleanParamName << std::endl;
-        std::cout << type << std::endl;
         
         typeWithParamNames[type][modelId].push_back(namesAllParams[i]);
         if (paramNameAndType){

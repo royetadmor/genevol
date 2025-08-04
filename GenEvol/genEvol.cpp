@@ -104,9 +104,6 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
     std::map<string, std::pair<int, uint>> paramNameAndType; // parameter name, its type and number of model
 
     vector<string> parametersNames = likelihoodProcess->getSubstitutionModelParameters().getParameterNames();
-    for (const auto& s : parametersNames) {
-        std::cout << s << std::endl;
-    }
     LikelihoodUtils::updateMapsOfParamTypesAndNames(typeWithParamNames, &paramNameAndType, parametersNames, 0, "");
     ParameterList params = likelihoodProcess->getParameters();
     size_t nbParams = parametersNames.size();

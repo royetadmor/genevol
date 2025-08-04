@@ -9,14 +9,15 @@ double MixtureModelLikelihoodFunction::calculateFunctionValue() const {
     for (size_t i = 0; i < numberOfSites; i++) {
         double familyLikelihood = 0;
         for (const auto& lik : likelihoods) {
-            familyLikelihood += double((lik->getLikelihoodPerSite()[i])->toDouble() * probabilityPrior);
-            double value = lik->getValue() * probabilityPrior;
-            totalMMLikelihood += value;
-            LikelihoodUtils::deleteLikelihoodProcess(lik);
+            familyLikelihood += bpp::ExtendedFloat::convert(lik->getLikelihoodPerSite()[i]) * probabilityPrior;;
         }
-        std::cout << "Family Likelihood: " << familyLikelihood << std::endl;
+        totalMMLikelihood += log(familyLikelihood);
     }
-    return totalMMLikelihood;
+
+    for (const auto& lik : likelihoods) {
+        LikelihoodUtils::deleteLikelihoodProcess(lik);
+    }
+    return -totalMMLikelihood;
 }
 
 std::map<std::string, std::vector<double>> MixtureModelLikelihoodFunction::generateMMValues(int categories, double alphaGain, double betaGain, double alphaLoss, double betaLoss) const {
@@ -39,7 +40,6 @@ std::vector<SingleProcessPhyloLikelihood*> MixtureModelLikelihoodFunction::getLi
     double alphaGain = getParameterValue("alphaGain0_1");
     double betaGain = getParameterValue("betaGain0_1");
     double linearGain = getParameterValue("linearGain0_1");
-    double dupl = -999; //getParameterValue("dupl0_1");
     double alphaLoss = getParameterValue("alphaLoss0_1");
     double betaLoss = getParameterValue("betaLoss0_1");
     double linearLoss = getParameterValue("linearLoss0_1");
@@ -51,7 +51,7 @@ std::vector<SingleProcessPhyloLikelihood*> MixtureModelLikelihoodFunction::getLi
         for (double lossValue : mmValues["loss"]) {
             std::map<int, std::vector<double>> MMparamMap = {
                 {1, {-999}},                    // BaseNumR
-                {2, {dupl}},                    // Dupl
+                {2, {-999}},                    // Dupl
                 {3, {lossValue, linearLoss}},   // Loss
                 {4, {gainValue, linearGain}},   // Gain
                 {5, {-999}}                     // Demi

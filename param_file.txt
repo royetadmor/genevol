@@ -1,8 +1,8 @@
-_treePath = test_data/tree.newick
-_dataPath = test_data/data.fasta
+_treePath = test_data/12monocots.newick
+_dataPath = test_data/12monocots_250.fasta
 #_countRange = 50
-_minState = 30
-_maxState = 100
+#_minState = 30
+#_maxState = 100
 _baseNumR = -999
 _branchMul = -999
 _dupl=-999
