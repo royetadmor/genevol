@@ -14,6 +14,7 @@ void GeneCountManager::optimizeMixtureModelParametersOneDimension(double tol, un
     optimizer->setMessageHandler(0);
     optimizer->setConstraintPolicy(AutoParameter::CONSTRAINTS_AUTO);
     optimizer->setMaximumNumberOfEvaluations(100);
+    optimizer->getStopCondition()->setTolerance(tol);
     // Can use BRACKET_INWARD or BRACKET_OUTWARD instead
     optimizer->setBracketing(BrentOneDimension::BRACKET_SIMPLE);
 
@@ -23,7 +24,7 @@ void GeneCountManager::optimizeMixtureModelParametersOneDimension(double tol, un
     int minDomain = m_->alphabet_->getMin();
     int maxDomain = m_->alphabet_->getMax();
     size_t startCompositeParams = ChromosomeSubstitutionModel::getNumberOfNonCompositeParams();
-    std::vector<int> rateChangeType = m_->rateChangeType_;
+    std::vector<int> rateChangeType = m_->mixtureRateChangeType_;
 
 
     // setting maps of parameter type and the corresponding parameters, and vice versa
@@ -60,7 +61,9 @@ void GeneCountManager::optimizeMixtureModelParametersOneDimension(double tol, un
                 throw Exception("ChromosomeNumberOptimizer::optimizeModelParametersOneDimension(): index out of range!");
             }
             size_t index = it - paramsNames.begin();
-            ChromosomeNumberDependencyFunction::FunctionType funcType = static_cast<ChromosomeNumberDependencyFunction::FunctionType>(0); // TODO: hardcoded
+            // Since we don't estimate the parameters directly from the data, but rather from the gamma distrbution,
+            // the parameters value's don't depend on the current state, hence constant.
+            ChromosomeNumberDependencyFunction::FunctionType funcType = ChromosomeNumberDependencyFunction::FunctionType::CONSTANT;
             ChromosomeNumberDependencyFunction* functionOp;
             functionOp = compositeParameter::setDependencyFunction(funcType);
 
@@ -70,7 +73,6 @@ void GeneCountManager::optimizeMixtureModelParametersOneDimension(double tol, un
 
             delete functionOp;
             std::cout << "Parameter name is: " + nameOfParam << std::endl;
-            optimizer->getStopCondition()->setTolerance(tol); // TODO: move outside the for loop
             optimizer->setInitialInterval(lowerBound, upperBound);            
             optimizer->init(params.createSubList(param.getName()));
             currentLikelihood = optimizer->optimize();

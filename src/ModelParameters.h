@@ -37,6 +37,7 @@ public: // Variables
     VectorSiteContainer* container_;
     std::map<int, std::vector<double>> paramMap_;
     std::vector<int> rateChangeType_;
+    std::vector<int> mixtureRateChangeType_;
 
     // Translates rate functions from string to int
     const std::map<std::string, int> func_string_to_enum = {
@@ -50,6 +51,13 @@ public: // Variables
         {ChromosomeNumberDependencyFunction::FunctionType::CONSTANT, 1},
         {ChromosomeNumberDependencyFunction::FunctionType::LINEAR, 2},
         {ChromosomeNumberDependencyFunction::FunctionType::IGNORE, 1}
+    };
+
+    // Map of event type integer to event type string 
+    const std::map<int, std::string> eventTypeToString = {
+        {ChromosomeSubstitutionModel::DUPL, "Dupl"},
+        {ChromosomeSubstitutionModel::LOSS, "Loss"},
+        {ChromosomeSubstitutionModel::GAIN, "Gain"}
     };
     
 public:

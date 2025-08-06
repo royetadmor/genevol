@@ -112,11 +112,19 @@ void ModelParameters::setRateFunctionTypes(BppApplication GenEvol) {
     const int duplFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_duplFunc", GenEvol.getParams(), "CONST", "", true, -1));
     const int demiDuplFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_demiDuplFunc", GenEvol.getParams(), "IGNORE", "", true, -1));
     const int baseNumRFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_baseNumRFunc", GenEvol.getParams(), "IGNORE", "", true, -1));
+    const int mixtureGainFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_mixtureGainFunc", GenEvol.getParams(), "LINEAR", "", true, -1));
+    const int mixtureLossFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_mixtureLossFunc", GenEvol.getParams(), "LINEAR", "", true, -1));
     ModelParameters::rateChangeType_.push_back(baseNumRFunc);
     ModelParameters::rateChangeType_.push_back(duplFunc);
     ModelParameters::rateChangeType_.push_back(lossFunc);
     ModelParameters::rateChangeType_.push_back(gainFunc);
     ModelParameters::rateChangeType_.push_back(demiDuplFunc);
+    //TODO: temporary hack until we have a gene sub. model
+    ModelParameters::mixtureRateChangeType_.push_back(8);
+    ModelParameters::mixtureRateChangeType_.push_back(8);
+    ModelParameters::mixtureRateChangeType_.push_back(mixtureLossFunc);
+    ModelParameters::mixtureRateChangeType_.push_back(mixtureGainFunc);
+    ModelParameters::mixtureRateChangeType_.push_back(8);
 }
 
 void ModelParameters::validateRateFunctionParameters() {

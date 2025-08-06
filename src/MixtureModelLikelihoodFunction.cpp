@@ -9,7 +9,7 @@ double MixtureModelLikelihoodFunction::calculateFunctionValue() const {
     for (size_t i = 0; i < numberOfSites; i++) {
         double familyLikelihood = 0;
         for (const auto& lik : likelihoods) {
-            familyLikelihood += bpp::ExtendedFloat::convert(lik->getLikelihoodPerSite()[i]) * probabilityPrior;;
+            familyLikelihood += bpp::ExtendedFloat::convert(lik->getLikelihoodPerSite()[i]) * probabilityPrior;
         }
         totalMMLikelihood += log(familyLikelihood);
     }
@@ -37,31 +37,53 @@ std::map<std::string, std::vector<double>> MixtureModelLikelihoodFunction::gener
 }
 
 std::vector<SingleProcessPhyloLikelihood*> MixtureModelLikelihoodFunction::getLikelihoodProcesses() const {
-    double alphaGain = getParameterValue("alphaGain0_1");
-    double betaGain = getParameterValue("betaGain0_1");
-    double linearGain = getParameterValue("linearGain0_1");
-    double alphaLoss = getParameterValue("alphaLoss0_1");
-    double betaLoss = getParameterValue("betaLoss0_1");
-    double linearLoss = getParameterValue("linearLoss0_1");
     std::vector<SingleProcessPhyloLikelihood*> likelihoodProcesses;
-    
+    const auto alphaGain = getParameterValue("alphaGain0_1");
+    const auto betaGain = getParameterValue("betaGain0_1");
+    const auto alphaLoss = getParameterValue("alphaLoss0_1");
+    const auto betaLoss = getParameterValue("betaLoss0_1");
+    const auto& lossRateParams = getRateParametersByEvent(ChromosomeSubstitutionModel::LOSS);
+    const auto& gainRateParams = getRateParametersByEvent(ChromosomeSubstitutionModel::GAIN);
+
     // Generate gain/loss values per category
-    auto mmValues = generateMMValues(categories_, alphaGain, betaGain, alphaLoss, betaLoss);
-    for (double gainValue : mmValues["gain"]) {
-        for (double lossValue : mmValues["loss"]) {
+    const auto mmValues = generateMMValues(categories_, alphaGain, betaGain, alphaLoss, betaLoss);
+
+    // Pre-define constants to avoid repeated construction
+    const std::vector<double> emptyVec = {-999}; // For irrelevant events
+
+    for (double gainValue : mmValues.at("gain")) {
+        for (double lossValue : mmValues.at("loss")) {
+            std::vector<double> lossValues{lossValue};
+            std::vector<double> gainValues{gainValue};
+            lossValues.insert(lossValues.end(), lossRateParams.begin(), lossRateParams.end());
+            gainValues.insert(gainValues.end(), gainRateParams.begin(), gainRateParams.end());
+
             std::map<int, std::vector<double>> MMparamMap = {
-                {1, {-999}},                    // BaseNumR
-                {2, {-999}},                    // Dupl
-                {3, {lossValue, linearLoss}},   // Loss
-                {4, {gainValue, linearGain}},   // Gain
-                {5, {-999}}                     // Demi
+                {1, emptyVec},     // BaseNumR
+                {2, emptyVec},       // Duplication
+                {3, lossValues},     // Loss
+                {4, gainValues},     // Gain
+                {5, emptyVec}        // Demi
             };
 
-            // Build likelihood process
-            auto lik = LikelihoodUtils::createLikelihoodProcess(m_, tree_, MMparamMap);
-            likelihoodProcesses.push_back(lik);
+            likelihoodProcesses.push_back(
+                LikelihoodUtils::createLikelihoodProcess(m_, tree_, MMparamMap, m_->mixtureRateChangeType_)
+            );
         }
     }
+
     return likelihoodProcesses;
+}
+
+
+std::vector<double> MixtureModelLikelihoodFunction::getRateParametersByEvent(int eventType) const {
+    std::vector<double> values;
+    if (rateParams.find(eventType) != rateParams.end()) {
+        std::vector<string> paramNames = rateParams.at(eventType);
+        for (const auto& name : paramNames) {
+            values.push_back(getParameterValue(name));
+        }
+    }
+    return values;
 }
 

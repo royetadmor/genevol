@@ -34,7 +34,7 @@ namespace bpp{
       virtual ~LikelihoodUtils() {}
 
     public:
-        static SingleProcessPhyloLikelihood* createLikelihoodProcess(ModelParameters* m, PhyloTree* tree, std::map<int, std::vector<double>> rateParams);
+        static SingleProcessPhyloLikelihood* createLikelihoodProcess(ModelParameters* m, PhyloTree* tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType);
         static std::map<uint, vector<uint>> getMapOfNodeIds(PhyloTree* tree);
         static void deleteLikelihoodProcess(SingleProcessPhyloLikelihood* lik);
         static void updateMapsOfParamTypesAndNames(std::map<int, std::map<uint, std::vector<string>>> &typeWithParamNames, std::map<string, std::pair<int, uint>>* paramNameAndType, std::vector<std::string> namesAllParams, std::map<int, std::vector<std::pair<uint, int>>>* sharedParams, std::string suffix);

@@ -50,16 +50,17 @@ int main(int args, char **argv) {
 
     // Define substitution parameters
     auto paramMap = m->paramMap_;
+    auto rateChangeType = m->rateChangeType_;
 
     // Calculate normal likelihood
-    auto newLik = LikelihoodUtils::createLikelihoodProcess(m, tree_, paramMap);
+    auto newLik = LikelihoodUtils::createLikelihoodProcess(m, tree_, paramMap, rateChangeType);
     std::cout << "Likelihood: " << newLik->getValue() << std::endl;
     std::cout << "Starting optimization" << std::endl;
     optimizeModelParametersOneDimension(newLik, m, 0.1, 2);
 
     // Create mixture model, calculate likelihood and optimize
     auto geneCountManager = std::make_shared<GeneCountManager>(m, tree_);
-    std::cout << geneCountManager->getLikelihood() << std::endl;
+    std::cout << "MM Likelihood: " << geneCountManager->getLikelihood() << std::endl;
     geneCountManager->optimizeMixtureModelParametersOneDimension(0.1, 2);
     std::cout << geneCountManager->getLikelihood() << std::endl;
     std::cout << geneCountManager->getParameterValueByName("alphaGain0_1") << std::endl;
