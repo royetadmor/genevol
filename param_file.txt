@@ -1,5 +1,5 @@
-_treePath = test_data/12monocots/12monocots.newick
-_dataPath = test_data/12monocots/12monocots_1000.fasta
+_treePath = test_data/9dicots/9dicots.newick
+_dataPath = test_data/9dicots/9dicots_25.fasta
 #_countRange = 50
 #_minState = 30
 #_maxState = 100

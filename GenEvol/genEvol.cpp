@@ -35,7 +35,6 @@ using namespace std;
 void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoodProcess, ModelParameters* m,double tol, unsigned int maxNumOfIterations, bool mixed=false, unsigned curentIterNum=0);
 double getTreeScalingFactor(ModelParameters* m, PhyloTree* tree);
 int countUniqueStates(const Site site);
-// void optimizeMixtureModelParametersOneDimension(MixtureModelLikelihoodFunction* f, ModelParameters* m,double tol, unsigned int maxNumOfIterations, bool mixed=false, unsigned curentIterNum=0);
 
 int main(int args, char **argv) {
     // Set model data and parameters
@@ -105,7 +104,7 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
     std::map<string, std::pair<int, uint>> paramNameAndType; // parameter name, its type and number of model
 
     vector<string> parametersNames = likelihoodProcess->getSubstitutionModelParameters().getParameterNames();
-    LikelihoodUtils::updateMapsOfParamTypesAndNames(typeWithParamNames, &paramNameAndType, parametersNames, 0, "");
+    LikelihoodUtils::updateMapsOfParamTypesAndNames(typeWithParamNames, &paramNameAndType, parametersNames, "");
     ParameterList params = likelihoodProcess->getParameters();
     size_t nbParams = parametersNames.size();
 

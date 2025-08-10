@@ -52,12 +52,7 @@ void LikelihoodUtils::deleteLikelihoodProcess(SingleProcessPhyloLikelihood* lik)
     delete lik;
 }
 
-void LikelihoodUtils::updateMapsOfParamTypesAndNames(std::map<int, std::map<uint, std::vector<string>>> &typeWithParamNames, std::map<string, std::pair<int, uint>>* paramNameAndType, std::vector<std::string> namesAllParams, std::map<int, std::vector<std::pair<uint, int>>>* sharedParams, std::string suffix){
-    std::map<string, vector<std::pair<uint, int>>> sharedParamsNames;
-    if (sharedParams){
-        // LikelihoodUtils::createMapOfSharedParameterNames(*sharedParams, sharedParamsNames);
-        std::cout << "Hi" << std::endl; 
-    }
+void LikelihoodUtils::updateMapsOfParamTypesAndNames(std::map<int, std::map<uint, std::vector<string>>> &typeWithParamNames, std::map<string, std::pair<int, uint>>* paramNameAndType, std::vector<std::string> namesAllParams, std::string suffix){
     for (size_t i = 0; i < namesAllParams.size(); i++){
         string cleanParamName;
         if (suffix != ""){
@@ -73,19 +68,6 @@ void LikelihoodUtils::updateMapsOfParamTypesAndNames(std::map<int, std::map<uint
         if (paramNameAndType){
             (*paramNameAndType)[namesAllParams[i]] = std::pair<int, uint>(type, modelId);
         }
-        if (sharedParams){
-            if (sharedParamsNames.find(namesAllParams[i]) != sharedParamsNames.end()){
-                for (size_t k = 0; k < sharedParamsNames[namesAllParams[i]].size(); k++ ){
-                    uint model = sharedParamsNames[namesAllParams[i]][k].first;
-                    int typeOfSharedParam = sharedParamsNames[namesAllParams[i]][k].second;
-                    typeWithParamNames[typeOfSharedParam][model].push_back(namesAllParams[i]);
-
-                }
-
-            }
-
-        }
-
     }
 
 }

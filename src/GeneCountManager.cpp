@@ -23,7 +23,6 @@ void GeneCountManager::optimizeMixtureModelParametersOneDimension(double tol, un
     double prevLikelihood;
     int minDomain = m_->alphabet_->getMin();
     int maxDomain = m_->alphabet_->getMax();
-    size_t startCompositeParams = ChromosomeSubstitutionModel::getNumberOfNonCompositeParams();
     std::vector<int> rateChangeType = m_->mixtureRateChangeType_;
 
 
@@ -32,7 +31,7 @@ void GeneCountManager::optimizeMixtureModelParametersOneDimension(double tol, un
     std::map<string, std::pair<int, uint>> paramNameAndType; // parameter name, its type and number of model
 
     vector<string> parametersNames = f->getParameters().getParameterNames();
-    LikelihoodUtils::updateMapsOfParamTypesAndNames(typeWithParamNames, &paramNameAndType, parametersNames, 0, "");
+    LikelihoodUtils::updateMapsOfParamTypesAndNames(typeWithParamNames, &paramNameAndType, parametersNames, "");
     ParameterList params = f->getParameters();
     size_t nbParams = parametersNames.size();
 
@@ -53,14 +52,12 @@ void GeneCountManager::optimizeMixtureModelParametersOneDimension(double tol, un
             //     continue;
             // }
 
-            // param names corresponding to the parameter type
-            std::vector<string> paramsNames = typeWithParamNames[rateParamType][paramNameAndType[nameOfParam].second];
             Parameter param = params.getParameter(nameOfParam);
-            auto it = std::find(paramsNames.begin(), paramsNames.end(), nameOfParam);
-            if (it == paramsNames.end()){
+            auto it = std::find(parametersNames.begin(), parametersNames.end(), nameOfParam);
+            if (it == parametersNames.end()){
                 throw Exception("ChromosomeNumberOptimizer::optimizeModelParametersOneDimension(): index out of range!");
             }
-            size_t index = it - paramsNames.begin();
+            size_t index = it - parametersNames.begin();
             // Since we don't estimate the parameters directly from the data, but rather from the gamma distrbution,
             // the parameters value's don't depend on the current state, hence constant.
             ChromosomeNumberDependencyFunction::FunctionType funcType = ChromosomeNumberDependencyFunction::FunctionType::CONSTANT;
@@ -68,7 +65,7 @@ void GeneCountManager::optimizeMixtureModelParametersOneDimension(double tol, un
             functionOp = compositeParameter::setDependencyFunction(funcType);
 
             functionOp->setDomainsIfNeeded(minDomain, maxDomain);
-            functionOp->updateBounds(params, paramsNames, index, &lowerBound, &upperBound, maxDomain);
+            functionOp->updateBounds(params, parametersNames, index, &lowerBound, &upperBound, maxDomain);
             functionOp->updateBounds(f, nameOfParam, lowerBound, upperBound);
 
             delete functionOp;
