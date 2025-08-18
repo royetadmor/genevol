@@ -81,6 +81,7 @@ namespace bpp {
             }
             void setParameters(const ParameterList& parameters) { matchParametersValues(parameters); }
             double getParameterValueByName(string name) { return getParameterValue(name); }
+            int getParametersCount() { return getParameters().size(); }
             std::vector<SingleProcessPhyloLikelihood*> getLikelihoodProcesses() const;
 
     };

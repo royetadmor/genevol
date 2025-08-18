@@ -28,6 +28,7 @@ public:
     // Get final log likelihood
     double getLikelihood() const { return likelihoodFunction_->getValue(); }
     double getParameterValueByName(string name) const { return likelihoodFunction_->getParameterValueByName(name); }
+    double calculateAIC();
 
 private:
     ModelParameters* m_;

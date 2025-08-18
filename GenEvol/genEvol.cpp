@@ -62,7 +62,7 @@ int main(int args, char **argv) {
     std::cout << "MM Likelihood: " << geneCountManager->getLikelihood() << std::endl;
     geneCountManager->optimizeMixtureModelParametersOneDimension(0.1, 2);
     std::cout << geneCountManager->getLikelihood() << std::endl;
-    std::cout << geneCountManager->getParameterValueByName("alphaGain0_1") << std::endl;
+    std::cout << geneCountManager->calculateAIC() << std::endl;
 
     GenEvol.done();
     return 0;

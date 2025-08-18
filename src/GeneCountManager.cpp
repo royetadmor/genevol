@@ -85,3 +85,9 @@ void GeneCountManager::optimizeMixtureModelParametersOneDimension(double tol, un
     }
     delete optimizer;
 }
+
+double GeneCountManager::calculateAIC() {
+    auto numOfParams = likelihoodFunction_->getParametersCount();
+    double AIC = 2*(likelihoodFunction_->getValue()) + (2*numOfParams);
+    return AIC;
+}
