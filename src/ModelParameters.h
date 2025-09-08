@@ -54,11 +54,20 @@ public: // Variables
     };
 
     // Map of event type integer to event type string 
-    const std::map<int, std::string> eventTypeToString = {
+    const std::map<int, std::string> eventTypeToString = { //TODO: remove once we migrate to new sub model
         {ChromosomeSubstitutionModel::DUPL, "Dupl"},
         {ChromosomeSubstitutionModel::LOSS, "Loss"},
         {ChromosomeSubstitutionModel::GAIN, "Gain"}
     };
+
+    // Map of event type to rate 
+    const std::map<int, std::vector<double>> newParamMap_ = { //TODO: remove once we migrate to new sub model
+        {0, {2.5, 0.3}},
+        {1, {2.0}},
+        {2, {1.0}},
+        {3, {0.5}},
+    };
+    const std::vector<int> newRateChangeType_ = {1,0,0,0}; //TODO: remove after migration
     
 public:
     ModelParameters(BppApplication GenEvol);

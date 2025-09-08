@@ -10,6 +10,8 @@ set (CPP_FILES
   LikelihoodUtils.cpp
   MixtureModelLikelihoodFunction.cpp
   GeneCountManager.cpp
+  GeneCountDependencyFunction.cpp
+  GeneCountSubstitutionModel.cpp
   )
 
 IF(BUILD_STATIC)
