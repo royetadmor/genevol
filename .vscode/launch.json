@@ -9,7 +9,7 @@
             "type": "cppdbg",
             "request": "launch",
             "program": "/workspaces/genevol/GenEvol/genEvol",
-            // "args": ["param=/workspaces/chromevol/param_file.txt"],
+            "args": ["param=/workspaces/genevol/param_file.txt"],
             "stopAtEntry": false,
             "cwd": "/workspaces/genevol/",
             "environment": [],
