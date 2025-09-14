@@ -7,8 +7,9 @@
 
 
 #include "ModelParameters.h"
-#include "MixtureModelLikelihoodFunction.h" // for MixtureModelLikelihoodFunction
+#include "MixtureModelLikelihoodFunction.h" 
 #include "LikelihoodUtils.h"
+#include "GeneCountSubstitutionModel.h"
 
 namespace bpp {
 

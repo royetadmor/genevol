@@ -10,6 +10,10 @@
 #define lowerBoundOfRateParam 0.0
 #define upperBoundOfRateParam 100.0
 #define upperBoundLinearRateParam 5.0
+#define lowerBoundOfExpParam -3.0
+#define upperBoundExpParam 4.6
+#define revSigmoidExpRateParam 2
+#define logNormalDomainFactor 4
 
 
 using namespace std;
@@ -82,6 +86,116 @@ namespace bpp
         double getParsimonyBound(std::vector<double> params, double parsimonyBound, size_t index, int minChrNum, int maxChrNum);
 
     };
+
+    class NLinearBDDependencyFunction:
+        public virtual GeneCountDependencyFunction
+    {
+    public:
+        NLinearBDDependencyFunction():GeneCountDependencyFunction(){}
+        virtual ~NLinearBDDependencyFunction(){}
+
+        FunctionType getName() const{return FunctionType::LINEAR_BD;}
+        double getRate(std::vector<Parameter*> params, size_t state) const;
+        size_t getNumOfParameters() const{return 1;}
+
+    };
+    
+    class NExponentailDependencyFunction:
+        public virtual GeneCountDependencyFunction
+    {
+    public:
+        NExponentailDependencyFunction():GeneCountDependencyFunction(){}
+        virtual ~NExponentailDependencyFunction(){}
+
+        FunctionType getName() const {return FunctionType::EXP;}
+        double getRate(std::vector<Parameter*> params, size_t state) const;
+        size_t getNumOfParameters() const{return 2;}
+        void getBoundsForInitialParams(size_t index, vector<double> paramValues, double* lowerBound, double* upperBound, int maxChrNumber);
+        void getAbsoluteBounds(size_t index, double* lowerBound, double* upperBound, int maxChrNumber);
+
+    };
+
+    class NPolynomialDependencyFunction:
+        public virtual GeneCountDependencyFunction
+    {
+    public:
+        NPolynomialDependencyFunction():GeneCountDependencyFunction(){}
+        virtual ~NPolynomialDependencyFunction(){}
+
+        FunctionType getName() const{return FunctionType::POLYNOMIAL;}
+        double getRate(std::vector<Parameter*> params, size_t state) const;
+        size_t getNumOfParameters() const{return 3;}
+        void setDomainsIfNeeded(int minChrNum, int maxChrNum)
+        {
+            domainMin_ = minChrNum;
+            domainMax_ = maxChrNum;
+        }
+        void getBoundsForInitialParams(size_t index, vector<double> paramValues, double* lowerBound, double* upperBound, int maxChrNumber);
+        void getAbsoluteBounds(size_t index, double* lowerBound, double* upperBound, int maxChrNumber);
+
+    };
+
+    class NLognormalDependencyFunction:
+        public virtual GeneCountDependencyFunction
+    {
+    public:
+        NLognormalDependencyFunction():GeneCountDependencyFunction(){}
+        virtual ~NLognormalDependencyFunction(){}
+
+        FunctionType getName() const {return FunctionType::LOGNORMAL;}
+        void setDomainsIfNeeded(int minChrNum, int maxChrNum)
+        {
+            domainMin_ = minChrNum;
+            domainMax_ = maxChrNum;
+        }
+
+        double getRate(std::vector<Parameter*> params, size_t state) const;
+        size_t getNumOfParameters() const{return 3;}
+        void getBoundsForInitialParams(size_t index, vector<double> paramValues, double* lowerBound, double* upperBound, int maxChrNumber);
+        void getAbsoluteBounds(size_t index, double* lowerBound, double* upperBound, int maxChrNumber);
+
+    };
+
+    class NRevSigmoidDependencyFunction:
+        public virtual GeneCountDependencyFunction
+    {
+    public:
+        NRevSigmoidDependencyFunction():GeneCountDependencyFunction(){}
+        virtual ~NRevSigmoidDependencyFunction(){}
+
+        FunctionType getName() const {return FunctionType::REVERSE_SIGMOID;}
+        double getRate(std::vector<Parameter*> params, size_t state) const;
+        size_t getNumOfParameters() const{return 3;}
+        void getBoundsForInitialParams(size_t index, vector<double> paramValues, double* lowerBound, double* upperBound, int maxChrNumber);
+        void getAbsoluteBounds(size_t index, double* lowerBound, double* upperBound, int maxChrNumber);
+        void setDomainsIfNeeded(int minChrNum, int maxChrNum) {
+            domainMin_ = minChrNum;
+            domainMax_ = maxChrNum;
+        }
+
+    };
+
+    class NLogitnormalDependencyFunction:
+        public virtual GeneCountDependencyFunction
+    {
+    public:
+        NLogitnormalDependencyFunction():GeneCountDependencyFunction(){}
+        virtual ~NLogitnormalDependencyFunction(){}
+
+        FunctionType getName() const {return FunctionType::LOGITNORMAL;}
+        void setDomainsIfNeeded(int minChrNum, int maxChrNum)
+        {
+            domainMin_ = minChrNum;
+            domainMax_ = maxChrNum;
+        }
+
+        double getRate(std::vector<Parameter*> params, size_t state) const;
+        size_t getNumOfParameters() const{return 3;}
+        void getBoundsForInitialParams(size_t index, vector<double> paramValues, double* lowerBound, double* upperBound, int maxChrNumber);
+        void getAbsoluteBounds(size_t index, double* lowerBound, double* upperBound, int maxChrNumber);
+
+    };
+
 }
 
 

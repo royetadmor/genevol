@@ -46,18 +46,18 @@ GeneCountDependencyFunction* NcompositeParameter::getDependencyFunction(GeneCoun
     return new NConstantDependencyFunction();
   case GeneCountDependencyFunction::LINEAR:
     return new NLinearDependencyFunction();
-  // case ChromosomeNumberDependencyFunction::EXP:
-  //   return new ExponentailDependencyFunction();
-  // case ChromosomeNumberDependencyFunction::LINEAR_BD:
-  //   return new LinearBDDependencyFunction();
-  // case ChromosomeNumberDependencyFunction::LOGNORMAL:
-  //   return new LognormalDependencyFunction();
-  // case ChromosomeNumberDependencyFunction::POLYNOMIAL:
-  //   return new PolynomialDependencyFunction();
-  // case ChromosomeNumberDependencyFunction::REVERSE_SIGMOID:
-  //   return new RevSigmoidDependencyFunction();
-  // case ChromosomeNumberDependencyFunction::LOGITNORMAL:
-  //   return new LogitnormalDependencyFunction();
+  case GeneCountDependencyFunction::EXP:
+    return new NExponentailDependencyFunction();
+  case GeneCountDependencyFunction::LINEAR_BD:
+    return new NLinearBDDependencyFunction();
+  case GeneCountDependencyFunction::LOGNORMAL:
+    return new NLognormalDependencyFunction();
+  case GeneCountDependencyFunction::POLYNOMIAL:
+    return new NPolynomialDependencyFunction();
+  case GeneCountDependencyFunction::REVERSE_SIGMOID:
+    return new NRevSigmoidDependencyFunction();
+  case GeneCountDependencyFunction::LOGITNORMAL:
+    return new NLogitnormalDependencyFunction();
   default:
     throw Exception("compositeParameter::getDependencyFunction(): No such function!!");
   }

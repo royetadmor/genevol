@@ -60,9 +60,9 @@ void GeneCountManager::optimizeMixtureModelParametersOneDimension(double tol, un
             size_t index = it - parametersNames.begin();
             // Since we don't estimate the parameters directly from the data, but rather from the gamma distrbution,
             // the parameters value's don't depend on the current state, hence constant.
-            ChromosomeNumberDependencyFunction::FunctionType funcType = ChromosomeNumberDependencyFunction::FunctionType::CONSTANT;
-            ChromosomeNumberDependencyFunction* functionOp;
-            functionOp = compositeParameter::setDependencyFunction(funcType);
+            GeneCountDependencyFunction::FunctionType funcType = GeneCountDependencyFunction::FunctionType::CONSTANT;
+            GeneCountDependencyFunction* functionOp;
+            functionOp = NcompositeParameter::getDependencyFunction(funcType);
 
             functionOp->setDomainsIfNeeded(minDomain, maxDomain);
             functionOp->updateBounds(params, parametersNames, index, &lowerBound, &upperBound, maxDomain);
