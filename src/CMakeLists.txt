@@ -5,7 +5,6 @@
 
 # File list
 set (CPP_FILES
-  ChromosomeSubstitutionModel.cpp
   ModelParameters.cpp
   LikelihoodUtils.cpp
   MixtureModelLikelihoodFunction.cpp

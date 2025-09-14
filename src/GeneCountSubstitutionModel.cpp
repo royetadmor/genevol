@@ -101,7 +101,7 @@ std::vector<Parameter*> GeneCountSubstitutionModel::createRateParameter(GeneCoun
   for (size_t i = 0; i < vectorOfValues.size(); i++){
     auto paramValue = vectorOfValues[i];
     if (paramValue == IgnoreParam){
-      throw Exception("ChromosomeSubstitutionModel::createCompositeParameter(): Function is not supposed to be defined as a legal function name if the parameter should be ignored!");
+      throw Exception("GeneCountSubstitutionModel::createRateParameter(): Function is not supposed to be defined as a legal function name if the parameter should be ignored!");
     }
     double lowerBound;
     double upperBound;

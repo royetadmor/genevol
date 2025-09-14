@@ -28,7 +28,7 @@ namespace bpp
   class NcompositeParameter{ //TODO: change naming after migration
 
   private:
-    // a vector of ChromosomeSubstitutionModel parameters that correspond to a given parameter type
+    // a vector of GeneCountSubstitutionModel parameters that correspond to a given parameter type
     std::vector<Parameter*> params_; 
 
     // A function which is used to calculate the bounds and the rate of the composite parameter
@@ -53,7 +53,7 @@ namespace bpp
     // get the number of parameters
     const size_t getSize() const {return params_.size();}
 
-    // Returns the value of the overall independent/dependent rate on the number of chromosomes (for any function)
+    // Returns the value of the overall independent/dependent rate on the number of gene counnt (for any function)
     double getRate(size_t state) const {return func_->getRate(params_, state);};
 
     // Converts a FunctionType enum variable to GeneCountDependencyFunction* object
