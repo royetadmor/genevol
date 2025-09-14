@@ -100,7 +100,9 @@ namespace bpp
     double firstNormQ_;
     mutable bool pijtCalledFromDeriv_;
     rootFreqType freqType_;
-    static const std::map<int, std::string> newEventTypeToString;
+
+  public:
+    static const std::map<int, std::string> eventTypeToString;
 
 
   public:

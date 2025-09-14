@@ -100,20 +100,28 @@ void ModelParameters::setBaseModelParameters(BppApplication GenEvol) {
     ModelParameters::paramMap_ = {
         {1, ApplicationTools::getVectorParameter<double>("_baseNumR", GenEvol.getParams(), ',', "-999", "", true, -1)},
         {2, ApplicationTools::getVectorParameter<double>("_dupl", GenEvol.getParams(), ',', "1", "", true, -1)},
-        {3, ApplicationTools::getVectorParameter<double>("_loss", GenEvol.getParams(), ',', "1,0.1", "", true, -1)},
-        {4, ApplicationTools::getVectorParameter<double>("_gain", GenEvol.getParams(), ',', "1,0.1", "", true, -1)},
+        {3, ApplicationTools::getVectorParameter<double>("_loss", GenEvol.getParams(), ',', "1", "", true, -1)},
+        {4, ApplicationTools::getVectorParameter<double>("_gain", GenEvol.getParams(), ',', "1", "", true, -1)},
         {5, ApplicationTools::getVectorParameter<double>("_demi", GenEvol.getParams(), ',', "-999", "", true, -1)}
+    };
+    ModelParameters::newParamMap_ = {
+        {0, ApplicationTools::getVectorParameter<double>("_loss", GenEvol.getParams(), ',', "1", "", true, -1)},
+        {1, ApplicationTools::getVectorParameter<double>("_gain", GenEvol.getParams(), ',', "1", "", true, -1)},
+        {2, ApplicationTools::getVectorParameter<double>("_innovation", GenEvol.getParams(), ',', "1", "", true, -1)},
+        {3, ApplicationTools::getVectorParameter<double>("_elimination", GenEvol.getParams(), ',', "1", "", true, -1)}
     };
 }
 
 void ModelParameters::setRateFunctionTypes(BppApplication GenEvol) {
-    const int gainFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_gainFunc", GenEvol.getParams(), "LINEAR", "", true, -1));
-    const int lossFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_lossFunc", GenEvol.getParams(), "LINEAR", "", true, -1));
+    const int gainFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_gainFunc", GenEvol.getParams(), "CONST", "", true, -1));
+    const int lossFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_lossFunc", GenEvol.getParams(), "CONST", "", true, -1));
     const int duplFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_duplFunc", GenEvol.getParams(), "CONST", "", true, -1));
     const int demiDuplFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_demiDuplFunc", GenEvol.getParams(), "IGNORE", "", true, -1));
     const int baseNumRFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_baseNumRFunc", GenEvol.getParams(), "IGNORE", "", true, -1));
-    const int mixtureGainFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_mixtureGainFunc", GenEvol.getParams(), "LINEAR", "", true, -1));
-    const int mixtureLossFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_mixtureLossFunc", GenEvol.getParams(), "LINEAR", "", true, -1));
+    const int mixtureGainFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_mixtureGainFunc", GenEvol.getParams(), "CONST", "", true, -1));
+    const int mixtureLossFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_mixtureLossFunc", GenEvol.getParams(), "CONST", "", true, -1));
+    const int innovationFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_innovationFunc", GenEvol.getParams(), "CONST", "", true, -1));
+    const int eliminationFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_eliminationFunc", GenEvol.getParams(), "CONST", "", true, -1));
     ModelParameters::rateChangeType_.push_back(baseNumRFunc);
     ModelParameters::rateChangeType_.push_back(duplFunc);
     ModelParameters::rateChangeType_.push_back(lossFunc);
@@ -124,6 +132,11 @@ void ModelParameters::setRateFunctionTypes(BppApplication GenEvol) {
     ModelParameters::mixtureRateChangeType_.push_back(mixtureGainFunc);
     ModelParameters::mixtureRateChangeType_.push_back(0);
     ModelParameters::mixtureRateChangeType_.push_back(0);
+    //TODO: Rename after migration
+    ModelParameters::newRateChangeType_.push_back(lossFunc);
+    ModelParameters::newRateChangeType_.push_back(gainFunc);
+    ModelParameters::newRateChangeType_.push_back(innovationFunc);
+    ModelParameters::newRateChangeType_.push_back(eliminationFunc);
 }
 
 void ModelParameters::validateRateFunctionParameters() {

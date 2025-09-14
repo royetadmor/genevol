@@ -61,7 +61,7 @@ void LikelihoodUtils::updateMapsOfParamTypesAndNames(std::map<int, std::map<uint
             cleanParamName = namesAllParams[i];
         }
         uint modelId = getModelFromParamName(cleanParamName);
-        int type = getTypeOfParamFromParamName(cleanParamName); // TODO: fix type for all models
+        int type = getTypeOfParamFromParamName(cleanParamName);
         //should get the type
         
         typeWithParamNames[type][modelId].push_back(namesAllParams[i]);

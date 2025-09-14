@@ -15,6 +15,7 @@
 #include "LikelihoodUtils.h"
 #include "ModelParameters.h"
 #include "GeneCountDependencyFunction.h"
+#include "GeneCountSubstitutionModel.h"
 
 using namespace std;
 
@@ -48,9 +49,8 @@ namespace bpp {
                     int requiredParams = it->second;
                     for (int j = 1; j < requiredParams; j++)
                     {
-                        int eventIndex = i+1;
-                        string paramName = "rate" + m_->eventTypeToString.at(eventIndex) + std::to_string(j) + "_1";
-                        rateParams[eventIndex].push_back(paramName);
+                        string paramName = "rate_" + GeneCountSubstitutionModel::eventTypeToString.at(i) + std::to_string(j) + "_1";
+                        rateParams[i].push_back(paramName);
                         addParameter_(new Parameter(paramName, 1, make_shared<IntervalConstraint>(0.5, 5, false, true))); //TODO: fix hardcoded interval
                     }
                     

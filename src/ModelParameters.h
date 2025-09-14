@@ -36,8 +36,10 @@ public: // Variables
     IntegerAlphabet* alphabet_;
     VectorSiteContainer* container_;
     std::map<int, std::vector<double>> paramMap_;
+    std::map<int, std::vector<double>> newParamMap_;
     std::vector<int> rateChangeType_;
     std::vector<int> mixtureRateChangeType_;
+    std::vector<int> newRateChangeType_;
 
     // Translates rate functions from string to int
     const std::map<std::string, int> func_string_to_enum = {
@@ -52,22 +54,6 @@ public: // Variables
         {ChromosomeNumberDependencyFunction::FunctionType::LINEAR, 2},
         {ChromosomeNumberDependencyFunction::FunctionType::IGNORE, 1}
     };
-
-    // Map of event type integer to event type string 
-    const std::map<int, std::string> eventTypeToString = { //TODO: remove once we migrate to new sub model
-        {ChromosomeSubstitutionModel::DUPL, "Dupl"},
-        {ChromosomeSubstitutionModel::LOSS, "Loss"},
-        {ChromosomeSubstitutionModel::GAIN, "Gain"}
-    };
-
-    // Map of event type to rate 
-    const std::map<int, std::vector<double>> newParamMap_ = { //TODO: remove once we migrate to new sub model
-        {0, {2.5}},
-        {1, {2.0}},
-        {2, {1.0}},
-        {3, {0.5}},
-    };
-    const std::vector<int> newRateChangeType_ = {0,0,0,0}; //TODO: remove after migration
     
 public:
     ModelParameters(BppApplication GenEvol);

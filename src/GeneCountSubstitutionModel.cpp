@@ -5,7 +5,7 @@
 using namespace bpp;
 using namespace std;
 
-const std::map<int, std::string> GeneCountSubstitutionModel::newEventTypeToString = {
+const std::map<int, std::string> GeneCountSubstitutionModel::eventTypeToString = {
   {GeneCountSubstitutionModel::paramType::LOSS, "loss"},
   {GeneCountSubstitutionModel::paramType::GAIN, "gain"},
   {GeneCountSubstitutionModel::paramType::INNOVATION, "innovation"},
@@ -67,8 +67,8 @@ void GeneCountSubstitutionModel::updateParameters(std::map<int, vector<double>> 
   for ( int i = 0; i < NUM_MODEL_PARAMETERS; i++ )
   {
     auto funcType = static_cast<GeneCountDependencyFunction::FunctionType>(rateChangeType[i]);
-    auto paramName = newEventTypeToString.at(i);//TODO: same
-    auto rateVector = mapOfParamValues.at(i);//TODO: change this to use the actual values
+    auto paramName = eventTypeToString.at(i);
+    auto rateVector = mapOfParamValues.at(i);
     auto rParam = createRateParameter(funcType, paramName, rateVector);
     if (!rParam.empty()) {
       switch (i)
@@ -535,7 +535,7 @@ void GeneCountSubstitutionModel::updateEigenMatrices()
 }
 
 int GeneCountSubstitutionModel::getParamIndexByName(string name) {
-  for (const auto& kv : newEventTypeToString)
+  for (const auto& kv : eventTypeToString)
   {
       if (name.find(kv.second) != std::string::npos)
             return kv.first;
