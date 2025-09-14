@@ -13,7 +13,7 @@
 #include <Bpp/Seq/Alphabet/IntegerAlphabet.h>
 #include <Bpp/Seq/Container/VectorSiteContainer.h>
 
-#include "ChromosomeSubstitutionModel.h"
+#include "GeneCountDependencyFunction.h"
 
 using namespace std;
 using namespace bpp;
@@ -43,16 +43,16 @@ public: // Variables
 
     // Translates rate functions from string to int
     const std::map<std::string, int> func_string_to_enum = {
-        {"CONST", ChromosomeNumberDependencyFunction::FunctionType::CONSTANT},
-        {"LINEAR", ChromosomeNumberDependencyFunction::FunctionType::LINEAR},
-        {"IGNORE", ChromosomeNumberDependencyFunction::FunctionType::IGNORE} // Can add more according to enum at ChromosomeSubModel.h
+        {"CONST", GeneCountDependencyFunction::FunctionType::CONSTANT},
+        {"LINEAR", GeneCountDependencyFunction::FunctionType::LINEAR},
+        {"IGNORE", GeneCountDependencyFunction::FunctionType::IGNORE} // Can add more according to enum at GeneCountSubModel.h
     };
 
     // Expected number of parameters for each rate function
     const std::map<int, int> expectedNumOfParams = {
-        {ChromosomeNumberDependencyFunction::FunctionType::CONSTANT, 1},
-        {ChromosomeNumberDependencyFunction::FunctionType::LINEAR, 2},
-        {ChromosomeNumberDependencyFunction::FunctionType::IGNORE, 1}
+        {GeneCountDependencyFunction::FunctionType::CONSTANT, 1},
+        {GeneCountDependencyFunction::FunctionType::LINEAR, 2},
+        {GeneCountDependencyFunction::FunctionType::IGNORE, 1}
     };
     
 public:
