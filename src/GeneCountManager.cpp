@@ -27,9 +27,11 @@ void GeneCountManager::optimizeMixtureModelParametersOneDimension(double tol, un
 
 
     // setting maps of parameter type and the corresponding parameters, and vice versa
+    std::map<int, std::map<uint, std::vector<string>>> typeWithParamNames;//parameter type, num of model, related parameters
     std::map<string, std::pair<int, uint>> paramNameAndType; // parameter name, its type and number of model
 
     vector<string> parametersNames = f->getParameters().getParameterNames();
+    LikelihoodUtils::updateMapsOfParamTypesAndNames(typeWithParamNames, &paramNameAndType, parametersNames, "");
     ParameterList params = f->getParameters();
     size_t nbParams = parametersNames.size();
 
@@ -42,16 +44,20 @@ void GeneCountManager::optimizeMixtureModelParametersOneDimension(double tol, un
         {
             double lowerBound, upperBound;            
             const string nameOfParam = parametersNames[j];
+            int rateParamType = paramNameAndType[nameOfParam].first;
             std::cout << "Previous value of "+ nameOfParam + " is: "+ std::to_string(params.getParameter(nameOfParam).getValue()) << std::endl;
 
             // This checks if there's a param we don't need to optimize (==fixed param)
             // if (std::count((*fixedParams)[paramNameAndType[nameOfParam].second].begin(), (*fixedParams)[paramNameAndType[nameOfParam].second].end(), rateParamType)){
             //     continue;
             // }
-            std::vector<string> paramsNames = LikelihoodUtils::filterParamsByName(parametersNames, nameOfParam);
-            // Parameter param = params.getParameter(nameOfParam);
 
-            size_t index = LikelihoodUtils::getParamIndex(nameOfParam);
+            Parameter param = params.getParameter(nameOfParam);
+            auto it = std::find(parametersNames.begin(), parametersNames.end(), nameOfParam);
+            if (it == parametersNames.end()){
+                throw Exception("ChromosomeNumberOptimizer::optimizeModelParametersOneDimension(): index out of range!");
+            }
+            size_t index = it - parametersNames.begin();
             // Since we don't estimate the parameters directly from the data, but rather from the gamma distrbution,
             // the parameters value's don't depend on the current state, hence constant.
             GeneCountDependencyFunction::FunctionType funcType = GeneCountDependencyFunction::FunctionType::CONSTANT;
@@ -59,16 +65,16 @@ void GeneCountManager::optimizeMixtureModelParametersOneDimension(double tol, un
             functionOp = NcompositeParameter::getDependencyFunction(funcType);
 
             functionOp->setDomainsIfNeeded(minDomain, maxDomain);
-            functionOp->updateBounds(params, paramsNames, index, &lowerBound, &upperBound, maxDomain);
+            functionOp->updateBounds(params, parametersNames, index, &lowerBound, &upperBound, maxDomain);
             functionOp->updateBounds(f, nameOfParam, lowerBound, upperBound);
 
             delete functionOp;
             std::cout << "Parameter name is: " + nameOfParam << std::endl;
             optimizer->setInitialInterval(lowerBound, upperBound);            
-            optimizer->init(params.createSubList(nameOfParam));
+            optimizer->init(params.createSubList(param.getName()));
             currentLikelihood = optimizer->optimize();
             std::cout << "\nCurrent likelihood: " + std::to_string(currentLikelihood) << std::endl;
-            std::cout << nameOfParam + " parameter value after optimization "+ std::to_string(f->getParameters().getParameter(nameOfParam).getValue()) << std::endl;
+            std::cout << nameOfParam + " parameter value after optimization "+ std::to_string(f->getParameters().getParameter(param.getName()).getValue()) << std::endl;
         }
 
         if (std::abs(prevLikelihood-currentLikelihood) < tol){
