@@ -105,7 +105,7 @@ namespace bpp
 
   public:
     // Constructor
-    GeneCountSubstitutionModel(const IntegerAlphabet* alpha, std::map<int, vector<double>> mapOfParamValues, rootFreqType freqType, ModelParameters* m);
+    GeneCountSubstitutionModel(const IntegerAlphabet* alpha, std::map<int, vector<double>> mapOfParamValues, rootFreqType freqType, std::vector<int> rateChangeType, ModelParameters* m);
     virtual ~GeneCountSubstitutionModel() {
       if (gain_ != 0){
         delete gain_;

@@ -62,12 +62,12 @@ public: // Variables
 
     // Map of event type to rate 
     const std::map<int, std::vector<double>> newParamMap_ = { //TODO: remove once we migrate to new sub model
-        {0, {2.5, 0.3}},
+        {0, {2.5}},
         {1, {2.0}},
         {2, {1.0}},
         {3, {0.5}},
     };
-    const std::vector<int> newRateChangeType_ = {1,0,0,0}; //TODO: remove after migration
+    const std::vector<int> newRateChangeType_ = {0,0,0,0}; //TODO: remove after migration
     
 public:
     ModelParameters(BppApplication GenEvol);

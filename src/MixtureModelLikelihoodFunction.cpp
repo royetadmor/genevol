@@ -42,14 +42,11 @@ std::vector<SingleProcessPhyloLikelihood*> MixtureModelLikelihoodFunction::getLi
     const auto betaGain = getParameterValue("betaGain0_1");
     const auto alphaLoss = getParameterValue("alphaLoss0_1");
     const auto betaLoss = getParameterValue("betaLoss0_1");
-    const auto& lossRateParams = getRateParametersByEvent(ChromosomeSubstitutionModel::LOSS);
-    const auto& gainRateParams = getRateParametersByEvent(ChromosomeSubstitutionModel::GAIN);
+    const auto& lossRateParams = getRateParametersByEvent(GeneCountSubstitutionModel::LOSS);
+    const auto& gainRateParams = getRateParametersByEvent(GeneCountSubstitutionModel::GAIN);
 
     // Generate gain/loss values per category
     const auto mmValues = generateMMValues(categories_, alphaGain, betaGain, alphaLoss, betaLoss);
-
-    // Pre-define constants to avoid repeated construction
-    const std::vector<double> emptyVec = {-999}; // For irrelevant events
 
     for (double gainValue : mmValues.at("gain")) {
         for (double lossValue : mmValues.at("loss")) {
@@ -59,15 +56,14 @@ std::vector<SingleProcessPhyloLikelihood*> MixtureModelLikelihoodFunction::getLi
             gainValues.insert(gainValues.end(), gainRateParams.begin(), gainRateParams.end());
 
             std::map<int, std::vector<double>> MMparamMap = {
-                {1, emptyVec},     // BaseNumR
-                {2, emptyVec},       // Duplication
-                {3, lossValues},     // Loss
-                {4, gainValues},     // Gain
-                {5, emptyVec}        // Demi
+                {GeneCountSubstitutionModel::LOSS, lossValues},
+                {GeneCountSubstitutionModel::GAIN, gainValues},
+                {GeneCountSubstitutionModel::INNOVATION, {1.0}}, // TODO: hardcoded
+                {GeneCountSubstitutionModel::ELIMINATION, {1.0}}, // TODO: hardcoded
             };
 
             likelihoodProcesses.push_back(
-                LikelihoodUtils::createLikelihoodProcess(m_, tree_, MMparamMap, m_->mixtureRateChangeType_)
+                LikelihoodUtils::createMyLikelihoodProcess(m_, tree_, MMparamMap, m_->mixtureRateChangeType_)
             );
         }
     }

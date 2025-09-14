@@ -120,11 +120,10 @@ void ModelParameters::setRateFunctionTypes(BppApplication GenEvol) {
     ModelParameters::rateChangeType_.push_back(gainFunc);
     ModelParameters::rateChangeType_.push_back(demiDuplFunc);
     //TODO: temporary hack until we have a gene sub. model
-    ModelParameters::mixtureRateChangeType_.push_back(8);
-    ModelParameters::mixtureRateChangeType_.push_back(8);
     ModelParameters::mixtureRateChangeType_.push_back(mixtureLossFunc);
     ModelParameters::mixtureRateChangeType_.push_back(mixtureGainFunc);
-    ModelParameters::mixtureRateChangeType_.push_back(8);
+    ModelParameters::mixtureRateChangeType_.push_back(0);
+    ModelParameters::mixtureRateChangeType_.push_back(0);
 }
 
 void ModelParameters::validateRateFunctionParameters() {

@@ -16,6 +16,7 @@ const std::map<int, std::string> GeneCountSubstitutionModel::newEventTypeToStrin
 GeneCountSubstitutionModel::GeneCountSubstitutionModel(const IntegerAlphabet* alpha,
   std::map<int, vector<double>> mapOfParamValues,
   rootFreqType freqType,
+  std::vector<int> rateChangeType,
   ModelParameters* m):
     AbstractParameterAliasable("GeneCount."),
     AbstractSubstitutionModel(alpha, std::shared_ptr<const StateMap>(new CanonicalStateMap(alpha, false)), "GeneCount."),
@@ -27,7 +28,6 @@ GeneCountSubstitutionModel::GeneCountSubstitutionModel(const IntegerAlphabet* al
     pijtCalledFromDeriv_(false)
 {
   // Set class params
-  auto rateChangeType = m->newRateChangeType_;
   minState_ = m->minState_;
   maxState_ = m->maxState_;
   countRange_ = m->countRange_;

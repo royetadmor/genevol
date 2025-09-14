@@ -12,9 +12,9 @@
 
 
 // Local modules
-#include "ChromosomeSubstitutionModel.h"
 #include "LikelihoodUtils.h"
 #include "ModelParameters.h"
+#include "GeneCountDependencyFunction.h"
 
 using namespace std;
 
@@ -37,7 +37,7 @@ namespace bpp {
                 auto rateChangeType = m_->mixtureRateChangeType_;
                 for (int i = 0; i < rateChangeType.size(); i++)
                 {
-                    if (rateChangeType[i] == ChromosomeNumberDependencyFunction::IGNORE){
+                    if (rateChangeType[i] == GeneCountDependencyFunction::IGNORE){
                         continue;
                     }
                     int funcType = rateChangeType[i];
