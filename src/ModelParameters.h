@@ -36,10 +36,8 @@ public: // Variables
     IntegerAlphabet* alphabet_;
     VectorSiteContainer* container_;
     std::map<int, std::vector<double>> paramMap_;
-    std::map<int, std::vector<double>> newParamMap_;
-    std::vector<int> rateChangeType_;
     std::vector<int> mixtureRateChangeType_;
-    std::vector<int> newRateChangeType_;
+    std::vector<int> rateChangeType_;
 
     // Translates rate functions from string to int
     const std::map<std::string, int> func_string_to_enum = {

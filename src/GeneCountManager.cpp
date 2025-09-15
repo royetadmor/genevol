@@ -50,7 +50,7 @@ void GeneCountManager::optimizeMixtureModelParametersOneDimension(double tol, un
             // }
             std::vector<string> paramsNames = LikelihoodUtils::filterParamsByName(parametersNames, nameOfParam);
             size_t index = LikelihoodUtils::getParamIndex(nameOfParam);
-            
+
             // TODO: this is a hack you should fix. The problem it currently fix is:
             // - I assume every parameter is constant (which is false because I support dependency funcs in MM)
             // - So I check when the index is 1 and set it manually to linear - PROBLEM! need to get the dep. function somehow
@@ -65,7 +65,7 @@ void GeneCountManager::optimizeMixtureModelParametersOneDimension(double tol, un
                 paramsNames.insert(paramsNames.begin(), "alphaLoss0_1");
             }
             GeneCountDependencyFunction* functionOp;
-            functionOp = NcompositeParameter::getDependencyFunction(funcType);
+            functionOp = compositeParameter::getDependencyFunction(funcType);
 
             functionOp->setDomainsIfNeeded(minDomain, maxDomain);
             functionOp->updateBounds(params, paramsNames, index, &lowerBound, &upperBound, maxDomain);

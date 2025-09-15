@@ -8,14 +8,14 @@ using namespace bpp;
 /************************/
 /*******CONSTANT*********/
 /************************/
-double NConstantDependencyFunction::getRate(std::vector<Parameter*> params, size_t state) const{
+double ConstantDependencyFunction::getRate(std::vector<Parameter*> params, size_t state) const{
   return params[0]->getValue();
 }
 
 /************************/
 /********LINEAR**********/
 /************************/
-double NLinearDependencyFunction::getRate(std::vector<Parameter*> params, size_t state) const{
+double LinearDependencyFunction::getRate(std::vector<Parameter*> params, size_t state) const{
   double func_res = params[0]->getValue() + ((double)(state-1)*params[1]->getValue());
   if (func_res < 0){
     return 0;
@@ -24,7 +24,7 @@ double NLinearDependencyFunction::getRate(std::vector<Parameter*> params, size_t
 
 }
 
-void NLinearDependencyFunction::updateBounds(ParameterList& params, std::vector<string> paramsNames, size_t index, double* lowerBound, double* upperBound, int maxChrNum){
+void LinearDependencyFunction::updateBounds(ParameterList& params, std::vector<string> paramsNames, size_t index, double* lowerBound, double* upperBound, int maxChrNum){
   if (index == 0){
     *lowerBound = std::max(lowerBoundOfRateParam, -params.getParameter(paramsNames[1]).getValue()*(maxChrNum-1));
     *upperBound = upperBoundOfRateParam;
@@ -40,13 +40,13 @@ void NLinearDependencyFunction::updateBounds(ParameterList& params, std::vector<
   interval->setLowerBound(*lowerBound, interval->strictLowerBound());
 }
 
-void NLinearDependencyFunction::updateBounds(Function* f, const std::string &paramName, double &lowerBound, double &upperBound){
+void LinearDependencyFunction::updateBounds(Function* f, const std::string &paramName, double &lowerBound, double &upperBound){
   std::shared_ptr<IntervalConstraint> interval = dynamic_pointer_cast<IntervalConstraint>((&(f->getParameter(paramName)))->getConstraint());
   interval->setLowerBound(lowerBound, interval->strictLowerBound());
 
 }
 
-void NLinearDependencyFunction::getBoundsForInitialParams(size_t index, vector<double> paramValues, double* lowerBound, double* upperBound, int maxChrNumber){
+void LinearDependencyFunction::getBoundsForInitialParams(size_t index, vector<double> paramValues, double* lowerBound, double* upperBound, int maxChrNumber){
   if (index == 0){
     *lowerBound = lowerBoundOfRateParam;
     *upperBound = upperBoundOfRateParam;
@@ -60,7 +60,7 @@ void NLinearDependencyFunction::getBoundsForInitialParams(size_t index, vector<d
   }
 }
 
-void NLinearDependencyFunction::getAbsoluteBounds(size_t index, double* lowerBound, double* upperBound, int maxChrNumber){
+void LinearDependencyFunction::getAbsoluteBounds(size_t index, double* lowerBound, double* upperBound, int maxChrNumber){
   if (index == 0){
     *lowerBound = -upperBoundLinearRateParam*(maxChrNumber - 1);
     *upperBound = upperBoundOfRateParam;
@@ -75,23 +75,23 @@ void NLinearDependencyFunction::getAbsoluteBounds(size_t index, double* lowerBou
 /************************/
 /*******LINEARBDD********/
 /************************/
-double NLinearBDDependencyFunction::getRate(std::vector<Parameter*> params, size_t state) const{
+double LinearBDDependencyFunction::getRate(std::vector<Parameter*> params, size_t state) const{
   return params[0]->getValue() * (double)state;
 }
 
 /************************/
 /*******EXPONENTIAL******/
 /************************/
-double NExponentailDependencyFunction::getRate(std::vector<Parameter*> params, size_t state) const{
+double ExponentailDependencyFunction::getRate(std::vector<Parameter*> params, size_t state) const{
   return params[0]->getValue() * std::exp((double)(state-1)*params[1]->getValue());
 }
 
-void NExponentailDependencyFunction::getBoundsForInitialParams(size_t index, vector<double> paramValues, double* lowerBound, double* upperBound, int maxChrNumber){
+void ExponentailDependencyFunction::getBoundsForInitialParams(size_t index, vector<double> paramValues, double* lowerBound, double* upperBound, int maxChrNumber){
   getAbsoluteBounds(index, lowerBound, upperBound, maxChrNumber);
 
 }
 
-void NExponentailDependencyFunction::getAbsoluteBounds(size_t index, double* lowerBound, double* upperBound, int maxChrNumber){
+void ExponentailDependencyFunction::getAbsoluteBounds(size_t index, double* lowerBound, double* upperBound, int maxChrNumber){
   if (index > 1){
     throw Exception("ExponentailDependencyFunction::getAbsoluteBounds(): Too many parameters!!!");
   }
@@ -110,16 +110,16 @@ void NExponentailDependencyFunction::getAbsoluteBounds(size_t index, double* low
 /************************/
 /*******POLYNOMIAL*******/
 /************************/
-double NPolynomialDependencyFunction::getRate(std::vector<Parameter*> params, size_t state) const{
+double PolynomialDependencyFunction::getRate(std::vector<Parameter*> params, size_t state) const{
   return (params[0]->getValue()) * pow((double)(state) + params[1]->getValue(), params[2]->getValue());
 
 }
 
-void NPolynomialDependencyFunction::getBoundsForInitialParams(size_t index, vector<double> paramValues, double* lowerBound, double* upperBound, int maxChrNumber){
+void PolynomialDependencyFunction::getBoundsForInitialParams(size_t index, vector<double> paramValues, double* lowerBound, double* upperBound, int maxChrNumber){
   getAbsoluteBounds(index, lowerBound, upperBound, maxChrNumber);
 }
 
-void NPolynomialDependencyFunction::getAbsoluteBounds(size_t index, double* lowerBound, double* upperBound, int maxChrNumber){
+void PolynomialDependencyFunction::getAbsoluteBounds(size_t index, double* lowerBound, double* upperBound, int maxChrNumber){
   if (index == 0){
       *lowerBound = 0;
       *upperBound = upperBoundOfRateParam;
@@ -141,7 +141,7 @@ void NPolynomialDependencyFunction::getAbsoluteBounds(size_t index, double* lowe
 /************************/
 /*******LOGNORMAL********/
 /************************/
-double NLognormalDependencyFunction::getRate(std::vector<Parameter*> params, size_t state) const{
+double LognormalDependencyFunction::getRate(std::vector<Parameter*> params, size_t state) const{
   auto rangeFactor = params[0]->getValue();
   double scalingFactor = (double)domainMax_/logNormalDomainFactor;
   double transformedState = (double)state/scalingFactor;
@@ -154,11 +154,11 @@ double NLognormalDependencyFunction::getRate(std::vector<Parameter*> params, siz
 
 }
 
-void NLognormalDependencyFunction::getBoundsForInitialParams(size_t index, vector<double> paramValues, double* lowerBound, double* upperBound, int maxChrNumber){
+void LognormalDependencyFunction::getBoundsForInitialParams(size_t index, vector<double> paramValues, double* lowerBound, double* upperBound, int maxChrNumber){
   getAbsoluteBounds(index, lowerBound, upperBound, maxChrNumber);
 }
 
-void NLognormalDependencyFunction::getAbsoluteBounds(size_t index, double* lowerBound, double* upperBound, int maxChrNumber){
+void LognormalDependencyFunction::getAbsoluteBounds(size_t index, double* lowerBound, double* upperBound, int maxChrNumber){
   *lowerBound = lowerBoundOfRateParam;
   if (index == 0){  // for the range parameter   
     *upperBound = upperBoundOfRateParam;
@@ -176,7 +176,7 @@ void NLognormalDependencyFunction::getAbsoluteBounds(size_t index, double* lower
 /************************/
 /******REVSIGMOID********/
 /************************/
-double NRevSigmoidDependencyFunction::getRate(std::vector<Parameter*> params, size_t state) const{
+double RevSigmoidDependencyFunction::getRate(std::vector<Parameter*> params, size_t state) const{
   // p1 is the range parameter
   auto p1 = params[0]->getValue();
   // p2 is the exponent multiplier parameter
@@ -189,7 +189,7 @@ double NRevSigmoidDependencyFunction::getRate(std::vector<Parameter*> params, si
 
 }
 
-void NRevSigmoidDependencyFunction::getAbsoluteBounds(size_t index, double* lowerBound, double* upperBound, int maxChrNumber){
+void RevSigmoidDependencyFunction::getAbsoluteBounds(size_t index, double* lowerBound, double* upperBound, int maxChrNumber){
   
   if (index == 0){  // for the range parameter   
     *lowerBound = lowerBoundOfRateParam;
@@ -207,14 +207,14 @@ void NRevSigmoidDependencyFunction::getAbsoluteBounds(size_t index, double* lowe
   }
 }
 
-void NRevSigmoidDependencyFunction::getBoundsForInitialParams(size_t index, vector<double> paramValues, double* lowerBound, double* upperBound, int maxChrNumber){
+void RevSigmoidDependencyFunction::getBoundsForInitialParams(size_t index, vector<double> paramValues, double* lowerBound, double* upperBound, int maxChrNumber){
   getAbsoluteBounds(index, lowerBound, upperBound, maxChrNumber);
 }
 
 /************************/
 /******LOGITNORMAL*******/
 /************************/
-double NLogitnormalDependencyFunction::getRate(std::vector<Parameter*> params, size_t state) const{
+double LogitnormalDependencyFunction::getRate(std::vector<Parameter*> params, size_t state) const{
   auto rangeFactor = params[0]->getValue();
   double transformedState = ((double)state-(double)domainMin_+1)/((double)domainMax_-(double)domainMin_+2);
   auto mu = params[1]->getValue();
@@ -228,11 +228,11 @@ double NLogitnormalDependencyFunction::getRate(std::vector<Parameter*> params, s
 
 }
 
-void NLogitnormalDependencyFunction::getBoundsForInitialParams(size_t index, vector<double> paramValues, double* lowerBound, double* upperBound, int maxChrNumber){
+void LogitnormalDependencyFunction::getBoundsForInitialParams(size_t index, vector<double> paramValues, double* lowerBound, double* upperBound, int maxChrNumber){
   getAbsoluteBounds(index, lowerBound, upperBound, maxChrNumber);
 }
 
-void NLogitnormalDependencyFunction::getAbsoluteBounds(size_t index, double* lowerBound, double* upperBound, int maxChrNumber){
+void LogitnormalDependencyFunction::getAbsoluteBounds(size_t index, double* lowerBound, double* upperBound, int maxChrNumber){
   *lowerBound = lowerBoundOfRateParam;
   if (index == 0){  // for the range parameter   
     *upperBound = upperBoundOfRateParam;

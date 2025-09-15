@@ -55,12 +55,12 @@ namespace bpp
         }
     };
 
-    class NConstantDependencyFunction : //TODO: change after migration
+    class ConstantDependencyFunction :
         public virtual GeneCountDependencyFunction
     {
     public:
-        NConstantDependencyFunction():GeneCountDependencyFunction(){}
-        virtual ~NConstantDependencyFunction(){}
+        ConstantDependencyFunction():GeneCountDependencyFunction(){}
+        virtual ~ConstantDependencyFunction(){}
 
         FunctionType getName() const{return FunctionType::CONSTANT;}
         double getRate(std::vector<Parameter*> params, size_t state) const;
@@ -68,13 +68,13 @@ namespace bpp
 
     };
 
-    class NLinearDependencyFunction: //TODO: change after migration
+    class LinearDependencyFunction:
         public virtual GeneCountDependencyFunction
     {
     public:
 
-        NLinearDependencyFunction():GeneCountDependencyFunction(){}
-        virtual ~NLinearDependencyFunction(){}
+        LinearDependencyFunction():GeneCountDependencyFunction(){}
+        virtual ~LinearDependencyFunction(){}
 
         FunctionType getName() const{return FunctionType::LINEAR;}
         double getRate(std::vector<Parameter*> params, size_t state) const;
@@ -85,12 +85,12 @@ namespace bpp
         void getAbsoluteBounds(size_t index, double* lowerBound, double* upperBound, int maxChrNumber);
     };
 
-    class NLinearBDDependencyFunction:
+    class LinearBDDependencyFunction:
         public virtual GeneCountDependencyFunction
     {
     public:
-        NLinearBDDependencyFunction():GeneCountDependencyFunction(){}
-        virtual ~NLinearBDDependencyFunction(){}
+        LinearBDDependencyFunction():GeneCountDependencyFunction(){}
+        virtual ~LinearBDDependencyFunction(){}
 
         FunctionType getName() const{return FunctionType::LINEAR_BD;}
         double getRate(std::vector<Parameter*> params, size_t state) const;
@@ -98,12 +98,12 @@ namespace bpp
 
     };
     
-    class NExponentailDependencyFunction:
+    class ExponentailDependencyFunction:
         public virtual GeneCountDependencyFunction
     {
     public:
-        NExponentailDependencyFunction():GeneCountDependencyFunction(){}
-        virtual ~NExponentailDependencyFunction(){}
+        ExponentailDependencyFunction():GeneCountDependencyFunction(){}
+        virtual ~ExponentailDependencyFunction(){}
 
         FunctionType getName() const {return FunctionType::EXP;}
         double getRate(std::vector<Parameter*> params, size_t state) const;
@@ -113,12 +113,12 @@ namespace bpp
 
     };
 
-    class NPolynomialDependencyFunction:
+    class PolynomialDependencyFunction:
         public virtual GeneCountDependencyFunction
     {
     public:
-        NPolynomialDependencyFunction():GeneCountDependencyFunction(){}
-        virtual ~NPolynomialDependencyFunction(){}
+        PolynomialDependencyFunction():GeneCountDependencyFunction(){}
+        virtual ~PolynomialDependencyFunction(){}
 
         FunctionType getName() const{return FunctionType::POLYNOMIAL;}
         double getRate(std::vector<Parameter*> params, size_t state) const;
@@ -133,12 +133,12 @@ namespace bpp
 
     };
 
-    class NLognormalDependencyFunction:
+    class LognormalDependencyFunction:
         public virtual GeneCountDependencyFunction
     {
     public:
-        NLognormalDependencyFunction():GeneCountDependencyFunction(){}
-        virtual ~NLognormalDependencyFunction(){}
+        LognormalDependencyFunction():GeneCountDependencyFunction(){}
+        virtual ~LognormalDependencyFunction(){}
 
         FunctionType getName() const {return FunctionType::LOGNORMAL;}
         void setDomainsIfNeeded(int minChrNum, int maxChrNum)
@@ -154,12 +154,12 @@ namespace bpp
 
     };
 
-    class NRevSigmoidDependencyFunction:
+    class RevSigmoidDependencyFunction:
         public virtual GeneCountDependencyFunction
     {
     public:
-        NRevSigmoidDependencyFunction():GeneCountDependencyFunction(){}
-        virtual ~NRevSigmoidDependencyFunction(){}
+        RevSigmoidDependencyFunction():GeneCountDependencyFunction(){}
+        virtual ~RevSigmoidDependencyFunction(){}
 
         FunctionType getName() const {return FunctionType::REVERSE_SIGMOID;}
         double getRate(std::vector<Parameter*> params, size_t state) const;
@@ -173,12 +173,12 @@ namespace bpp
 
     };
 
-    class NLogitnormalDependencyFunction:
+    class LogitnormalDependencyFunction:
         public virtual GeneCountDependencyFunction
     {
     public:
-        NLogitnormalDependencyFunction():GeneCountDependencyFunction(){}
-        virtual ~NLogitnormalDependencyFunction(){}
+        LogitnormalDependencyFunction():GeneCountDependencyFunction(){}
+        virtual ~LogitnormalDependencyFunction(){}
 
         FunctionType getName() const {return FunctionType::LOGITNORMAL;}
         void setDomainsIfNeeded(int minChrNum, int maxChrNum)

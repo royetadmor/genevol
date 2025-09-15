@@ -39,25 +39,25 @@ GeneCountSubstitutionModel::GeneCountSubstitutionModel(const IntegerAlphabet* al
   updateMatrices();
 }
 
-GeneCountDependencyFunction* NcompositeParameter::getDependencyFunction(GeneCountDependencyFunction::FunctionType funcType){
+GeneCountDependencyFunction* compositeParameter::getDependencyFunction(GeneCountDependencyFunction::FunctionType funcType){
   switch (funcType)
   {
   case GeneCountDependencyFunction::CONSTANT:
-    return new NConstantDependencyFunction();
+    return new ConstantDependencyFunction();
   case GeneCountDependencyFunction::LINEAR:
-    return new NLinearDependencyFunction();
+    return new LinearDependencyFunction();
   case GeneCountDependencyFunction::EXP:
-    return new NExponentailDependencyFunction();
+    return new ExponentailDependencyFunction();
   case GeneCountDependencyFunction::LINEAR_BD:
-    return new NLinearBDDependencyFunction();
+    return new LinearBDDependencyFunction();
   case GeneCountDependencyFunction::LOGNORMAL:
-    return new NLognormalDependencyFunction();
+    return new LognormalDependencyFunction();
   case GeneCountDependencyFunction::POLYNOMIAL:
-    return new NPolynomialDependencyFunction();
+    return new PolynomialDependencyFunction();
   case GeneCountDependencyFunction::REVERSE_SIGMOID:
-    return new NRevSigmoidDependencyFunction();
+    return new RevSigmoidDependencyFunction();
   case GeneCountDependencyFunction::LOGITNORMAL:
-    return new NLogitnormalDependencyFunction();
+    return new LogitnormalDependencyFunction();
   default:
     throw Exception("compositeParameter::getDependencyFunction(): No such function!!");
   }
@@ -74,16 +74,16 @@ void GeneCountSubstitutionModel::updateParameters(std::map<int, vector<double>> 
       switch (i)
       {
       case GeneCountSubstitutionModel::paramType::GAIN:
-        gain_ = new NcompositeParameter(funcType, paramName, rParam);
+        gain_ = new compositeParameter(funcType, paramName, rParam);
         break;
       case GeneCountSubstitutionModel::paramType::LOSS:
-        loss_ = new NcompositeParameter(funcType, paramName, rParam);
+        loss_ = new compositeParameter(funcType, paramName, rParam);
         break;
       case GeneCountSubstitutionModel::paramType::INNOVATION:
-        innovation_ = new NcompositeParameter(funcType, paramName, rParam);
+        innovation_ = new compositeParameter(funcType, paramName, rParam);
         break;
       case GeneCountSubstitutionModel::paramType::ELIMINATION:
-        elimination_ = new NcompositeParameter(funcType, paramName, rParam);
+        elimination_ = new compositeParameter(funcType, paramName, rParam);
         break;
       default:
         std::string err = "GeneCountSubstitutionModel: no parameter named " + paramName;
@@ -105,7 +105,7 @@ std::vector<Parameter*> GeneCountSubstitutionModel::createRateParameter(GeneCoun
     }
     double lowerBound;
     double upperBound;
-    GeneCountDependencyFunction* functionOp = NcompositeParameter::getDependencyFunction(func);
+    GeneCountDependencyFunction* functionOp = compositeParameter::getDependencyFunction(func);
     functionOp->setDomainsIfNeeded(minState_, maxState_);
     functionOp->getAbsoluteBounds(i, &lowerBound, &upperBound, maxState_);
     //TODO: might be relevant, keeping for now

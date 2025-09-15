@@ -51,12 +51,10 @@ int main(int args, char **argv) {
     // Define substitution parameters
     auto paramMap = m->paramMap_;
     auto rateChangeType = m->rateChangeType_;
-    auto newParamMap = m->newParamMap_;
-    auto newRateChangeType = m->newRateChangeType_;
     
 
     // Calculate new likelihood
-    auto myNewLik = LikelihoodUtils::createMyLikelihoodProcess(m, tree_, newParamMap, newRateChangeType);
+    auto myNewLik = LikelihoodUtils::createMyLikelihoodProcess(m, tree_, paramMap, rateChangeType);
     std::cout << "New Likelihood: " << myNewLik->getValue() << std::endl;
     if(std::isinf(myNewLik->getValue())) {
         std::cout << "Likelihood is inf, exiting" << std::endl;
@@ -118,7 +116,7 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
     double prevLikelihood;
     int minDomain = m->minState_;
     int maxDomain = m->maxState_;
-    std::vector<int> rateChangeType = m->newRateChangeType_;
+    std::vector<int> rateChangeType = m->rateChangeType_;
 
 
     vector<string> parametersNames = likelihoodProcess->getSubstitutionModelParameters().getParameterNames();
@@ -146,7 +144,7 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
             size_t index = LikelihoodUtils::getParamIndex(nameOfParam);
             GeneCountDependencyFunction::FunctionType funcType = static_cast<GeneCountDependencyFunction::FunctionType>(rateChangeType[GeneCountSubstitutionModel::getParamIndexByName(nameOfParam)]);
             GeneCountDependencyFunction* functionOp;
-            functionOp = NcompositeParameter::getDependencyFunction(funcType);
+            functionOp = compositeParameter::getDependencyFunction(funcType);
 
             functionOp->setDomainsIfNeeded(minDomain, maxDomain);
             functionOp->updateBounds(params, paramsNames, index, &lowerBound, &upperBound, maxDomain);

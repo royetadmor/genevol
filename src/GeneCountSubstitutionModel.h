@@ -28,7 +28,7 @@ namespace bpp
 {
   class GeneCountSubstitutionModel;
 
-  class NcompositeParameter{ //TODO: change naming after migration
+  class compositeParameter{
 
   private:
     // a vector of GeneCountSubstitutionModel parameters that correspond to a given parameter type
@@ -46,7 +46,7 @@ namespace bpp
     const GeneCountDependencyFunction* getFunction() const{return func_;}
 
     // Returns true if the parameter is ignored
-    static bool isIgnored(NcompositeParameter* param){return param == 0;}
+    static bool isIgnored(compositeParameter* param){return param == 0;}
 
     // get the function of the composite parameter
     const GeneCountDependencyFunction::FunctionType getFuncType() const {return func_->getName();}
@@ -64,7 +64,7 @@ namespace bpp
 
 
     static std::vector<std::string> getRelatedParameterNames(ParameterList &params, std::string pattern);
-    NcompositeParameter(GeneCountDependencyFunction::FunctionType func, std::string paramName, vector<Parameter*> &params):
+    compositeParameter(GeneCountDependencyFunction::FunctionType func, std::string paramName, vector<Parameter*> &params):
       params_(), func_(0), name_(paramName)
     {
       for (size_t i = 0; i < params.size(); i++){
@@ -75,7 +75,7 @@ namespace bpp
     }
 
 
-    virtual ~NcompositeParameter(){ delete func_;}
+    virtual ~compositeParameter(){ delete func_;}
 
 
 
@@ -93,10 +93,10 @@ namespace bpp
     enum rootFreqType {UNIFORM, ROOT_LL, STATIONARY, FIXED};
 
   private:
-    NcompositeParameter* gain_;
-    NcompositeParameter* loss_;
-    NcompositeParameter* innovation_;
-    NcompositeParameter* elimination_;
+    compositeParameter* gain_;
+    compositeParameter* loss_;
+    compositeParameter* innovation_;
+    compositeParameter* elimination_;
     int minState_;
     int maxState_;
     int countRange_;
@@ -140,8 +140,8 @@ namespace bpp
       pijtCalledFromDeriv_(model.pijtCalledFromDeriv_),
       vPowExp_(model.vPowExp_)
     {
-      std::vector<NcompositeParameter**> newModelParams = {&gain_, &loss_, &innovation_, &elimination_};
-      std::vector<NcompositeParameter*> originalModelParams = {model.gain_, model.loss_, model.innovation_, model.elimination_};
+      std::vector<compositeParameter**> newModelParams = {&gain_, &loss_, &innovation_, &elimination_};
+      std::vector<compositeParameter*> originalModelParams = {model.gain_, model.loss_, model.innovation_, model.elimination_};
       for (size_t i = 0; i < originalModelParams.size(); i++){
         if (originalModelParams[i] == 0){
           continue;
@@ -154,7 +154,7 @@ namespace bpp
           newParams.push_back(&(getParameter_(noPrefixName)));
         }
 
-        *(newModelParams[i]) = new NcompositeParameter(originalModelParams[i]->getFuncType(), originalModelParams[i]->getName(), newParams);
+        *(newModelParams[i]) = new compositeParameter(originalModelParams[i]->getFuncType(), originalModelParams[i]->getName(), newParams);
         (*(newModelParams[i]))->func_->setDomainsIfNeeded(minState_, maxState_);
 
       }
