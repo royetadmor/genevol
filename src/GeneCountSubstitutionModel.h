@@ -1,6 +1,9 @@
 #ifndef GENECOUNT_SUBSTITUTION_MODEL_H
 #define GENECOUNT_SUBSTITUTION_MODEL_H
 
+#include <iostream>
+#include <regex>
+
 // from bpp-phyl
 #include <Bpp/Phyl/Model/SubstitutionModel.h>
 #include <Bpp/Phyl/Model/AbstractSubstitutionModel.h>

@@ -49,19 +49,28 @@ void GeneCountManager::optimizeMixtureModelParametersOneDimension(double tol, un
             //     continue;
             // }
             std::vector<string> paramsNames = LikelihoodUtils::filterParamsByName(parametersNames, nameOfParam);
-            // Parameter param = params.getParameter(nameOfParam);
-
             size_t index = LikelihoodUtils::getParamIndex(nameOfParam);
-            // Since we don't estimate the parameters directly from the data, but rather from the gamma distrbution,
-            // the parameters value's don't depend on the current state, hence constant.
+            
+            // TODO: this is a hack you should fix. The problem it currently fix is:
+            // - I assume every parameter is constant (which is false because I support dependency funcs in MM)
+            // - So I check when the index is 1 and set it manually to linear - PROBLEM! need to get the dep. function somehow
+            // - since the name of the rate parameter is "rategain1_1" it doesn't associate it with the other gain param (alphaGain)
+            // - so the list is missing one element, so when `updateBounds` is called it tries to get the 2nd parameter and fails
+            // - because he isn't there. The manual fix is to add another random parameter name from the back so it can find
+            // - the right parameter name at the right index, but this is bad and should fix!
+            // so to summarize: need to fix the dependecny function and the paramsNames list.
             GeneCountDependencyFunction::FunctionType funcType = GeneCountDependencyFunction::FunctionType::CONSTANT;
+            if(index == 1) {
+                funcType = GeneCountDependencyFunction::FunctionType::LINEAR;
+                paramsNames.insert(paramsNames.begin(), "alphaLoss0_1");
+            }
             GeneCountDependencyFunction* functionOp;
             functionOp = NcompositeParameter::getDependencyFunction(funcType);
 
             functionOp->setDomainsIfNeeded(minDomain, maxDomain);
             functionOp->updateBounds(params, paramsNames, index, &lowerBound, &upperBound, maxDomain);
             functionOp->updateBounds(f, nameOfParam, lowerBound, upperBound);
-
+            
             delete functionOp;
             std::cout << "Parameter name is: " + nameOfParam << std::endl;
             optimizer->setInitialInterval(lowerBound, upperBound);            

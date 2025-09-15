@@ -49,7 +49,7 @@ namespace bpp {
                     int requiredParams = it->second;
                     for (int j = 1; j < requiredParams; j++)
                     {
-                        string paramName = "rate_" + GeneCountSubstitutionModel::eventTypeToString.at(i) + std::to_string(j) + "_1";
+                        string paramName = "rate" + GeneCountSubstitutionModel::eventTypeToString.at(i) + std::to_string(j) + "_1";
                         rateParams[i].push_back(paramName);
                         addParameter_(new Parameter(paramName, 1, make_shared<IntervalConstraint>(0.5, 5, false, true))); //TODO: fix hardcoded interval
                     }

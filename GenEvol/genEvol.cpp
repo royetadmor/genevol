@@ -54,11 +54,6 @@ int main(int args, char **argv) {
     auto newParamMap = m->newParamMap_;
     auto newRateChangeType = m->newRateChangeType_;
     
-    // Calculate normal likelihood
-    auto newLik = LikelihoodUtils::createLikelihoodProcess(m, tree_, paramMap, rateChangeType);
-    std::cout << "Likelihood: " << newLik->getValue() << std::endl;
-    std::cout << "Starting optimization for old model" << std::endl;
-    optimizeModelParametersOneDimension(newLik, m, 0.1, 2);
 
     // Calculate new likelihood
     auto myNewLik = LikelihoodUtils::createMyLikelihoodProcess(m, tree_, newParamMap, newRateChangeType);
@@ -68,7 +63,7 @@ int main(int args, char **argv) {
         return 1;
     }
     std::cout << "Starting optimization for new model" << std::endl;
-    myOptimizeModelParametersOneDimension(myNewLik, m, 0.1, 2);
+    optimizeModelParametersOneDimension(myNewLik, m, 0.1, 2);
 
     // Create mixture model, calculate likelihood and optimize
     auto geneCountManager = std::make_shared<GeneCountManager>(m, tree_);

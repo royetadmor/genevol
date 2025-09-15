@@ -83,8 +83,6 @@ namespace bpp
         void updateBounds(Function* f, const std::string &paramName, double &lowerBound, double &upperBound);
         void getBoundsForInitialParams(size_t index, vector<double> paramValues, double* lowerBound, double* upperBound, int maxChrNumber);
         void getAbsoluteBounds(size_t index, double* lowerBound, double* upperBound, int maxChrNumber);
-        double getParsimonyBound(std::vector<double> params, double parsimonyBound, size_t index, int minChrNum, int maxChrNum);
-
     };
 
     class NLinearBDDependencyFunction:
