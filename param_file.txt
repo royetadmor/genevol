@@ -1,27 +1,28 @@
+# Mandatory Params
 _treePath = test_data/arthur2020/9dicots/9dicots.newick
 _dataPath = test_data/arthur2020/9dicots/9dicots_25.fasta
+
+# General Params
 #_countRange = 50
 #_minState = 30
 #_maxState = 100
-_baseNumR = -999
 _branchMul = -999
-_dupl=-999
+
+# Rate Params
 _gain=2
 _loss=2
-_demi=-999
-_gainFunc = CONST
-_lossFunc = CONST
-_duplFunc = IGNORE
-_demiDuplFunc = IGNORE
-_baseNumRFunc = IGNORE
+_innovation=1
+_elimination=1
 _alphaGain = 1
 _betaGain = 1
 _alphaLoss = 1
 _betaLoss = 1
 _numCategories = 4
-_mixtureGainFunc = LINEAR
-_mixtureLossFunc = LINEAR
+
+# Dependency functions
+_gainFunc = CONST
+_lossFunc = CONST
+_mixtureGainFunc = CONST
+_mixtureLossFunc = CONST
 _innovationFunc = CONST
 _eliminationFunc = CONST
-_innovation=1
-_elimination=1

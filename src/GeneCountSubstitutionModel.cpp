@@ -47,7 +47,7 @@ GeneCountDependencyFunction* compositeParameter::getDependencyFunction(GeneCount
   case GeneCountDependencyFunction::LINEAR:
     return new LinearDependencyFunction();
   case GeneCountDependencyFunction::EXP:
-    return new ExponentailDependencyFunction();
+    return new ExponentialDependencyFunction();
   case GeneCountDependencyFunction::LINEAR_BD:
     return new LinearBDDependencyFunction();
   case GeneCountDependencyFunction::LOGNORMAL:
@@ -144,12 +144,11 @@ void GeneCountSubstitutionModel::updateMatrices() {
       }
       if (i == 1) {
         updateQWithElimination(i);
-        continue;
       }
       if (i+1 < maxChrNum+1){
         updateQWithGain(i, minChrNum);
       }
-      if (i > 0 && i-1 >= minChrNum){
+      if (i > 1 && i-1 >= minChrNum){
         updateQWithLoss(i, minChrNum);
       }            
   }

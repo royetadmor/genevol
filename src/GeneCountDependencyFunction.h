@@ -98,12 +98,12 @@ namespace bpp
 
     };
     
-    class ExponentailDependencyFunction:
+    class ExponentialDependencyFunction:
         public virtual GeneCountDependencyFunction
     {
     public:
-        ExponentailDependencyFunction():GeneCountDependencyFunction(){}
-        virtual ~ExponentailDependencyFunction(){}
+        ExponentialDependencyFunction():GeneCountDependencyFunction(){}
+        virtual ~ExponentialDependencyFunction(){}
 
         FunctionType getName() const {return FunctionType::EXP;}
         double getRate(std::vector<Parameter*> params, size_t state) const;

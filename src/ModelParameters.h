@@ -43,6 +43,7 @@ public: // Variables
     const std::map<std::string, int> func_string_to_enum = {
         {"CONST", GeneCountDependencyFunction::FunctionType::CONSTANT},
         {"LINEAR", GeneCountDependencyFunction::FunctionType::LINEAR},
+        {"EXP", GeneCountDependencyFunction::FunctionType::EXP},
         {"IGNORE", GeneCountDependencyFunction::FunctionType::IGNORE} // Can add more according to enum at GeneCountSubModel.h
     };
 
@@ -50,6 +51,7 @@ public: // Variables
     const std::map<int, int> expectedNumOfParams = {
         {GeneCountDependencyFunction::FunctionType::CONSTANT, 1},
         {GeneCountDependencyFunction::FunctionType::LINEAR, 2},
+        {GeneCountDependencyFunction::FunctionType::EXP, 2},
         {GeneCountDependencyFunction::FunctionType::IGNORE, 1}
     };
     

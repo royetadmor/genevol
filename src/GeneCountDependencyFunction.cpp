@@ -82,18 +82,18 @@ double LinearBDDependencyFunction::getRate(std::vector<Parameter*> params, size_
 /************************/
 /*******EXPONENTIAL******/
 /************************/
-double ExponentailDependencyFunction::getRate(std::vector<Parameter*> params, size_t state) const{
+double ExponentialDependencyFunction::getRate(std::vector<Parameter*> params, size_t state) const{
   return params[0]->getValue() * std::exp((double)(state-1)*params[1]->getValue());
 }
 
-void ExponentailDependencyFunction::getBoundsForInitialParams(size_t index, vector<double> paramValues, double* lowerBound, double* upperBound, int maxChrNumber){
+void ExponentialDependencyFunction::getBoundsForInitialParams(size_t index, vector<double> paramValues, double* lowerBound, double* upperBound, int maxChrNumber){
   getAbsoluteBounds(index, lowerBound, upperBound, maxChrNumber);
 
 }
 
-void ExponentailDependencyFunction::getAbsoluteBounds(size_t index, double* lowerBound, double* upperBound, int maxChrNumber){
+void ExponentialDependencyFunction::getAbsoluteBounds(size_t index, double* lowerBound, double* upperBound, int maxChrNumber){
   if (index > 1){
-    throw Exception("ExponentailDependencyFunction::getAbsoluteBounds(): Too many parameters!!!");
+    throw Exception("ExponentialDependencyFunction::getAbsoluteBounds(): Too many parameters!!!");
   }
   if (index == 0){
     *lowerBound = lowerBoundOfRateParam;
