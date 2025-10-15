@@ -51,7 +51,7 @@ namespace bpp {
                     {
                         string paramName = "rate" + GeneCountSubstitutionModel::eventTypeToString.at(i) + std::to_string(j) + "_1";
                         rateParams[i].push_back(paramName);
-                        addParameter_(new Parameter(paramName, 1, make_shared<IntervalConstraint>(0.5, 5, false, true))); //TODO: fix hardcoded interval
+                        addParameter_(new Parameter(paramName, 1, make_shared<IntervalConstraint>(0.5, 5, false, true))); //TODO: fix hardcoded value and interval
                     }
                     
                 }
@@ -68,7 +68,8 @@ namespace bpp {
                 addParameter_(new Parameter("betaGain0_1", m->betaGain_, make_shared<IntervalConstraint>(0.5, 5, false, true)));
                 addParameter_(new Parameter("alphaLoss0_1", m->alphaLoss_, make_shared<IntervalConstraint>(0.5, 45, false, true)));
                 addParameter_(new Parameter("betaLoss0_1", m->betaLoss_, make_shared<IntervalConstraint>(0.5, 5, false, true)));
-                
+                addParameter_(new Parameter("innovation0_1", m->mixtureInnovation_, make_shared<IntervalConstraint>(0.5, 100, false, true)));
+                addParameter_(new Parameter("elimination0_1", m->mixtureElimination_, make_shared<IntervalConstraint>(0.5, 100, false, true)));
                 // Dependency function parameters 
                 setRateParameters();
                 fireParameterChanged(getParameters());

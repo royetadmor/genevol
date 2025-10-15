@@ -33,6 +33,8 @@ public: // Variables
     double betaGain_;
     double alphaLoss_;
     double betaLoss_;
+    double mixtureInnovation_;
+    double mixtureElimination_;
     IntegerAlphabet* alphabet_;
     VectorSiteContainer* container_;
     std::map<int, std::vector<double>> paramMap_;

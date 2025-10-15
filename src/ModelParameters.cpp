@@ -32,6 +32,8 @@ ModelParameters::ModelParameters(BppApplication GenEvol)
     ModelParameters::alphaLoss_ = ApplicationTools::getDoubleParameter("_alphaLoss", GenEvol.getParams(), 1.0);
     ModelParameters::betaLoss_ = ApplicationTools::getDoubleParameter("_betaLoss", GenEvol.getParams(), 1.0);
     ModelParameters::categories_ = ApplicationTools::getIntParameter("_numCategories", GenEvol.getParams(), 4, "", true, -1);
+    ModelParameters::mixtureInnovation_ = ApplicationTools::getDoubleParameter("_mixtureInnovation", GenEvol.getParams(), 1.0);
+    ModelParameters::mixtureElimination_ = ApplicationTools::getDoubleParameter("_mixtureElimination", GenEvol.getParams(), 1.0);
 
     // Load parameters and rate functions
     setBaseModelParameters(GenEvol);
@@ -114,18 +116,21 @@ void ModelParameters::setRateFunctionTypes(BppApplication GenEvol) {
     const int lossFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_lossFunc", GenEvol.getParams(), "CONST", "", true, -1));
     const int innovationFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_innovationFunc", GenEvol.getParams(), "CONST", "", true, -1));
     const int eliminationFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_eliminationFunc", GenEvol.getParams(), "CONST", "", true, -1));
+
     const int mixtureGainFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_mixtureGainFunc", GenEvol.getParams(), "CONST", "", true, -1));
     const int mixtureLossFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_mixtureLossFunc", GenEvol.getParams(), "CONST", "", true, -1));
+    const int mixtureInnovationFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_mixtureInnovationFunc", GenEvol.getParams(), "CONST", "", true, -1));
+    const int mixtureEliminationFunc = ModelParameters::func_string_to_enum.at(ApplicationTools::getStringParameter("_mixtureEliminationFunc", GenEvol.getParams(), "CONST", "", true, -1));
+
     ModelParameters::rateChangeType_.push_back(lossFunc);
     ModelParameters::rateChangeType_.push_back(gainFunc);
     ModelParameters::rateChangeType_.push_back(innovationFunc);
     ModelParameters::rateChangeType_.push_back(eliminationFunc);
 
-    //TODO: temporary hack until we have a gene sub. model
     ModelParameters::mixtureRateChangeType_.push_back(mixtureLossFunc);
     ModelParameters::mixtureRateChangeType_.push_back(mixtureGainFunc);
-    ModelParameters::mixtureRateChangeType_.push_back(innovationFunc);
-    ModelParameters::mixtureRateChangeType_.push_back(eliminationFunc);
+    ModelParameters::mixtureRateChangeType_.push_back(mixtureInnovationFunc);
+    ModelParameters::mixtureRateChangeType_.push_back(mixtureEliminationFunc);
 }
 
 void ModelParameters::validateRateFunctionParameters() {

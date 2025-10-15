@@ -42,8 +42,12 @@ std::vector<SingleProcessPhyloLikelihood*> MixtureModelLikelihoodFunction::getLi
     const auto betaGain = getParameterValue("betaGain0_1");
     const auto alphaLoss = getParameterValue("alphaLoss0_1");
     const auto betaLoss = getParameterValue("betaLoss0_1");
+    const auto innovation = getParameterValue("innovation0_1");
+    const auto elimination = getParameterValue("elimination0_1");
     const auto& lossRateParams = getRateParametersByEvent(GeneCountSubstitutionModel::LOSS);
     const auto& gainRateParams = getRateParametersByEvent(GeneCountSubstitutionModel::GAIN);
+    const auto& innovationRateParams = getRateParametersByEvent(GeneCountSubstitutionModel::INNOVATION);
+    const auto& eliminationRateParams = getRateParametersByEvent(GeneCountSubstitutionModel::ELIMINATION);
 
     // Generate gain/loss values per category
     const auto mmValues = generateMMValues(categories_, alphaGain, betaGain, alphaLoss, betaLoss);
@@ -52,14 +56,18 @@ std::vector<SingleProcessPhyloLikelihood*> MixtureModelLikelihoodFunction::getLi
         for (double lossValue : mmValues.at("loss")) {
             std::vector<double> lossValues{lossValue};
             std::vector<double> gainValues{gainValue};
+            std::vector<double> innovationValues{innovation};
+            std::vector<double> eliminationValues{elimination};
             lossValues.insert(lossValues.end(), lossRateParams.begin(), lossRateParams.end());
             gainValues.insert(gainValues.end(), gainRateParams.begin(), gainRateParams.end());
+            innovationValues.insert(innovationValues.end(), innovationRateParams.begin(), innovationRateParams.end());
+            eliminationValues.insert(eliminationValues.end(), eliminationRateParams.begin(), eliminationRateParams.end());
 
             std::map<int, std::vector<double>> MMparamMap = {
                 {GeneCountSubstitutionModel::LOSS, lossValues},
                 {GeneCountSubstitutionModel::GAIN, gainValues},
-                {GeneCountSubstitutionModel::INNOVATION, {1.0}}, // TODO: hardcoded
-                {GeneCountSubstitutionModel::ELIMINATION, {1.0}}, // TODO: hardcoded
+                {GeneCountSubstitutionModel::INNOVATION, innovationValues},
+                {GeneCountSubstitutionModel::ELIMINATION, eliminationValues},
             };
 
             likelihoodProcesses.push_back(

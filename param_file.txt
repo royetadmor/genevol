@@ -8,24 +8,31 @@ _dataPath = test_data/arthur2020/9dicots/9dicots_25.fasta
 #_maxState = 100
 _branchMul = -999
 
-# Rate Params
+# Rate Params for classic model
 _gain=2
 _loss=2
 _innovation=1
 _elimination=1
-_alphaGain = 1
-_betaGain = 1
-_alphaLoss = 1
-_betaLoss = 1
-_numCategories = 4
 
-# Dependency functions
+# Dependency functions for classic model
 _gainFunc = CONST
 _lossFunc = CONST
 _innovationFunc = CONST
 _eliminationFunc = CONST
 
+# Rate Params for mixture model
+_alphaGain = 1
+_betaGain = 1
+_alphaLoss = 1
+_betaLoss = 1
+_numCategories = 4
+_mixtureInnovation = 1
+_mixtureElimination = 1
+
+# Dependency functions for mixture model
 _mixtureGainFunc = CONST
 _mixtureLossFunc = CONST
+_mixtureInnovationFunc = CONST
+_mixtureEliminationFunc = CONST
 
 #_fixedParams = gain
