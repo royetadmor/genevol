@@ -38,6 +38,7 @@ public: // Variables
     std::map<int, std::vector<double>> paramMap_;
     std::vector<int> mixtureRateChangeType_;
     std::vector<int> rateChangeType_;
+    std::vector<string> fixedParams_;
 
     // Translates rate functions from string to int
     const std::map<std::string, int> func_string_to_enum = {
@@ -58,6 +59,7 @@ public: // Variables
 public:
     ModelParameters(BppApplication GenEvol);
     ~ModelParameters(){};
+    bool isFixedParam(const std::string& name);
 
 private:
     void setAlphabetLimit(BppApplication GenEvol);

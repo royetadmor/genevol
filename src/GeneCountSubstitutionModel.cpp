@@ -191,7 +191,7 @@ void GeneCountSubstitutionModel::updateQWithInnovation(size_t i){
   if (innovationRate < 0){
     throw Exception ("GeneCountSubstitutionModel::updateQWithLoss(): negative loss rate!");
   }
-  generator_(0, 1) += innovationRate;
+  generator_(0, 1) = innovationRate;
 
 }
 
@@ -203,7 +203,7 @@ void GeneCountSubstitutionModel::updateQWithElimination(size_t i){
   if (eliminationRate < 0){
     throw Exception ("GeneCountSubstitutionModel::updateQWithLoss(): negative loss rate!");
   }
-  generator_(1, 0) += eliminationRate;
+  generator_(1, 0) = eliminationRate;
 
 }
 

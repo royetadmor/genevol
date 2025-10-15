@@ -32,10 +32,14 @@ ModelParameters::ModelParameters(BppApplication GenEvol)
     ModelParameters::alphaLoss_ = ApplicationTools::getDoubleParameter("_alphaLoss", GenEvol.getParams(), 1.0);
     ModelParameters::betaLoss_ = ApplicationTools::getDoubleParameter("_betaLoss", GenEvol.getParams(), 1.0);
     ModelParameters::categories_ = ApplicationTools::getIntParameter("_numCategories", GenEvol.getParams(), 4, "", true, -1);
+
     // Load parameters and rate functions
     setBaseModelParameters(GenEvol);
     setRateFunctionTypes(GenEvol);
     validateRateFunctionParameters();
+
+    // Set fixed params
+    ModelParameters::fixedParams_ = ApplicationTools::getVectorParameter<string>("_fixedParams", GenEvol.getParams(), ',', "", "", true);
 }
 
 void ModelParameters::setAlphabetLimit(BppApplication GenEvol) {
@@ -197,4 +201,13 @@ VectorSiteContainer* ModelParameters::readGeneFamilyFile(const std::string& file
     }
     file.close();
     return container;
+}
+
+bool ModelParameters::isFixedParam(const std::string& name) {
+    for (const std::string& element : ModelParameters::fixedParams_) {
+        if (name.find(element) != std::string::npos) {
+            return true;
+        }
+    }
+    return false;
 }

@@ -54,14 +54,14 @@ int main(int args, char **argv) {
     
 
     // Calculate new likelihood
-    auto myNewLik = LikelihoodUtils::createMyLikelihoodProcess(m, tree_, paramMap, rateChangeType);
-    std::cout << "New Likelihood: " << myNewLik->getValue() << std::endl;
-    if(std::isinf(myNewLik->getValue())) {
+    auto likProc = LikelihoodUtils::createLikelihoodProcess(m, tree_, paramMap, rateChangeType);
+    std::cout << "Likelihood: " << likProc->getValue() << std::endl;
+    if(std::isinf(likProc->getValue())) {
         std::cout << "Likelihood is inf, exiting" << std::endl;
         return 1;
     }
     std::cout << "Starting optimization for new model" << std::endl;
-    optimizeModelParametersOneDimension(myNewLik, m, 0.1, 2);
+    optimizeModelParametersOneDimension(likProc, m, 0.1, 2);
 
     // Create mixture model, calculate likelihood and optimize
     auto geneCountManager = std::make_shared<GeneCountManager>(m, tree_);
@@ -133,10 +133,10 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
             const string nameOfParam = parametersNames[j];
             std::cout << "Previous value of "+ nameOfParam + " is: "+ std::to_string(params.getParameter(nameOfParam).getValue()) << std::endl;
 
-            // This checks if there's a param we don't need to optimize (==fixed param)
-            // if (std::count((*fixedParams)[paramNameAndType[nameOfParam].second].begin(), (*fixedParams)[paramNameAndType[nameOfParam].second].end(), rateParamType)){
-            //     continue;
-            // }
+            if (m->isFixedParam(nameOfParam)) {
+                std::cout << "Skipping " << nameOfParam << std::endl;
+                continue;
+            }
 
             // param names corresponding to the parameter type
             std::vector<string> paramsNames = LikelihoodUtils::filterParamsByName(parametersNames, nameOfParam);

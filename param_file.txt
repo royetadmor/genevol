@@ -22,7 +22,10 @@ _numCategories = 4
 # Dependency functions
 _gainFunc = CONST
 _lossFunc = CONST
-_mixtureGainFunc = CONST
-_mixtureLossFunc = CONST
 _innovationFunc = CONST
 _eliminationFunc = CONST
+
+_mixtureGainFunc = CONST
+_mixtureLossFunc = CONST
+
+#_fixedParams = gain

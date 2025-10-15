@@ -3,7 +3,7 @@
 using namespace bpp;
 using namespace std;
 
-SingleProcessPhyloLikelihood* LikelihoodUtils::createMyLikelihoodProcess(ModelParameters* m, PhyloTree* tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType) {
+SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelParameters* m, PhyloTree* tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType) {
 
     // Create substitution process
     auto mapOfNodeIds = LikelihoodUtils::getMapOfNodeIds(tree);
