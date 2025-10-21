@@ -16,7 +16,7 @@ double ConstantDependencyFunction::getRate(std::vector<Parameter*> params, size_
 /********LINEAR**********/
 /************************/
 double LinearDependencyFunction::getRate(std::vector<Parameter*> params, size_t state) const{
-  double func_res = params[0]->getValue() + ((double)(state-1)*params[1]->getValue());
+  double func_res = params[0]->getValue() + (((double)(state)-1)*params[1]->getValue()); //TODO: check why it's state-1
   if (func_res < 0){
     return 0;
   }
@@ -83,7 +83,7 @@ double LinearBDDependencyFunction::getRate(std::vector<Parameter*> params, size_
 /*******EXPONENTIAL******/
 /************************/
 double ExponentialDependencyFunction::getRate(std::vector<Parameter*> params, size_t state) const{
-  return params[0]->getValue() * std::exp((double)(state-1)*params[1]->getValue());
+  return params[0]->getValue() * std::exp(((double)(state)-1)*params[1]->getValue()); //TODO: check why it's state-1
 }
 
 void ExponentialDependencyFunction::getBoundsForInitialParams(size_t index, vector<double> paramValues, double* lowerBound, double* upperBound, int maxChrNumber){
