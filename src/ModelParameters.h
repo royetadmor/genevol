@@ -5,6 +5,7 @@
 
 #include <string> 
 #include <tuple>
+#include <sstream>
 
 #include <Bpp/App/BppApplication.h>
 #include <Bpp/App/ApplicationTools.h>
@@ -41,6 +42,7 @@ public: // Variables
     std::vector<int> mixtureRateChangeType_;
     std::vector<int> rateChangeType_;
     std::vector<string> fixedParams_;
+    std::map<string, vector<string>> constraintedParams_;
 
     // Translates rate functions from string to int
     const std::map<std::string, int> func_string_to_enum = {
@@ -69,6 +71,7 @@ private:
     VectorSiteContainer* readGeneFamilyFile(const std::string& filePath, IntegerAlphabet* alphabet);
     void setRateFunctionTypes(BppApplication GenEvol);
     void validateRateFunctionParameters();
+    void setConstraintedParams(BppApplication GenEvol);
 };
 
 

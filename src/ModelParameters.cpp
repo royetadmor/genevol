@@ -41,7 +41,8 @@ ModelParameters::ModelParameters(BppApplication GenEvol)
     validateRateFunctionParameters();
 
     // Set fixed params
-    ModelParameters::fixedParams_ = ApplicationTools::getVectorParameter<string>("_fixedParams", GenEvol.getParams(), ',', "", "", true);
+    ModelParameters::fixedParams_ = ApplicationTools::getVectorParameter<string>("_fixedParams", GenEvol.getParams(), ',', "", "", true, 1);
+    setConstraintedParams(GenEvol);
 }
 
 void ModelParameters::setAlphabetLimit(BppApplication GenEvol) {
@@ -215,4 +216,22 @@ bool ModelParameters::isFixedParam(const std::string& name) {
         }
     }
     return false;
+}
+
+void ModelParameters::setConstraintedParams(BppApplication GenEvol) {
+    std::vector<string> constraintedParams = ApplicationTools::getVectorParameter<string>("_constraintedParams", GenEvol.getParams(), ';', "", "", true, 1);
+    for (const string element: constraintedParams) {
+        std::vector<std::string> paramList;
+        std::stringstream ss(element); 
+        std::string segment;
+
+        // split string by comma
+        while (std::getline(ss, segment, ',')) {
+            paramList.push_back(segment);
+        }
+        if (paramList.size() != 2) {
+            throw std::runtime_error("Each constraint should contain exactly 2 parameters");
+        }
+        ModelParameters::constraintedParams_[paramList[0]].push_back(paramList[1]);
+    }
 }

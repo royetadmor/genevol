@@ -51,10 +51,11 @@ int main(int args, char **argv) {
     // Define substitution parameters
     auto paramMap = m->paramMap_;
     auto rateChangeType = m->rateChangeType_;
+    auto constraintedParams = m->constraintedParams_;
     
 
     // Calculate new likelihood
-    auto likProc = LikelihoodUtils::createLikelihoodProcess(m, tree_, paramMap, rateChangeType);
+    auto likProc = LikelihoodUtils::createLikelihoodProcess(m, tree_, paramMap, rateChangeType, constraintedParams);
     std::cout << "Likelihood: " << likProc->getValue() << std::endl;
     if(std::isinf(likProc->getValue())) {
         std::cout << "Likelihood is inf, exiting" << std::endl;
@@ -166,5 +167,6 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
         }
 
     }
+    std::cout << likelihoodProcess->getParameters().getParameter("GeneCount.innovation0_1").getValue() << std::endl;
     delete optimizer;
 }

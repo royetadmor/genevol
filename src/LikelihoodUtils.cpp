@@ -3,7 +3,7 @@
 using namespace bpp;
 using namespace std;
 
-SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelParameters* m, PhyloTree* tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType) {
+SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelParameters* m, PhyloTree* tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, vector<string>> constraintedParams) {
 
     // Create substitution process
     auto mapOfNodeIds = LikelihoodUtils::getMapOfNodeIds(tree);
@@ -16,6 +16,10 @@ SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelPara
     subProcesses->addModel(subModel, mapOfNodeIds[1]);
     SubstitutionProcess* nsubPro = subProcesses->clone();
     
+    if (!constraintedParams.empty()) {
+        LikelihoodUtils::setProcessConstraintedParams(constraintedParams, nsubPro);
+    }
+
     // Create likelihood object
     Context* context = new Context();
     bool weightedRootFreqs = true;
@@ -82,5 +86,31 @@ std::vector<string> LikelihoodUtils::filterParamsByName(std::vector<std::string>
     }
 
     return result;
+}
+
+void LikelihoodUtils::setProcessConstraintedParams(std::map<string, vector<string>> constraintedParams, SubstitutionProcess* process) {
+    ParameterList params = process->getParameters();
+    for (const auto& pair : constraintedParams) {
+        string p1 = LikelihoodUtils::getParameterByName(params, pair.first);
+        for (const string s : pair.second) {
+            string p2 = LikelihoodUtils::getParameterByName(params, s);
+            process->aliasParameters(p1,p2);
+        }
+    }
+}
+
+// Given a parameter name, returns the matching parameter name from the substitution model
+// i.e., if the parameter name is "gain", it will return "GeneCount.gain0_1" etc.
+string LikelihoodUtils::getParameterByName(ParameterList params, string name) {
+    for (size_t i = 0; i < params.size(); ++i)
+    {
+        const string paramName = params[i].getName();
+        if (paramName.find(name) != std::string::npos) // substring found
+        {
+            return paramName;
+        }
+    }
+    const string err = "Parameter name not found: " + name;
+    throw std::runtime_error(err);
 }
 

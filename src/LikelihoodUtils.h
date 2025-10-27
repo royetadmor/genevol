@@ -38,7 +38,10 @@ namespace bpp{
         static void deleteLikelihoodProcess(SingleProcessPhyloLikelihood* lik);
         static int getParamIndex(string name);
         static std::vector<string> filterParamsByName(std::vector<std::string> listOfParams, std::string paramName);
-        static SingleProcessPhyloLikelihood* createLikelihoodProcess(ModelParameters* m, PhyloTree* tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType);
+        static SingleProcessPhyloLikelihood* createLikelihoodProcess(ModelParameters* m, PhyloTree* tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, vector<string>> constraintedParams);
+        static void setProcessConstraintedParams(std::map<string, vector<string>> constraintedParams, SubstitutionProcess* process);
+    private:
+        static string getParameterByName(ParameterList params, string name);
   };
 }
 

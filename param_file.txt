@@ -36,3 +36,4 @@ _mixtureInnovationFunc = CONST
 _mixtureEliminationFunc = CONST
 
 #_fixedParams = gain
+#_constraintedParams=gain,innovation;gain,loss
