@@ -44,10 +44,10 @@ void GeneCountManager::optimizeMixtureModelParametersOneDimension(double tol, un
             const string nameOfParam = parametersNames[j];
             std::cout << "Previous value of "+ nameOfParam + " is: "+ std::to_string(params.getParameter(nameOfParam).getValue()) << std::endl;
 
-            // This checks if there's a param we don't need to optimize (==fixed param)
-            // if (std::count((*fixedParams)[paramNameAndType[nameOfParam].second].begin(), (*fixedParams)[paramNameAndType[nameOfParam].second].end(), rateParamType)){
-            //     continue;
-            // }
+            if (LikelihoodUtils::isFixedParam(nameOfParam, m_->mixtureFixedParams_)) {
+                std::cout << "Skipping " << nameOfParam << std::endl;
+                continue;
+            }
             std::vector<string> paramsNames = LikelihoodUtils::filterParamsByName(parametersNames, nameOfParam);
             size_t index = LikelihoodUtils::getParamIndex(nameOfParam);
 

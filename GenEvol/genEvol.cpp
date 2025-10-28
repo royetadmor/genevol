@@ -134,7 +134,7 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
             const string nameOfParam = parametersNames[j];
             std::cout << "Previous value of "+ nameOfParam + " is: "+ std::to_string(params.getParameter(nameOfParam).getValue()) << std::endl;
 
-            if (m->isFixedParam(nameOfParam)) {
+            if (LikelihoodUtils::isFixedParam(nameOfParam, m->fixedParams_)) {
                 std::cout << "Skipping " << nameOfParam << std::endl;
                 continue;
             }

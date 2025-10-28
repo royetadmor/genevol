@@ -42,6 +42,7 @@ public: // Variables
     std::vector<int> mixtureRateChangeType_;
     std::vector<int> rateChangeType_;
     std::vector<string> fixedParams_;
+    std::vector<string> mixtureFixedParams_;
     std::map<string, vector<string>> constraintedParams_;
 
     // Translates rate functions from string to int
@@ -63,7 +64,6 @@ public: // Variables
 public:
     ModelParameters(BppApplication GenEvol);
     ~ModelParameters(){};
-    bool isFixedParam(const std::string& name);
 
 private:
     void setAlphabetLimit(BppApplication GenEvol);

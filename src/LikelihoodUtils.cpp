@@ -114,3 +114,12 @@ string LikelihoodUtils::getParameterByName(ParameterList params, string name) {
     throw std::runtime_error(err);
 }
 
+bool LikelihoodUtils::isFixedParam(const std::string& name, const std::vector<string> params) {
+    for (const std::string& element : params) {
+        if (name.find(element) != std::string::npos) {
+            return true;
+        }
+    }
+    return false;
+}
+

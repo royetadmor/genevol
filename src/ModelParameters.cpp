@@ -42,6 +42,7 @@ ModelParameters::ModelParameters(BppApplication GenEvol)
 
     // Set fixed params
     ModelParameters::fixedParams_ = ApplicationTools::getVectorParameter<string>("_fixedParams", GenEvol.getParams(), ',', "", "", true, 1);
+    ModelParameters::mixtureFixedParams_ = ApplicationTools::getVectorParameter<string>("_mixtureFixedParams", GenEvol.getParams(), ',', "", "", true, 1);
     setConstraintedParams(GenEvol);
 }
 
@@ -207,15 +208,6 @@ VectorSiteContainer* ModelParameters::readGeneFamilyFile(const std::string& file
     }
     file.close();
     return container;
-}
-
-bool ModelParameters::isFixedParam(const std::string& name) {
-    for (const std::string& element : ModelParameters::fixedParams_) {
-        if (name.find(element) != std::string::npos) {
-            return true;
-        }
-    }
-    return false;
 }
 
 void ModelParameters::setConstraintedParams(BppApplication GenEvol) {
