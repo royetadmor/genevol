@@ -22,7 +22,7 @@ using namespace std;
 namespace bpp {
     class MixtureModelLikelihoodFunction : 
         public Function,
-        public AbstractParametrizable
+        public AbstractParameterAliasable
     {
         private:
             ModelParameters* m_;
@@ -58,7 +58,7 @@ namespace bpp {
                 
             }
         public:
-            MixtureModelLikelihoodFunction(ModelParameters* m, PhyloTree* tree) : AbstractParametrizable("") {
+            MixtureModelLikelihoodFunction(ModelParameters* m, PhyloTree* tree) : AbstractParameterAliasable(""),  Function() {
                 m_ = m;
                 tree_ = tree;
                 categories_ = m->categories_;
@@ -71,6 +71,7 @@ namespace bpp {
                 addParameter_(new Parameter("innovation0_1", m->mixtureInnovation_, make_shared<IntervalConstraint>(0.5, 100, false, true)));
                 addParameter_(new Parameter("elimination0_1", m->mixtureElimination_, make_shared<IntervalConstraint>(0.5, 100, false, true)));
                 // Dependency function parameters 
+                LikelihoodUtils::setProcessConstraintedParams(m_->mixtureConstraintedParams_, this);
                 setRateParameters();
                 fireParameterChanged(getParameters());
             }

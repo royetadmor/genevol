@@ -167,6 +167,5 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
         }
 
     }
-    std::cout << likelihoodProcess->getParameters().getParameter("GeneCount.innovation0_1").getValue() << std::endl;
     delete optimizer;
 }

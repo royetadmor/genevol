@@ -44,6 +44,7 @@ public: // Variables
     std::vector<string> fixedParams_;
     std::vector<string> mixtureFixedParams_;
     std::map<string, vector<string>> constraintedParams_;
+    std::map<string, vector<string>> mixtureConstraintedParams_;
 
     // Translates rate functions from string to int
     const std::map<std::string, int> func_string_to_enum = {
@@ -71,7 +72,7 @@ private:
     VectorSiteContainer* readGeneFamilyFile(const std::string& filePath, IntegerAlphabet* alphabet);
     void setRateFunctionTypes(BppApplication GenEvol);
     void validateRateFunctionParameters();
-    void setConstraintedParams(BppApplication GenEvol);
+    void setConstraintedParams(BppApplication GenEvol, std::vector<string> inputParams, std::map<string, vector<string>>& outputParams);
 };
 
 

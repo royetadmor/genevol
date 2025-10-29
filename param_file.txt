@@ -37,5 +37,5 @@ _mixtureEliminationFunc = CONST
 
 #_fixedParams = gain
 #_mixtureFixedParams = alphaGain,innovation
-#_constraintedParams=gain,innovation;gain,loss
-#_mixtureConstraintedParams=gain,innovation;gain,loss
+#_constraintedParams=gain,innovation
+#_mixtureConstraintedParams=alphaGain,betaGain

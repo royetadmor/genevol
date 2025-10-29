@@ -29,8 +29,8 @@ void GeneCountManager::optimizeMixtureModelParametersOneDimension(double tol, un
     // setting maps of parameter type and the corresponding parameters, and vice versa
     std::map<string, std::pair<int, uint>> paramNameAndType; // parameter name, its type and number of model
 
-    vector<string> parametersNames = f->getParameters().getParameterNames();
-    ParameterList params = f->getParameters();
+    vector<string> parametersNames = f->getIndependentParameters().getParameterNames();
+    ParameterList params = f->getIndependentParameters();
     size_t nbParams = parametersNames.size();
 
     
@@ -84,13 +84,12 @@ void GeneCountManager::optimizeMixtureModelParametersOneDimension(double tol, un
             break;
         }
         optimizer->getNumberOfEvaluations();
-
     }
     delete optimizer;
 }
 
 double GeneCountManager::calculateAIC() {
-    auto numOfParams = likelihoodFunction_->getParametersCount();
+    auto numOfParams = likelihoodFunction_->getIndependentParameters().size();
     double AIC = 2*(likelihoodFunction_->getValue()) + (2*numOfParams);
     return AIC;
 }

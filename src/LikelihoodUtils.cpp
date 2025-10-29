@@ -17,7 +17,8 @@ SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelPara
     SubstitutionProcess* nsubPro = subProcesses->clone();
     
     if (!constraintedParams.empty()) {
-        LikelihoodUtils::setProcessConstraintedParams(constraintedParams, nsubPro);
+        AbstractParameterAliasable* aliasable = dynamic_cast<AbstractParameterAliasable*>(nsubPro);
+        LikelihoodUtils::setProcessConstraintedParams(constraintedParams, aliasable);
     }
 
     // Create likelihood object
@@ -88,13 +89,13 @@ std::vector<string> LikelihoodUtils::filterParamsByName(std::vector<std::string>
     return result;
 }
 
-void LikelihoodUtils::setProcessConstraintedParams(std::map<string, vector<string>> constraintedParams, SubstitutionProcess* process) {
-    ParameterList params = process->getParameters();
+void LikelihoodUtils::setProcessConstraintedParams(std::map<string, vector<string>> constraintedParams, AbstractParameterAliasable* aliasable) {
+    ParameterList params = aliasable->getParameters();
     for (const auto& pair : constraintedParams) {
         string p1 = LikelihoodUtils::getParameterByName(params, pair.first);
         for (const string s : pair.second) {
             string p2 = LikelihoodUtils::getParameterByName(params, s);
-            process->aliasParameters(p1,p2);
+            aliasable->aliasParameters(p1,p2);
         }
     }
 }

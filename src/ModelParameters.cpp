@@ -40,10 +40,13 @@ ModelParameters::ModelParameters(BppApplication GenEvol)
     setRateFunctionTypes(GenEvol);
     validateRateFunctionParameters();
 
-    // Set fixed params
+    // Set constraints
     ModelParameters::fixedParams_ = ApplicationTools::getVectorParameter<string>("_fixedParams", GenEvol.getParams(), ',', "", "", true, 1);
     ModelParameters::mixtureFixedParams_ = ApplicationTools::getVectorParameter<string>("_mixtureFixedParams", GenEvol.getParams(), ',', "", "", true, 1);
-    setConstraintedParams(GenEvol);
+    std::vector<string> constraintedParams = ApplicationTools::getVectorParameter<string>("_constraintedParams", GenEvol.getParams(), ';', "", "", true, 1);
+    setConstraintedParams(GenEvol, constraintedParams, ModelParameters::constraintedParams_);
+    std::vector<string> mixtureConstraintedParams = ApplicationTools::getVectorParameter<string>("_mixtureConstraintedParams", GenEvol.getParams(), ';', "", "", true, 1);
+    setConstraintedParams(GenEvol, mixtureConstraintedParams, ModelParameters::mixtureConstraintedParams_);
 }
 
 void ModelParameters::setAlphabetLimit(BppApplication GenEvol) {
@@ -210,9 +213,8 @@ VectorSiteContainer* ModelParameters::readGeneFamilyFile(const std::string& file
     return container;
 }
 
-void ModelParameters::setConstraintedParams(BppApplication GenEvol) {
-    std::vector<string> constraintedParams = ApplicationTools::getVectorParameter<string>("_constraintedParams", GenEvol.getParams(), ';', "", "", true, 1);
-    for (const string element: constraintedParams) {
+void ModelParameters::setConstraintedParams(BppApplication GenEvol, std::vector<string> inputParams, std::map<string, vector<string>>& outputParams) {
+    for (const string element: inputParams) {
         std::vector<std::string> paramList;
         std::stringstream ss(element); 
         std::string segment;
@@ -224,6 +226,6 @@ void ModelParameters::setConstraintedParams(BppApplication GenEvol) {
         if (paramList.size() != 2) {
             throw std::runtime_error("Each constraint should contain exactly 2 parameters");
         }
-        ModelParameters::constraintedParams_[paramList[0]].push_back(paramList[1]);
+        outputParams[paramList[0]].push_back(paramList[1]);
     }
 }
