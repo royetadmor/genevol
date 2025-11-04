@@ -14,6 +14,8 @@
 #include <Bpp/Seq/Alphabet/IntegerAlphabet.h>
 #include <Bpp/Seq/Container/VectorSiteContainer.h>
 
+#include <Bpp/Phyl/App/PhylogeneticsApplicationTools.h>
+
 #include "GeneCountDependencyFunction.h"
 
 using namespace std;
@@ -45,6 +47,7 @@ public: // Variables
     std::vector<string> mixtureFixedParams_;
     std::map<string, vector<string>> constraintedParams_;
     std::map<string, vector<string>> mixtureConstraintedParams_;
+    DiscreteDistribution* rDist_;
 
     // Translates rate functions from string to int
     const std::map<std::string, int> func_string_to_enum = {

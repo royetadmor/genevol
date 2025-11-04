@@ -52,10 +52,11 @@ int main(int args, char **argv) {
     auto paramMap = m->paramMap_;
     auto rateChangeType = m->rateChangeType_;
     auto constraintedParams = m->constraintedParams_;
+    auto rDist = m->rDist_;
     
 
     // Calculate new likelihood
-    auto likProc = LikelihoodUtils::createLikelihoodProcess(m, tree_, paramMap, rateChangeType, constraintedParams);
+    auto likProc = LikelihoodUtils::createLikelihoodProcess(m, tree_, paramMap, rateChangeType, constraintedParams, rDist);
     std::cout << "Likelihood: " << likProc->getValue() << std::endl;
     if(std::isinf(likProc->getValue())) {
         std::cout << "Likelihood is inf, exiting" << std::endl;
@@ -119,11 +120,22 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
     int maxDomain = m->maxState_;
     std::vector<int> rateChangeType = m->rateChangeType_;
 
-
+    
+    ParameterList rParams = likelihoodProcess->getSubstitutionProcess().getRateDistributionParameters(true);
+    vector<string> rParamsNames = rParams.getParameterNames();
     vector<string> parametersNames = likelihoodProcess->getSubstitutionModelParameters().getParameterNames();
+    parametersNames.insert(parametersNames.end(), rParamsNames.begin(), rParamsNames.end()); 
     ParameterList params = likelihoodProcess->getParameters();
-    size_t nbParams = parametersNames.size();
 
+    for (size_t i = 0; i < params.size(); ++i) {
+        if (params[i].getName().find("Gamma") != std::string::npos) {
+            std::cout << "Found!" << std::endl;
+            std::shared_ptr<IntervalConstraint> interval = make_shared<IntervalConstraint>(0, 100, false, true);
+            params[i].setConstraint(interval);
+        }
+    }
+    
+    size_t nbParams = parametersNames.size();
     // starting iterations of optimization
     for (size_t i = 0; i < maxNumOfIterations; i++)
     {
@@ -143,9 +155,14 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
             std::vector<string> paramsNames = LikelihoodUtils::filterParamsByName(parametersNames, nameOfParam);
 
             size_t index = LikelihoodUtils::getParamIndex(nameOfParam);
-            GeneCountDependencyFunction::FunctionType funcType = static_cast<GeneCountDependencyFunction::FunctionType>(rateChangeType[GeneCountSubstitutionModel::getParamIndexByName(nameOfParam)]);
             GeneCountDependencyFunction* functionOp;
-            functionOp = compositeParameter::getDependencyFunction(funcType);
+
+            if (nameOfParam.find("Gamma") != std::string::npos) {
+                functionOp = compositeParameter::getDependencyFunction(static_cast<GeneCountDependencyFunction::FunctionType>(0));
+            } else {
+                GeneCountDependencyFunction::FunctionType funcType = static_cast<GeneCountDependencyFunction::FunctionType>(rateChangeType[GeneCountSubstitutionModel::getParamIndexByName(nameOfParam)]);
+                functionOp = compositeParameter::getDependencyFunction(funcType);
+            };
 
             functionOp->setDomainsIfNeeded(minDomain, maxDomain);
             functionOp->updateBounds(params, paramsNames, index, &lowerBound, &upperBound, maxDomain);
@@ -155,8 +172,16 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
             delete functionOp;
             std::cout << "Parameter name is: " + nameOfParam << std::endl;
             optimizer->getStopCondition()->setTolerance(tol);
-            optimizer->setInitialInterval(lowerBound, upperBound);            
+            optimizer->setInitialInterval(lowerBound, upperBound);
+            std::cout << "think its here" << std::endl;
+            std::cout << lowerBound << "----" << upperBound << std::endl;
+            std::cout << "Index " <<  index << std::endl;
+            for (size_t i = 0; i <  params.createSubList(nameOfParam).size(); ++i) {
+                std::cout << params.createSubList(nameOfParam)[i].getValue() << std::endl;
+            }
+            std::cout << params.createSubList(nameOfParam).size() << std::endl;
             optimizer->init(params.createSubList(nameOfParam));
+            std::cout << "maybe not" << std::endl;
             currentLikelihood = optimizer->optimize();
             std::cout << "\nCurrent likelihood: " + std::to_string(currentLikelihood) << std::endl;
             std::cout << nameOfParam + " parameter value after optimization "+ std::to_string(likelihoodProcess->getParameters().getParameter(nameOfParam).getValue()) << std::endl;

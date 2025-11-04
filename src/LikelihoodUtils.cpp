@@ -3,13 +3,13 @@
 using namespace bpp;
 using namespace std;
 
-SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelParameters* m, PhyloTree* tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, vector<string>> constraintedParams) {
+SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelParameters* m, PhyloTree* tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, vector<string>> constraintedParams, DiscreteDistribution* rDist) {
 
     // Create substitution process
     auto mapOfNodeIds = LikelihoodUtils::getMapOfNodeIds(tree);
-    std::shared_ptr<DiscreteDistribution> gammaDist = std::shared_ptr<DiscreteDistribution>(new GammaDiscreteRateDistribution(1, 1.0));
+    std::shared_ptr<DiscreteDistribution> rateDist = std::shared_ptr<DiscreteDistribution>(rDist);
     auto parTree = std::make_shared<ParametrizablePhyloTree>(tree);
-    std::shared_ptr<NonHomogeneousSubstitutionProcess> subProcesses = std::make_shared<NonHomogeneousSubstitutionProcess>(gammaDist, parTree);
+    std::shared_ptr<NonHomogeneousSubstitutionProcess> subProcesses = std::make_shared<NonHomogeneousSubstitutionProcess>(rateDist, parTree);
     
     // Create substitution model
     std::shared_ptr<GeneCountSubstitutionModel> subModel = std::make_shared<GeneCountSubstitutionModel>(m->alphabet_, rateParams, GeneCountSubstitutionModel::rootFreqType::ROOT_LL, rateChangeType, m);
@@ -54,6 +54,10 @@ void LikelihoodUtils::deleteLikelihoodProcess(SingleProcessPhyloLikelihood* lik)
 }
 
 int LikelihoodUtils::getParamIndex(string name) {
+    // Special case for gamma distribution parameter names which does not contain an underscore
+    if (name.find("Gamma") != std::string::npos) {
+        return 0;
+    }
     size_t pos = name.find('_');
     if (pos == std::string::npos || pos == 0) {
         throw std::runtime_error("No underscore found in string: " + name);
@@ -68,16 +72,24 @@ int LikelihoodUtils::getParamIndex(string name) {
 
 std::vector<string> LikelihoodUtils::filterParamsByName(std::vector<std::string> listOfParams, std::string paramName)
 {
+    std::vector<std::string> result;
+
+    // Special case for gamma distribution parameter names which does not contain an underscore
+    if (paramName.find("Gamma") != std::string::npos) {
+        result.push_back(paramName);
+        return result;
+    }
+    
     // find underscore
     size_t pos = paramName.find('_');
-    if (pos == std::string::npos)
+    if (pos == std::string::npos) {
         throw std::runtime_error("No underscore found in paramName: " + paramName);
+    }
 
     // extract substring before underscore
     std::string prefix = paramName.substr(0, pos-1);
 
     // collect matches
-    std::vector<std::string> result;
     for (const auto& s : listOfParams)
     {
         if (s.find(prefix) != std::string::npos)
