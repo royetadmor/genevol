@@ -39,3 +39,5 @@ _mixtureEliminationFunc = CONST
 #_mixtureFixedParams = alphaGain,innovation
 #_constraintedParams=gain,innovation
 #_mixtureConstraintedParams=alphaGain,betaGain
+
+rate_distribution = Gamma(n=4, alpha=1.5) //Constant()

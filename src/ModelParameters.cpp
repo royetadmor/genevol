@@ -21,6 +21,7 @@ ModelParameters::ModelParameters(BppApplication GenEvol)
     setAlphabetLimit(GenEvol);
     ModelParameters::alphabet_ = new IntegerAlphabet(ModelParameters::maxState_, ModelParameters::minState_);
     ModelParameters::container_ = readGeneFamilyFile(ModelParameters::dataFilePath_, ModelParameters::alphabet_);
+    ModelParameters::rDist_ = PhylogeneticsApplicationTools::getRateDistribution(GenEvol.getParams(), "", true, true);
 
     // Load customization params
     ModelParameters::countRange_ = ApplicationTools::getIntParameter("_countRange", GenEvol.getParams(), ModelParameters::maxState_ - ModelParameters::minState_ + 1, "", true, 1);
@@ -40,9 +41,11 @@ ModelParameters::ModelParameters(BppApplication GenEvol)
     setRateFunctionTypes(GenEvol);
     validateRateFunctionParameters();
 
-    // Set constraints
+    // Set fixed params
     ModelParameters::fixedParams_ = ApplicationTools::getVectorParameter<string>("_fixedParams", GenEvol.getParams(), ',', "", "", true, 1);
     ModelParameters::mixtureFixedParams_ = ApplicationTools::getVectorParameter<string>("_mixtureFixedParams", GenEvol.getParams(), ',', "", "", true, 1);
+
+    // Set constrainted params
     std::vector<string> constraintedParams = ApplicationTools::getVectorParameter<string>("_constraintedParams", GenEvol.getParams(), ';', "", "", true, 1);
     setConstraintedParams(GenEvol, constraintedParams, ModelParameters::constraintedParams_);
     std::vector<string> mixtureConstraintedParams = ApplicationTools::getVectorParameter<string>("_mixtureConstraintedParams", GenEvol.getParams(), ';', "", "", true, 1);
