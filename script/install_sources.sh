@@ -15,9 +15,9 @@ mkdir ../sources
 cd ../sources
 
 # Install bpp-core
-git clone https://github.com/anatshafir1/bpp-core.git
+git clone https://github.com/BioPP/bpp-core.git
 cd bpp-core
-git checkout rel_anat # (switch to rel_anat branch)
+git checkout fc0695d523a6060eb8a7696a5a48076df1e349d4 # (switch to latest supported commit)
 mkdir build
 cd build
 cmake  -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$WORKDIR ..
@@ -26,9 +26,9 @@ make install
 cd ../../ # (getting back to the sources directory)
 
 # Install bpp-seq
-git clone https://github.com/anatshafir1/bpp-seq.git
+git clone https://github.com/BioPP/bpp-seq.git
 cd bpp-seq
-git checkout rel_anat
+git checkout 60edc55aa7c81ad1320589b8fbe144045ff865d9
 mkdir build
 cd build
 cmake  -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$WORKDIR ..
@@ -37,9 +37,9 @@ make install
 cd ../../
 
 # Install bpp-phyl
-git clone https://github.com/anatshafir1/bpp-phyl.git
+git clone https://github.com/BioPP/bpp-phyl.git
 cd bpp-phyl
-git checkout rel3_anat
+git checkout ea24a299fe4575f4c51357ed3ff1cb7e9e610f42
 mkdir build
 cd build
 cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=$WORKDIR ..

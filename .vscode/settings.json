@@ -76,6 +76,11 @@
         "concepts": "cpp",
         "queue": "cpp",
         "__memory": "cpp",
-        "thread": "cpp"
+        "thread": "cpp",
+        "numbers": "cpp",
+        "complex": "cpp",
+        "unordered_set": "cpp",
+        "semaphore": "cpp",
+        "stop_token": "cpp"
     }
 }

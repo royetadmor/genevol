@@ -38,12 +38,12 @@ namespace bpp
         virtual void setDomainsIfNeeded(int minChrNum, int maxChrNum){}
 
         virtual void updateBounds(ParameterList& params, std::vector<string> paramsNames, size_t index, double* lowerBound, double* upperBound, int maxChrNum){
-            std::shared_ptr<IntervalConstraint> interval = dynamic_pointer_cast<IntervalConstraint>(params.getParameter(paramsNames[index]).getConstraint());
+            std::shared_ptr<IntervalConstraint> interval = dynamic_pointer_cast<IntervalConstraint>(params.getParameter(paramsNames[index])->getConstraint());
             *lowerBound = interval->getLowerBound();
             *upperBound = interval->getUpperBound();
         }
 
-        virtual void updateBounds(Function* f, const std::string &paramName, double &lowerBound, double &upperBound){return;};
+        virtual void updateBounds(FunctionInterface* f, const std::string &paramName, double &lowerBound, double &upperBound){return;};
         virtual void getBoundsForInitialParams(size_t index, vector<double> paramValues, double* lowerBound, double* upperBound, int maxChrNumber)
         {
             *lowerBound = lowerBoundOfRateParam;
@@ -80,7 +80,7 @@ namespace bpp
         double getRate(std::vector<Parameter*> params, size_t state) const;
         size_t getNumOfParameters() const{return 2;}
         void updateBounds(ParameterList& params, std::vector<string> paramsNames, size_t index, double* lowerBound, double* upperBound, int maxChrNum);
-        void updateBounds(Function* f, const std::string &paramName, double &lowerBound, double &upperBound);
+        void updateBounds(FunctionInterface* f, const std::string &paramName, double &lowerBound, double &upperBound);
         void getBoundsForInitialParams(size_t index, vector<double> paramValues, double* lowerBound, double* upperBound, int maxChrNumber);
         void getAbsoluteBounds(size_t index, double* lowerBound, double* upperBound, int maxChrNumber);
     };

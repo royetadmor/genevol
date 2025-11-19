@@ -3,33 +3,41 @@
 using namespace bpp;
 using namespace std;
 
-SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelParameters* m, PhyloTree* tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, vector<string>> constraintedParams) {
+SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, vector<string>> constraintedParams) {
 
-    // Create substitution process
-    auto mapOfNodeIds = LikelihoodUtils::getMapOfNodeIds(tree);
-    std::shared_ptr<DiscreteDistribution> gammaDist = std::shared_ptr<DiscreteDistribution>(new GammaDiscreteRateDistribution(1, 1.0));
-    auto parTree = std::make_shared<ParametrizablePhyloTree>(tree);
-    std::shared_ptr<NonHomogeneousSubstitutionProcess> subProcesses = std::make_shared<NonHomogeneousSubstitutionProcess>(gammaDist, parTree);
-    
+    // Create substitution process components
+    std::shared_ptr<DiscreteDistributionInterface> gammaDist = std::shared_ptr<DiscreteDistributionInterface>(new GammaDiscreteRateDistribution(1, 1.0));
+    auto parTree = std::make_shared<ParametrizablePhyloTree>(*tree);
+
     // Create substitution model
     std::shared_ptr<GeneCountSubstitutionModel> subModel = std::make_shared<GeneCountSubstitutionModel>(m->alphabet_, rateParams, GeneCountSubstitutionModel::rootFreqType::ROOT_LL, rateChangeType, m);
+
+    // Calculate and set root frequencies
+    auto alphabetSize = m->alphabet_->getSize();
+    std::vector<double> freq(alphabetSize, (1.0/alphabetSize));
+    std::shared_ptr<FixedFrequencySet> rootFreqsFixed = std::make_shared<FixedFrequencySet>(subModel->getStateMap(), freq);
+    std::shared_ptr<FrequencySetInterface> rootFrequencies = static_pointer_cast<FrequencySetInterface>(rootFreqsFixed);
+
+    // Create substitution process
+    std::shared_ptr<NonHomogeneousSubstitutionProcess> subProcesses = std::make_shared<NonHomogeneousSubstitutionProcess>(gammaDist, parTree, rootFrequencies);
+    auto mapOfNodeIds = LikelihoodUtils::getMapOfNodeIds(tree);
     subProcesses->addModel(subModel, mapOfNodeIds[1]);
-    SubstitutionProcess* nsubPro = subProcesses->clone();
-    
+    auto nsubPro = std::shared_ptr<bpp::SubstitutionProcessInterface>(subProcesses->clone());
+
+    // Check for constrainted params
     if (!constraintedParams.empty()) {
-        AbstractParameterAliasable* aliasable = dynamic_cast<AbstractParameterAliasable*>(nsubPro);
+        auto aliasable = dynamic_cast<AbstractParameterAliasable*>(nsubPro.get());
         LikelihoodUtils::setProcessConstraintedParams(constraintedParams, aliasable);
     }
 
     // Create likelihood object
     Context* context = new Context();
-    bool weightedRootFreqs = true;
-    auto lik = std::make_shared<LikelihoodCalculationSingleProcess>(*context, *m->container_->clone(), *nsubPro, weightedRootFreqs);
+    auto lik = std::make_shared<LikelihoodCalculationSingleProcess>(*context, m->container_, nsubPro);
     SingleProcessPhyloLikelihood* newLik = new SingleProcessPhyloLikelihood(*context, lik, lik->getParameters());
     return newLik;
 }
 
-std::map<uint, vector<uint>> LikelihoodUtils::getMapOfNodeIds(PhyloTree* tree) {
+std::map<uint, vector<uint>> LikelihoodUtils::getMapOfNodeIds(std::shared_ptr<bpp::PhyloTree> tree) {
     std::map<uint, vector<uint>> mapModelNodesIds;
     auto nodes = tree->getAllNodes();
     for (size_t i = 0; i < nodes.size(); i++){
@@ -44,11 +52,7 @@ std::map<uint, vector<uint>> LikelihoodUtils::getMapOfNodeIds(PhyloTree* tree) {
 }
 
 void LikelihoodUtils::deleteLikelihoodProcess(SingleProcessPhyloLikelihood* lik) {
-    auto sequenceData = lik->getData();
-    auto process = &(lik->getSubstitutionProcess());
-    auto context = &(lik->getContext());
-    delete process;
-    delete sequenceData;
+    auto context = &(lik->context());
     delete context;
     delete lik;
 }
@@ -93,7 +97,7 @@ void LikelihoodUtils::setProcessConstraintedParams(std::map<string, vector<strin
     ParameterList params = aliasable->getParameters();
     for (const auto& pair : constraintedParams) {
         string p1 = LikelihoodUtils::getParameterByName(params, pair.first);
-        for (const string s : pair.second) {
+        for (const string& s : pair.second) {
             string p2 = LikelihoodUtils::getParameterByName(params, s);
             aliasable->aliasParameters(p1,p2);
         }

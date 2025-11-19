@@ -11,12 +11,11 @@
 // from bpp-core
 #include <Bpp/Numeric/Matrix/MatrixTools.h>
 
-// from bpp-seq
-#include <Bpp/Seq/Alphabet/IntegerAlphabet.h>
 
 // local
 #include "GeneCountDependencyFunction.h"
 #include "ModelParameters.h"
+#include "GeneCountAlphabet.h"
 
 #define IgnoreParam -999
 #define NUM_MODEL_PARAMETERS 4
@@ -110,7 +109,7 @@ namespace bpp
 
   public:
     // Constructor
-    GeneCountSubstitutionModel(const IntegerAlphabet* alpha, std::map<int, vector<double>> mapOfParamValues, rootFreqType freqType, std::vector<int> rateChangeType, ModelParameters* m);
+    GeneCountSubstitutionModel(std::shared_ptr<bpp::GeneCountAlphabet>& alpha, std::map<int, vector<double>> mapOfParamValues, rootFreqType freqType, std::vector<int> rateChangeType, ModelParameters* m);
     virtual ~GeneCountSubstitutionModel() {
       if (gain_ != 0){
         delete gain_;
@@ -175,7 +174,7 @@ namespace bpp
     // Creates, sets and adds all relevant substitution model parameters
     void updateParameters(std::map<int, vector<double>> mapOfParamValues, std::vector<int> rateChangeType);
     // Fills the generator matrix with parameter values
-    void updateMatrices();
+    void updateMatrices_();
 
     void updateQWithGain(size_t i, size_t minChrNum);
     void updateQWithLoss(size_t i, size_t minChrNum);
