@@ -19,7 +19,7 @@ ModelParameters::ModelParameters(BppApplication GenEvol)
     ModelParameters::dataFilePath_ = ApplicationTools::getAFilePath("_dataPath", GenEvol.getParams(), true, true, "", true, "none", 1);
     ModelParameters::stateOverhead_ = ApplicationTools::getIntParameter("_stateOverhead", GenEvol.getParams(), STATE_OVERHEAD, "", true, -1);
     setAlphabetLimit(GenEvol);
-    ModelParameters::alphabet_ = new IntegerAlphabet(ModelParameters::maxState_, ModelParameters::minState_);
+    ModelParameters::alphabet_ = std::make_shared<bpp::GeneCountAlphabet>(ModelParameters::maxState_, ModelParameters::minState_);
     ModelParameters::container_ = readGeneFamilyFile(ModelParameters::dataFilePath_, ModelParameters::alphabet_);
     ModelParameters::rDist_ = PhylogeneticsApplicationTools::getRateDistribution(GenEvol.getParams(), "", true, true);
 
@@ -165,7 +165,7 @@ void ModelParameters::validateRateFunctionParameters() {
     }
 }
 
-VectorSiteContainer* ModelParameters::readGeneFamilyFile(const std::string& filePath, IntegerAlphabet* alphabet) {
+std::shared_ptr<VectorSiteContainer> ModelParameters::readGeneFamilyFile(const std::string& filePath, std::shared_ptr<const bpp::Alphabet> alphabet) {
     std::ifstream file(filePath);
     if (!file.is_open()) {
         throw std::runtime_error("Could not open file: " + filePath);
@@ -186,7 +186,7 @@ VectorSiteContainer* ModelParameters::readGeneFamilyFile(const std::string& file
     }
 
     // Create a sequence container
-    auto* container = new VectorSiteContainer(alphabet);
+    auto container = std::make_shared<VectorSiteContainer>(alphabet);
 
     while (std::getline(file, line)) {
         std::istringstream lineStream(line);
@@ -206,18 +206,18 @@ VectorSiteContainer* ModelParameters::readGeneFamilyFile(const std::string& file
 
         // Verify the number of gene counts matches the number of families
         if (geneCounts.size() != familyIds.size()) {
-            delete container;
             throw std::runtime_error("Mismatch between family count and data columns in file.");
         }
 
-        container->addSequence(BasicSequence(speciesName, geneCounts, alphabet), true);
+        std::unique_ptr<bpp::Sequence> seq = std::make_unique<bpp::Sequence>(speciesName, geneCounts, alphabet);
+        container->addSequence(speciesName, seq);
     }
     file.close();
     return container;
 }
 
 void ModelParameters::setConstraintedParams(BppApplication GenEvol, std::vector<string> inputParams, std::map<string, vector<string>>& outputParams) {
-    for (const string element: inputParams) {
+    for (const string& element: inputParams) {
         std::vector<std::string> paramList;
         std::stringstream ss(element); 
         std::string segment;

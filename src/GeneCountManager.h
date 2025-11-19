@@ -16,7 +16,7 @@ namespace bpp {
 class GeneCountManager {
 public:
     // Constructor
-    GeneCountManager(ModelParameters* m, PhyloTree* tree) {
+    GeneCountManager(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree) {
         m_ = m;
         tree_ = tree;
         likelihoodFunction_ = std::make_shared<MixtureModelLikelihoodFunction>(m, tree_);
@@ -33,7 +33,7 @@ public:
 
 private:
     ModelParameters* m_;
-    PhyloTree* tree_;
+    std::shared_ptr<bpp::PhyloTree> tree_;
     std::vector<SingleProcessPhyloLikelihood*> vectorOfLikelihoods;
     std::shared_ptr<MixtureModelLikelihoodFunction> likelihoodFunction_;
 };

@@ -11,12 +11,13 @@
 #include <Bpp/App/ApplicationTools.h>
 
 
-#include <Bpp/Seq/Alphabet/IntegerAlphabet.h>
+#include <Bpp/Seq/Sequence.h>
 #include <Bpp/Seq/Container/VectorSiteContainer.h>
 
 #include <Bpp/Phyl/App/PhylogeneticsApplicationTools.h>
 
 #include "GeneCountDependencyFunction.h"
+#include "GeneCountAlphabet.h"
 
 using namespace std;
 using namespace bpp;
@@ -38,8 +39,8 @@ public: // Variables
     double betaLoss_;
     double mixtureInnovation_;
     double mixtureElimination_;
-    IntegerAlphabet* alphabet_;
-    VectorSiteContainer* container_;
+    std::shared_ptr<GeneCountAlphabet> alphabet_;
+    std::shared_ptr<VectorSiteContainer> container_;
     std::map<int, std::vector<double>> paramMap_;
     std::vector<int> mixtureRateChangeType_;
     std::vector<int> rateChangeType_;
@@ -72,7 +73,7 @@ public:
 private:
     void setAlphabetLimit(BppApplication GenEvol);
     void setBaseModelParameters(BppApplication GenEvol);
-    VectorSiteContainer* readGeneFamilyFile(const std::string& filePath, IntegerAlphabet* alphabet);
+    std::shared_ptr<VectorSiteContainer> readGeneFamilyFile(const std::string& filePath, std::shared_ptr<const bpp::Alphabet> alphabet);
     void setRateFunctionTypes(BppApplication GenEvol);
     void validateRateFunctionParameters();
     void setConstraintedParams(BppApplication GenEvol, std::vector<string> inputParams, std::map<string, vector<string>>& outputParams);

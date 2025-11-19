@@ -4,6 +4,7 @@
 
 // From bpp-core
 #include <Bpp/Numeric/Function/BrentOneDimension.h>
+#include <Bpp/Numeric/Function/Functions.h>
 #include <Bpp/Numeric/AutoParameter.h>
 #include <Bpp/Numeric/Prob/GammaDiscreteDistribution.h>
 #include <Bpp/App/BppApplication.h>
@@ -34,8 +35,9 @@ using namespace bpp;
 using namespace std;
 
 void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoodProcess, ModelParameters* m,double tol, unsigned int maxNumOfIterations, bool mixed=false, unsigned curentIterNum=0);
-double getTreeScalingFactor(ModelParameters* m, PhyloTree* tree);
+double getTreeScalingFactor(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree);
 int countUniqueStates(const Site site);
+double getTotalLength(std::shared_ptr<bpp::PhyloTree> tree);
 
 int main(int args, char **argv) {
     // Set model data and parameters
@@ -44,7 +46,7 @@ int main(int args, char **argv) {
 
     // Get tree and rescale it
     Newick reader;
-    PhyloTree* tree_ = reader.readPhyloTree(m->treeFilePath_);
+    std::shared_ptr<bpp::PhyloTree> tree_ = std::move(reader.readPhyloTree(m->treeFilePath_));
     double scale_tree_factor = getTreeScalingFactor(m, tree_);
     tree_->scaleTree(scale_tree_factor);
 
@@ -84,26 +86,27 @@ int countUniqueStates(const Site site) {
     return uniqueStates.size();
 }
 
-double getTreeScalingFactor(ModelParameters* m, PhyloTree* tree) {
-    VectorSiteContainer* container = m->container_;
+double getTreeScalingFactor(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree) {
+    auto container = m->container_;
     if (m->branchMul_ != -999) {
         return m->branchMul_;
     }
     int uniqueStateCount = 0;
     // Iterate over all sites (columns)
     for (size_t i = 0; i < container->getNumberOfSites(); i++) {
-        const Site site = container->getSite(i);
+        const Site site = container->site(i);
         uniqueStateCount += countUniqueStates(site);
     }
     double avgUniqueStateCount = uniqueStateCount/container->getNumberOfSites();
-    return avgUniqueStateCount/tree->getTotalLength();
+    double totalLength = getTotalLength(tree);
+    return avgUniqueStateCount/totalLength;
 }
 
 void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoodProcess, ModelParameters* m,double tol, unsigned int maxNumOfIterations, bool mixed, unsigned curentIterNum)
 {
     // Initialize optimizer
-    DerivableSecondOrder* f = likelihoodProcess;
-    BrentOneDimension* optimizer = new BrentOneDimension(f);
+    SecondOrderDerivable* f = likelihoodProcess;
+    BrentOneDimension* optimizer = new BrentOneDimension(std::shared_ptr<SecondOrderDerivable>(f));
     optimizer->setVerbose(1);
     optimizer->setProfiler(0);
     optimizer->setMessageHandler(0);
@@ -111,7 +114,7 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
     optimizer->setMaximumNumberOfEvaluations(100);
 
     // Can use BRACKET_INWARD or BRACKET_OUTWARD instead
-    optimizer->setBracketing(BrentOneDimension::BRACKET_SIMPLE);
+    optimizer->setBracketing(BrentOneDimension::BRACKET_OUTWARD);
 
     // initializing the likelihood values
     double currentLikelihood = likelihoodProcess->getValue();
@@ -144,7 +147,7 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
         {
             double lowerBound, upperBound;            
             const string nameOfParam = parametersNames[j];
-            std::cout << "Previous value of "+ nameOfParam + " is: "+ std::to_string(params.getParameter(nameOfParam).getValue()) << std::endl;
+            std::cout << "Previous value of "+ nameOfParam + " is: "+ std::to_string(params.getParameter(nameOfParam)->getValue()) << std::endl;
 
             if (LikelihoodUtils::isFixedParam(nameOfParam, m->fixedParams_)) {
                 std::cout << "Skipping " << nameOfParam << std::endl;
@@ -173,18 +176,10 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
             std::cout << "Parameter name is: " + nameOfParam << std::endl;
             optimizer->getStopCondition()->setTolerance(tol);
             optimizer->setInitialInterval(lowerBound, upperBound);
-            std::cout << "think its here" << std::endl;
-            std::cout << lowerBound << "----" << upperBound << std::endl;
-            std::cout << "Index " <<  index << std::endl;
-            for (size_t i = 0; i <  params.createSubList(nameOfParam).size(); ++i) {
-                std::cout << params.createSubList(nameOfParam)[i].getValue() << std::endl;
-            }
-            std::cout << params.createSubList(nameOfParam).size() << std::endl;
             optimizer->init(params.createSubList(nameOfParam));
-            std::cout << "maybe not" << std::endl;
             currentLikelihood = optimizer->optimize();
             std::cout << "\nCurrent likelihood: " + std::to_string(currentLikelihood) << std::endl;
-            std::cout << nameOfParam + " parameter value after optimization "+ std::to_string(likelihoodProcess->getParameters().getParameter(nameOfParam).getValue()) << std::endl;
+            std::cout << nameOfParam + " parameter value after optimization "+ std::to_string(likelihoodProcess->getParameters().getParameter(nameOfParam)->getValue()) << std::endl;
         }
 
         if (std::abs(prevLikelihood-currentLikelihood) < tol){
@@ -193,4 +188,13 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
 
     }
     delete optimizer;
+}
+
+double getTotalLength(std::shared_ptr<bpp::PhyloTree> tree) {
+    double treeLength = 0;
+    Vdouble branchLengths = tree->getBranchLengths();
+    for (size_t i = 0; i < branchLengths.size(); i++){
+        treeLength += branchLengths[i];
+    }
+    return treeLength;
 }

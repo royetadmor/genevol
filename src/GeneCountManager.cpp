@@ -8,7 +8,7 @@ void GeneCountManager::optimizeMixtureModelParametersOneDimension(double tol, un
 {
     // Initialize optimizer
     auto f = likelihoodFunction_.get();
-    BrentOneDimension* optimizer = new BrentOneDimension(f);
+    BrentOneDimension* optimizer = new BrentOneDimension(likelihoodFunction_);
     optimizer->setVerbose(1);
     optimizer->setProfiler(0);
     optimizer->setMessageHandler(0);
@@ -16,7 +16,7 @@ void GeneCountManager::optimizeMixtureModelParametersOneDimension(double tol, un
     optimizer->setMaximumNumberOfEvaluations(100);
     optimizer->getStopCondition()->setTolerance(tol);
     // Can use BRACKET_INWARD or BRACKET_OUTWARD instead
-    optimizer->setBracketing(BrentOneDimension::BRACKET_SIMPLE);
+    optimizer->setBracketing(BrentOneDimension::BRACKET_INWARD);
 
     // initializing the likelihood values
     double currentLikelihood = f->getValue();
@@ -42,7 +42,7 @@ void GeneCountManager::optimizeMixtureModelParametersOneDimension(double tol, un
         {
             double lowerBound, upperBound;            
             const string nameOfParam = parametersNames[j];
-            std::cout << "Previous value of "+ nameOfParam + " is: "+ std::to_string(params.getParameter(nameOfParam).getValue()) << std::endl;
+            std::cout << "Previous value of "+ nameOfParam + " is: "+ std::to_string(params.getParameter(nameOfParam)->getValue()) << std::endl;
 
             if (LikelihoodUtils::isFixedParam(nameOfParam, m_->mixtureFixedParams_)) {
                 std::cout << "Skipping " << nameOfParam << std::endl;
@@ -77,7 +77,7 @@ void GeneCountManager::optimizeMixtureModelParametersOneDimension(double tol, un
             optimizer->init(params.createSubList(nameOfParam));
             currentLikelihood = optimizer->optimize();
             std::cout << "\nCurrent likelihood: " + std::to_string(currentLikelihood) << std::endl;
-            std::cout << nameOfParam + " parameter value after optimization "+ std::to_string(f->getParameters().getParameter(nameOfParam).getValue()) << std::endl;
+            std::cout << nameOfParam + " parameter value after optimization "+ std::to_string(f->getParameters().getParameter(nameOfParam)->getValue()) << std::endl;
         }
 
         if (std::abs(prevLikelihood-currentLikelihood) < tol){

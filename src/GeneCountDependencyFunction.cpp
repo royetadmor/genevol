@@ -26,22 +26,22 @@ double LinearDependencyFunction::getRate(std::vector<Parameter*> params, size_t 
 
 void LinearDependencyFunction::updateBounds(ParameterList& params, std::vector<string> paramsNames, size_t index, double* lowerBound, double* upperBound, int maxChrNum){
   if (index == 0){
-    *lowerBound = std::max(lowerBoundOfRateParam, -params.getParameter(paramsNames[1]).getValue()*(maxChrNum-1));
+    *lowerBound = std::max(lowerBoundOfRateParam, -params.getParameter(paramsNames[1])->getValue()*(maxChrNum-1));
     *upperBound = upperBoundOfRateParam;
     
   }else if (index == 1){
-    *lowerBound = -params.getParameter(paramsNames[0]).getValue()/(maxChrNum-1);
+    *lowerBound = -params.getParameter(paramsNames[0])->getValue()/(maxChrNum-1);
     *upperBound = upperBoundLinearRateParam;   
   }else{
     throw Exception("LinearDependencyFunction::updateBounds(): index out of bounds!!");
     
   }
-  std::shared_ptr<IntervalConstraint> interval = dynamic_pointer_cast<IntervalConstraint>(params.getParameter(paramsNames[index]).getConstraint());
+  std::shared_ptr<IntervalConstraint> interval = dynamic_pointer_cast<IntervalConstraint>(params.getParameter(paramsNames[index])->getConstraint());
   interval->setLowerBound(*lowerBound, interval->strictLowerBound());
 }
 
-void LinearDependencyFunction::updateBounds(Function* f, const std::string &paramName, double &lowerBound, double &upperBound){
-  std::shared_ptr<IntervalConstraint> interval = dynamic_pointer_cast<IntervalConstraint>((&(f->getParameter(paramName)))->getConstraint());
+void LinearDependencyFunction::updateBounds(FunctionInterface* f, const std::string &paramName, double &lowerBound, double &upperBound){
+  std::shared_ptr<IntervalConstraint> interval = dynamic_pointer_cast<IntervalConstraint>(((f->getParameters().getParameter(paramName)))->getConstraint());
   interval->setLowerBound(lowerBound, interval->strictLowerBound());
 
 }

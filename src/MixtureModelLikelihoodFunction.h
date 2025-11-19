@@ -21,12 +21,12 @@ using namespace std;
 
 namespace bpp {
     class MixtureModelLikelihoodFunction : 
-        public Function,
+        public FunctionInterface,
         public AbstractParameterAliasable
     {
         private:
             ModelParameters* m_;
-            PhyloTree* tree_;
+            std::shared_ptr<bpp::PhyloTree> tree_;
             int categories_;
             double fval_;
             std::map<int, std::vector<std::string>> rateParams;
@@ -58,15 +58,15 @@ namespace bpp {
                 
             }
         public:
-            MixtureModelLikelihoodFunction(ModelParameters* m, PhyloTree* tree) : AbstractParameterAliasable(""),  Function() {
+            MixtureModelLikelihoodFunction(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree) : AbstractParameterAliasable(""),  FunctionInterface() {
                 m_ = m;
                 tree_ = tree;
                 categories_ = m->categories_;
                 // Basic parameters
                 // TODO: fix hardcoded intervals
-                addParameter_(new Parameter("alphaGain0_1", m->alphaGain_, make_shared<IntervalConstraint>(0.5, 45, false, true)));
+                addParameter_(new Parameter("alphaGain0_1", m->alphaGain_, make_shared<IntervalConstraint>(0.5, 30, false, true)));
                 addParameter_(new Parameter("betaGain0_1", m->betaGain_, make_shared<IntervalConstraint>(0.5, 5, false, true)));
-                addParameter_(new Parameter("alphaLoss0_1", m->alphaLoss_, make_shared<IntervalConstraint>(0.5, 45, false, true)));
+                addParameter_(new Parameter("alphaLoss0_1", m->alphaLoss_, make_shared<IntervalConstraint>(0.5, 30, false, true)));
                 addParameter_(new Parameter("betaLoss0_1", m->betaLoss_, make_shared<IntervalConstraint>(0.5, 5, false, true)));
                 addParameter_(new Parameter("innovation0_1", m->mixtureInnovation_, make_shared<IntervalConstraint>(0.5, 100, false, true)));
                 addParameter_(new Parameter("elimination0_1", m->mixtureElimination_, make_shared<IntervalConstraint>(0.5, 100, false, true)));

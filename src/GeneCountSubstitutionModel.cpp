@@ -13,13 +13,13 @@ const std::map<int, std::string> GeneCountSubstitutionModel::eventTypeToString =
 };
 
 // Constructor
-GeneCountSubstitutionModel::GeneCountSubstitutionModel(const IntegerAlphabet* alpha,
+GeneCountSubstitutionModel::GeneCountSubstitutionModel(std::shared_ptr<bpp::GeneCountAlphabet>& alpha,
   std::map<int, vector<double>> mapOfParamValues,
   rootFreqType freqType,
   std::vector<int> rateChangeType,
   ModelParameters* m):
     AbstractParameterAliasable("GeneCount."),
-    AbstractSubstitutionModel(alpha, std::shared_ptr<const StateMap>(new CanonicalStateMap(alpha, false)), "GeneCount."),
+    AbstractSubstitutionModel(alpha, std::make_shared<const CanonicalStateMap>(alpha, false), "GeneCount."),
     gain_(0),
     loss_(0),
     innovation_(0),
@@ -36,7 +36,7 @@ GeneCountSubstitutionModel::GeneCountSubstitutionModel(const IntegerAlphabet* al
   updateParameters(mapOfParamValues, rateChangeType);
   computeFrequencies(false);//TODO: should we actually do this?
   isScalable_ = false;
-  updateMatrices();
+  updateMatrices_();
 }
 
 GeneCountDependencyFunction* compositeParameter::getDependencyFunction(GeneCountDependencyFunction::FunctionType funcType){
@@ -127,10 +127,10 @@ std::vector<Parameter*> GeneCountSubstitutionModel::createRateParameter(GeneCoun
   return params;
 }
 
-void GeneCountSubstitutionModel::updateMatrices() {
+void GeneCountSubstitutionModel::updateMatrices_() {
  //update model parameters
   matchParametersValues(getParameters());
-
+  
   //update generator matrix
   size_t maxChrNum = (size_t)(maxState_);
   size_t minChrNum = (size_t)(minState_); 
@@ -442,7 +442,7 @@ void GeneCountSubstitutionModel::updateEigenMatrices()
       // is it diagonalizable ?
       isDiagonalizable_ = true;
 
-      if (!dynamic_cast<ReversibleSubstitutionModel*>(this))
+      if (!dynamic_cast<ReversibleSubstitutionModelInterface*>(this))
       {
         for (auto& vi : iEigenValues_)
         {
@@ -456,7 +456,7 @@ void GeneCountSubstitutionModel::updateEigenMatrices()
       
       // looking for the vector of 0 eigenvalues
 
-      vector<size_t> vNullEv;
+      std::vector<size_t> vNullEv;
       for (size_t i = 0; i< salph - nbStop; i++)
         if ((bpp::ExtendedFloat::convert(abs(eigenValues_[i])) < NumConstants::SMALL()) && (bpp::ExtendedFloat::convert(abs(iEigenValues_[i])) < NumConstants::SMALL()))
           vNullEv.push_back(i);
