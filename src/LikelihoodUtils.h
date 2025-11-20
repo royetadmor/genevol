@@ -40,7 +40,7 @@ namespace bpp{
         static void deleteLikelihoodProcess(SingleProcessPhyloLikelihood* lik);
         static int getParamIndex(string name);
         static std::vector<string> filterParamsByName(std::vector<std::string> listOfParams, std::string paramName);
-        static SingleProcessPhyloLikelihood* createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, vector<string>> constraintedParams, DiscreteDistribution* rDist);
+        static SingleProcessPhyloLikelihood* createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, vector<string>> constraintedParams, std::shared_ptr<DiscreteDistributionInterface> rDist);
         static void setProcessConstraintedParams(std::map<string, vector<string>> constraintedParams, AbstractParameterAliasable* process);
         static bool isFixedParam(const std::string& name, const std::vector<string> params);
     private:

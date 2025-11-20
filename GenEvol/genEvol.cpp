@@ -124,7 +124,7 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
     std::vector<int> rateChangeType = m->rateChangeType_;
 
     
-    ParameterList rParams = likelihoodProcess->getSubstitutionProcess().getRateDistributionParameters(true);
+    ParameterList rParams = likelihoodProcess->getRateDistributionParameters();
     vector<string> rParamsNames = rParams.getParameterNames();
     vector<string> parametersNames = likelihoodProcess->getSubstitutionModelParameters().getParameterNames();
     parametersNames.insert(parametersNames.end(), rParamsNames.begin(), rParamsNames.end()); 
@@ -133,11 +133,11 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
     for (size_t i = 0; i < params.size(); ++i) {
         if (params[i].getName().find("Gamma") != std::string::npos) {
             std::cout << "Found!" << std::endl;
-            std::shared_ptr<IntervalConstraint> interval = make_shared<IntervalConstraint>(0, 100, false, true);
+            std::shared_ptr<IntervalConstraint> interval = make_shared<IntervalConstraint>(0.05, 100, false, true);
             params[i].setConstraint(interval);
         }
     }
-    
+
     size_t nbParams = parametersNames.size();
     // starting iterations of optimization
     for (size_t i = 0; i < maxNumOfIterations; i++)
@@ -147,7 +147,7 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
         {
             double lowerBound, upperBound;            
             const string nameOfParam = parametersNames[j];
-            std::cout << "Previous value of "+ nameOfParam + " is: "+ std::to_string(params.getParameter(nameOfParam)->getValue()) << std::endl;
+            std::cout << "Previous value of "+ nameOfParam + " is: "+ std::to_string(likelihoodProcess->getParameters().getParameter(nameOfParam)->getValue()) << std::endl;
 
             if (LikelihoodUtils::isFixedParam(nameOfParam, m->fixedParams_)) {
                 std::cout << "Skipping " << nameOfParam << std::endl;
@@ -170,7 +170,7 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
             functionOp->setDomainsIfNeeded(minDomain, maxDomain);
             functionOp->updateBounds(params, paramsNames, index, &lowerBound, &upperBound, maxDomain);
             functionOp->updateBounds(f, nameOfParam, lowerBound, upperBound);
-
+            
 
             delete functionOp;
             std::cout << "Parameter name is: " + nameOfParam << std::endl;

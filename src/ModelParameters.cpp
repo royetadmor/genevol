@@ -21,7 +21,7 @@ ModelParameters::ModelParameters(BppApplication GenEvol)
     setAlphabetLimit(GenEvol);
     ModelParameters::alphabet_ = std::make_shared<bpp::GeneCountAlphabet>(ModelParameters::maxState_, ModelParameters::minState_);
     ModelParameters::container_ = readGeneFamilyFile(ModelParameters::dataFilePath_, ModelParameters::alphabet_);
-    ModelParameters::rDist_ = PhylogeneticsApplicationTools::getRateDistribution(GenEvol.getParams(), "", true, true);
+    ModelParameters::rDist_ = std::move(PhylogeneticsApplicationTools::getRateDistribution(GenEvol.getParams(), "", true, true));
 
     // Load customization params
     ModelParameters::countRange_ = ApplicationTools::getIntParameter("_countRange", GenEvol.getParams(), ModelParameters::maxState_ - ModelParameters::minState_ + 1, "", true, 1);

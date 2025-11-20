@@ -4,11 +4,10 @@ using namespace bpp;
 using namespace std;
 
 
-SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, vector<string>> constraintedParams, DiscreteDistribution* rDist) {
+SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, vector<string>> constraintedParams, std::shared_ptr<DiscreteDistributionInterface> rDist) {
   
     // Create substitution process components
-    std::shared_ptr<DiscreteDistributionInterface> gammaDist = std::shared_ptr<DiscreteDistributionInterface>(rDist);
-    auto parTree = std::make_shared<ParametrizablePhyloTree>(tree);
+    auto parTree = std::make_shared<ParametrizablePhyloTree>(*tree);
 
     // Create substitution model
     std::shared_ptr<GeneCountSubstitutionModel> subModel = std::make_shared<GeneCountSubstitutionModel>(m->alphabet_, rateParams, GeneCountSubstitutionModel::rootFreqType::ROOT_LL, rateChangeType, m);
@@ -20,7 +19,7 @@ SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelPara
     std::shared_ptr<FrequencySetInterface> rootFrequencies = static_pointer_cast<FrequencySetInterface>(rootFreqsFixed);
 
     // Create substitution process
-    std::shared_ptr<NonHomogeneousSubstitutionProcess> subProcesses = std::make_shared<NonHomogeneousSubstitutionProcess>(gammaDist, parTree, rootFrequencies);
+    std::shared_ptr<NonHomogeneousSubstitutionProcess> subProcesses = std::make_shared<NonHomogeneousSubstitutionProcess>(rDist, parTree, rootFrequencies);
     auto mapOfNodeIds = LikelihoodUtils::getMapOfNodeIds(tree);
     subProcesses->addModel(subModel, mapOfNodeIds[1]);
     auto nsubPro = std::shared_ptr<bpp::SubstitutionProcessInterface>(subProcesses->clone());
