@@ -274,7 +274,6 @@ const Matrix<double>& GeneCountSubstitutionModel::getPij_t(double t) const
       for (size_t j = 0; j < size_; j++){
         if (pijt_(i,j) < 0){
           pijt_(i,j) = NumConstants::VERY_TINY(); // trying to do it exactly as in ChromEvol. Maybe the "nan" problem will be solved
-          //pijt_(i,j) = 0;
         }
         else if (pijt_(i, j) > 1){
           pijt_(i,j) = 1.0;
@@ -351,7 +350,7 @@ void GeneCountSubstitutionModel::updateEigenMatrices()
 
     for (size_t i = 0; i < salph; i++)
     {
-      if (abs(generator_(i, i)) < NumConstants::TINY())
+      if (bpp::ExtendedFloat::convert(abs(generator_(i, i))) < NumConstants::TINY())
       {
         nbStop++;
         vnull[i]=true;
@@ -458,7 +457,7 @@ void GeneCountSubstitutionModel::updateEigenMatrices()
 
       std::vector<size_t> vNullEv;
       for (size_t i = 0; i< salph - nbStop; i++)
-        if ((abs(eigenValues_[i]) < NumConstants::SMALL()) && (abs(iEigenValues_[i]) < NumConstants::SMALL()))
+        if ((bpp::ExtendedFloat::convert(abs(eigenValues_[i])) < NumConstants::SMALL()) && (bpp::ExtendedFloat::convert(abs(iEigenValues_[i])) < NumConstants::SMALL()))
           vNullEv.push_back(i);
       
 
