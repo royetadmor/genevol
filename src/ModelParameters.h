@@ -46,8 +46,8 @@ public: // Variables
     std::vector<int> rateChangeType_;
     std::vector<string> fixedParams_;
     std::vector<string> mixtureFixedParams_;
-    std::map<string, vector<string>> constraintedParams_;
-    std::map<string, vector<string>> mixtureConstraintedParams_;
+    std::map<string, string> constraintedParams_;
+    std::map<string, string> mixtureConstraintedParams_;
     std::shared_ptr<DiscreteDistributionInterface> rDist_;
 
     // Translates rate functions from string to int
@@ -76,7 +76,7 @@ private:
     std::shared_ptr<VectorSiteContainer> readGeneFamilyFile(const std::string& filePath, std::shared_ptr<const bpp::Alphabet> alphabet);
     void setRateFunctionTypes(BppApplication GenEvol);
     void validateRateFunctionParameters();
-    void setConstraintedParams(BppApplication GenEvol, std::vector<string> inputParams, std::map<string, vector<string>>& outputParams);
+    void setConstraintedParams(BppApplication GenEvol, std::vector<string> inputParams, std::map<string, string>& outputParams);
 };
 
 

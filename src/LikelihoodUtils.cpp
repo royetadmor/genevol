@@ -4,7 +4,7 @@ using namespace bpp;
 using namespace std;
 
 
-SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, vector<string>> constraintedParams, std::shared_ptr<DiscreteDistributionInterface> rDist) {
+SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, string> constraintedParams, std::shared_ptr<DiscreteDistributionInterface> rDist) {
   
     // Create substitution process components
     auto parTree = std::make_shared<ParametrizablePhyloTree>(*tree);
@@ -105,30 +105,36 @@ std::vector<string> LikelihoodUtils::filterParamsByName(std::vector<std::string>
     return result;
 }
 
-void LikelihoodUtils::setProcessConstraintedParams(std::map<string, vector<string>> constraintedParams, AbstractParameterAliasable* aliasable) {
+void LikelihoodUtils::setProcessConstraintedParams(std::map<string, string> constraintedParams, AbstractParameterAliasable* aliasable) {
     ParameterList params = aliasable->getParameters();
     for (const auto& pair : constraintedParams) {
-        string p1 = LikelihoodUtils::getParameterByName(params, pair.first);
-        for (const string& s : pair.second) {
-            string p2 = LikelihoodUtils::getParameterByName(params, s);
-            aliasable->aliasParameters(p1,p2);
+        vector<string> p1 = LikelihoodUtils::getParametersByName(params, pair.first);
+        vector<string> p2 = LikelihoodUtils::getParametersByName(params, pair.second);
+        for (const auto& s1 : p1) {
+            for (const auto& s2 : p2) {
+                if (s1.substr(s1.size() - 3) == s2.substr(s2.size() - 3)) {
+                    std::cout << "Aliasing " << s1 << " <-> " << s2 << std::endl;
+                    aliasable->aliasParameters(s1,s2);
+                    continue;
+                }
+            }
         }
     }
 }
 
-// Given a parameter name, returns the matching parameter name from the substitution model
-// i.e., if the parameter name is "gain", it will return "GeneCount.gain0_1" etc.
-string LikelihoodUtils::getParameterByName(ParameterList params, string name) {
+// Given a parameter name, returns all matching parameters names from the substitution model
+// i.e., if the parameter name is "gain", it will return "GeneCount.gain0_1, GeneCount.gain1_1" etc.
+vector<string> LikelihoodUtils::getParametersByName(ParameterList params, string name) {
+    vector<string> res;
     for (size_t i = 0; i < params.size(); ++i)
     {
         const string paramName = params[i].getName();
         if (paramName.find(name) != std::string::npos) // substring found
         {
-            return paramName;
+            res.push_back(paramName);
         }
     }
-    const string err = "Parameter name not found: " + name;
-    throw std::runtime_error(err);
+    return res;
 }
 
 bool LikelihoodUtils::isFixedParam(const std::string& name, const std::vector<string> params) {

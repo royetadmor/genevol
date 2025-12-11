@@ -216,7 +216,7 @@ std::shared_ptr<VectorSiteContainer> ModelParameters::readGeneFamilyFile(const s
     return container;
 }
 
-void ModelParameters::setConstraintedParams(BppApplication GenEvol, std::vector<string> inputParams, std::map<string, vector<string>>& outputParams) {
+void ModelParameters::setConstraintedParams(BppApplication GenEvol, std::vector<string> inputParams, std::map<string, string>& outputParams) {
     for (const string& element: inputParams) {
         std::vector<std::string> paramList;
         std::stringstream ss(element); 
@@ -229,6 +229,6 @@ void ModelParameters::setConstraintedParams(BppApplication GenEvol, std::vector<
         if (paramList.size() != 2) {
             throw std::runtime_error("Each constraint should contain exactly 2 parameters");
         }
-        outputParams[paramList[0]].push_back(paramList[1]);
+        outputParams[paramList[0]] = paramList[1];
     }
 }

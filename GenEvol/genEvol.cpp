@@ -124,19 +124,11 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
     std::vector<int> rateChangeType = m->rateChangeType_;
 
     
-    ParameterList rParams = likelihoodProcess->getRateDistributionParameters();
-    vector<string> rParamsNames = rParams.getParameterNames();
+    vector<string> rParamsNames = likelihoodProcess->getRateDistributionParameters().getParameterNames();
     vector<string> parametersNames = likelihoodProcess->getSubstitutionModelParameters().getParameterNames();
     parametersNames.insert(parametersNames.end(), rParamsNames.begin(), rParamsNames.end()); 
     ParameterList params = likelihoodProcess->getParameters();
 
-    for (size_t i = 0; i < params.size(); ++i) {
-        if (params[i].getName().find("Gamma") != std::string::npos) {
-            std::cout << "Found!" << std::endl;
-            std::shared_ptr<IntervalConstraint> interval = make_shared<IntervalConstraint>(0.05, 100, false, true);
-            params[i].setConstraint(interval);
-        }
-    }
 
     size_t nbParams = parametersNames.size();
     // starting iterations of optimization
@@ -158,21 +150,19 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
             std::vector<string> paramsNames = LikelihoodUtils::filterParamsByName(parametersNames, nameOfParam);
 
             size_t index = LikelihoodUtils::getParamIndex(nameOfParam);
-            GeneCountDependencyFunction* functionOp;
 
             if (nameOfParam.find("Gamma") != std::string::npos) {
-                functionOp = compositeParameter::getDependencyFunction(static_cast<GeneCountDependencyFunction::FunctionType>(0));
+                upperBound = 100; //TODO: make this a little more pretty (Gamma.alpha has constraint exception with regular bound)
             } else {
+                GeneCountDependencyFunction* functionOp;
                 GeneCountDependencyFunction::FunctionType funcType = static_cast<GeneCountDependencyFunction::FunctionType>(rateChangeType[GeneCountSubstitutionModel::getParamIndexByName(nameOfParam)]);
                 functionOp = compositeParameter::getDependencyFunction(funcType);
+                functionOp->setDomainsIfNeeded(minDomain, maxDomain);
+                functionOp->updateBounds(params, paramsNames, index, &lowerBound, &upperBound, maxDomain);
+                functionOp->updateBounds(f, nameOfParam, lowerBound, upperBound);
+                delete functionOp;
             };
-
-            functionOp->setDomainsIfNeeded(minDomain, maxDomain);
-            functionOp->updateBounds(params, paramsNames, index, &lowerBound, &upperBound, maxDomain);
-            functionOp->updateBounds(f, nameOfParam, lowerBound, upperBound);
             
-
-            delete functionOp;
             std::cout << "Parameter name is: " + nameOfParam << std::endl;
             optimizer->getStopCondition()->setTolerance(tol);
             optimizer->setInitialInterval(lowerBound, upperBound);
