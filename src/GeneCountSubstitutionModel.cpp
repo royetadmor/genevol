@@ -108,17 +108,7 @@ std::vector<Parameter*> GeneCountSubstitutionModel::createRateParameter(GeneCoun
     GeneCountDependencyFunction* functionOp = compositeParameter::getDependencyFunction(func);
     functionOp->setDomainsIfNeeded(minState_, maxState_);
     functionOp->getAbsoluteBounds(i, &lowerBound, &upperBound, maxState_);
-    //TODO: might be relevant, keeping for now
-    // if ((simulated_) && (lowerBound > paramValue)){
-    //   lowerBound = paramValue - EPSILON;
-
-    // }
     delete functionOp;
-
-    //TODO: might be relevant, keeping for now
-    // if (simulated_ && upperBound <= paramValue){
-    //   upperBound = paramValue + EPSILON;
-    // }
     std::shared_ptr<IntervalConstraint> interval = make_shared<IntervalConstraint>(lowerBound, upperBound, false, true);
     Parameter* param = new Parameter("GeneCount."+ paramName + std::to_string(i), paramValue, interval);
     params.push_back(param);
@@ -358,7 +348,6 @@ void GeneCountSubstitutionModel::updateEigenMatrices()
       else
         vnull[i]=false;
     }
-        
     if (nbStop != 0)
     {
       size_t salphok=salph - nbStop;

@@ -30,14 +30,12 @@
 #include "GeneCountManager.h"
 #include "GeneCountDependencyFunction.h"
 #include "GeneCountSubstitutionModel.h"
+#include "TreeUtils.h"
 
 using namespace bpp;
 using namespace std;
 
 void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoodProcess, ModelParameters* m,double tol, unsigned int maxNumOfIterations, bool mixed=false, unsigned curentIterNum=0);
-double getTreeScalingFactor(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree);
-int countUniqueStates(const Site site);
-double getTotalLength(std::shared_ptr<bpp::PhyloTree> tree);
 
 int main(int args, char **argv) {
     // Set model data and parameters
@@ -47,7 +45,7 @@ int main(int args, char **argv) {
     // Get tree and rescale it
     Newick reader;
     std::shared_ptr<bpp::PhyloTree> tree_ = std::move(reader.readPhyloTree(m->treeFilePath_));
-    double scale_tree_factor = getTreeScalingFactor(m, tree_);
+    double scale_tree_factor = TreeUtils::getTreeScalingFactor(m, tree_);
     tree_->scaleTree(scale_tree_factor);
 
     // Define substitution parameters
@@ -68,38 +66,14 @@ int main(int args, char **argv) {
     optimizeModelParametersOneDimension(likProc, m, 0.1, 2);
 
     // Create mixture model, calculate likelihood and optimize
-    auto geneCountManager = std::make_shared<GeneCountManager>(m, tree_);
-    std::cout << "MM Likelihood: " << geneCountManager->getLikelihood() << std::endl;
-    geneCountManager->optimizeMixtureModelParametersOneDimension(0.1, 2);
-    std::cout << geneCountManager->getLikelihood() << std::endl;
-    std::cout << geneCountManager->calculateAIC() << std::endl;
+    // auto geneCountManager = std::make_shared<GeneCountManager>(m, tree_);
+    // std::cout << "MM Likelihood: " << geneCountManager->getLikelihood() << std::endl;
+    // geneCountManager->optimizeMixtureModelParametersOneDimension(0.1, 2);
+    // std::cout << geneCountManager->getLikelihood() << std::endl;
+    // std::cout << geneCountManager->calculateAIC() << std::endl;
 
     GenEvol.done();
     return 0;
-}
-
-int countUniqueStates(const Site site) {
-    std::set<int> uniqueStates;
-    for (size_t j = 0; j < site.size(); j++) {
-        uniqueStates.insert(site[j]); 
-    }
-    return uniqueStates.size();
-}
-
-double getTreeScalingFactor(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree) {
-    auto container = m->container_;
-    if (m->branchMul_ != -999) {
-        return m->branchMul_;
-    }
-    int uniqueStateCount = 0;
-    // Iterate over all sites (columns)
-    for (size_t i = 0; i < container->getNumberOfSites(); i++) {
-        const Site site = container->site(i);
-        uniqueStateCount += countUniqueStates(site);
-    }
-    double avgUniqueStateCount = uniqueStateCount/container->getNumberOfSites();
-    double totalLength = getTotalLength(tree);
-    return avgUniqueStateCount/totalLength;
 }
 
 void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoodProcess, ModelParameters* m,double tol, unsigned int maxNumOfIterations, bool mixed, unsigned curentIterNum)
@@ -151,8 +125,10 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
 
             size_t index = LikelihoodUtils::getParamIndex(nameOfParam);
 
+            // Handle bound calculation for gamma dist params
             if (nameOfParam.find("Gamma") != std::string::npos) {
-                upperBound = 100; //TODO: make this a little more pretty (Gamma.alpha has constraint exception with regular bound)
+                lowerBound = 0.05;
+                upperBound = 100;
             } else {
                 GeneCountDependencyFunction* functionOp;
                 GeneCountDependencyFunction::FunctionType funcType = static_cast<GeneCountDependencyFunction::FunctionType>(rateChangeType[GeneCountSubstitutionModel::getParamIndexByName(nameOfParam)]);
@@ -178,13 +154,4 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
 
     }
     delete optimizer;
-}
-
-double getTotalLength(std::shared_ptr<bpp::PhyloTree> tree) {
-    double treeLength = 0;
-    Vdouble branchLengths = tree->getBranchLengths();
-    for (size_t i = 0; i < branchLengths.size(); i++){
-        treeLength += branchLengths[i];
-    }
-    return treeLength;
 }

@@ -54,15 +54,25 @@ public: // Variables
     const std::map<std::string, int> func_string_to_enum = {
         {"CONST", GeneCountDependencyFunction::FunctionType::CONSTANT},
         {"LINEAR", GeneCountDependencyFunction::FunctionType::LINEAR},
+        {"LINEAR_BD", GeneCountDependencyFunction::FunctionType::LINEAR_BD},
         {"EXP", GeneCountDependencyFunction::FunctionType::EXP},
-        {"IGNORE", GeneCountDependencyFunction::FunctionType::IGNORE} // Can add more according to enum at GeneCountSubModel.h
+        {"POLYNOMIAL", GeneCountDependencyFunction::FunctionType::POLYNOMIAL},
+        {"LOGNORMAL", GeneCountDependencyFunction::FunctionType::LOGNORMAL},
+        {"REV_SIGMOID", GeneCountDependencyFunction::FunctionType::REVERSE_SIGMOID},
+        // {"LOGITNORMAL", GeneCountDependencyFunction::FunctionType::LOGITNORMAL}, TODO: this currently doesn't work
+        {"IGNORE", GeneCountDependencyFunction::FunctionType::IGNORE}
     };
 
     // Expected number of parameters for each rate function
     const std::map<int, int> expectedNumOfParams = {
         {GeneCountDependencyFunction::FunctionType::CONSTANT, 1},
         {GeneCountDependencyFunction::FunctionType::LINEAR, 2},
+        {GeneCountDependencyFunction::FunctionType::LINEAR_BD, 1},
         {GeneCountDependencyFunction::FunctionType::EXP, 2},
+        {GeneCountDependencyFunction::FunctionType::POLYNOMIAL, 3},
+        {GeneCountDependencyFunction::FunctionType::LOGNORMAL, 3},
+        {GeneCountDependencyFunction::FunctionType::REVERSE_SIGMOID, 3},
+        // {GeneCountDependencyFunction::FunctionType::LOGITNORMAL, 3}, TODO: this currently doesn't work
         {GeneCountDependencyFunction::FunctionType::IGNORE, 1}
     };
     

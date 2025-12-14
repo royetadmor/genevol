@@ -2,6 +2,9 @@
 _treePath = test_data/arthur2020/9dicots/9dicots.newick
 _dataPath = test_data/arthur2020/9dicots/9dicots_25.fasta
 
+#_treePath = test_data/tiley2016/Monocots/tree.newick
+#_dataPath = test_data/tiley2016/Monocots/data.fasta
+
 # General Params
 #_countRange = 50
 #_minState = 30
@@ -10,13 +13,13 @@ _branchMul = -999
 
 # Rate Params for classic model
 _gain=2
-_loss=2
+_loss=2,0.3,-0.4
 _innovation=1
 _elimination=1
 
 # Dependency functions for classic model
-_gainFunc = CONST
-_lossFunc = CONST
+_gainFunc = LINEAR_BD
+_lossFunc = REV_SIGMOID
 _innovationFunc = CONST
 _eliminationFunc = CONST
 
@@ -37,7 +40,7 @@ _mixtureEliminationFunc = CONST
 
 #_fixedParams = gain
 #_mixtureFixedParams = alphaGain,innovation
-_constraintedParams=gain,innovation;loss,elimination
+#_constraintedParams=gain,innovation;loss,elimination
 #_mixtureConstraintedParams=alphaGain,betaGain
 
 rate_distribution = Gamma(n=4, alpha=1.5)

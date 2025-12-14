@@ -12,6 +12,7 @@ set (CPP_FILES
   GeneCountDependencyFunction.cpp
   GeneCountSubstitutionModel.cpp
   GeneCountAlphabet.cpp
+  TreeUtils.cpp
   )
 
 IF(BUILD_STATIC)
