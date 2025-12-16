@@ -64,6 +64,10 @@ int main(int args, char **argv) {
     }
     std::cout << "Starting optimization for new model" << std::endl;
     optimizeModelParametersOneDimension(likProc, m, 0.1, 2);
+    auto ratePerSite = LikelihoodUtils::calculateExpectedRatePerSite(likProc, true);
+    for (size_t i = 0; i < ratePerSite.size(); ++i) {
+        std::cout << "Expected rate at site " << i << " is " << ratePerSite[i] << endl;
+    }   
 
     // Create mixture model, calculate likelihood and optimize
     // auto geneCountManager = std::make_shared<GeneCountManager>(m, tree_);
@@ -80,7 +84,9 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
 {
     // Initialize optimizer
     SecondOrderDerivable* f = likelihoodProcess;
-    BrentOneDimension* optimizer = new BrentOneDimension(std::shared_ptr<SecondOrderDerivable>(f));
+    // This is passed to the optimizer to the original object isn't deleted
+    auto fBorrowed = std::shared_ptr<SecondOrderDerivable>(f, [](SecondOrderDerivable*) {});
+    BrentOneDimension* optimizer = new BrentOneDimension(std::shared_ptr<SecondOrderDerivable>(fBorrowed));
     optimizer->setVerbose(1);
     optimizer->setProfiler(0);
     optimizer->setMessageHandler(0);

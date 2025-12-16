@@ -137,6 +137,53 @@ vector<string> LikelihoodUtils::getParametersByName(ParameterList params, string
     return res;
 }
 
+std::vector<double> LikelihoodUtils::calculateExpectedRatePerSite(SingleProcessPhyloLikelihood* lik, const bool normalize) {
+  std::vector<double> res;
+  std::shared_ptr<const SubstitutionProcessInterface> pSP = lik->getSubstitutionProcess();
+  auto pDD = pSP->getRateDistribution();
+  auto sites = lik->getData();
+  for (size_t i = 0; i < sites->getNumberOfSites(); ++i) {
+    auto post = lik->getPosteriorProbabilitiesForSitePerClass(i);
+    double expectedR = 0;
+    for (size_t j = 0; j < post.size(); ++j) {
+      auto cat = pDD->getCategory(j);
+      expectedR += post[j] * cat;
+    }
+    res.push_back(expectedR);
+  }
+  if (normalize) {
+    normalizeVector(res);
+  }
+  return res;
+}
+
+void LikelihoodUtils::normalizeVector(vector<double>& data) {
+    if (data.empty()) {
+        throw invalid_argument("Input vector is empty.");
+    }
+
+    // Compute mean
+    double sum = accumulate(data.begin(), data.end(), 0.0);
+    double size = static_cast<double>(data.size());
+    double mean = sum / size;
+
+    // Compute standard deviation
+    double sq_sum = 0.0;
+    for (double val : data) {
+        sq_sum += (val - mean) * (val - mean);
+    }
+    double stdev = sqrt(sq_sum / size);
+
+    if (stdev == 0.0) {
+        throw runtime_error("Standard deviation is zero. Cannot normalize.");
+    }
+
+    // Normalize each element
+    for (double& val : data) {
+        val = (val - mean) / stdev;
+    }
+}
+
 bool LikelihoodUtils::isFixedParam(const std::string& name, const std::vector<string> params) {
     for (const std::string& element : params) {
         if (name.find(element) != std::string::npos) {
@@ -145,4 +192,3 @@ bool LikelihoodUtils::isFixedParam(const std::string& name, const std::vector<st
     }
     return false;
 }
-

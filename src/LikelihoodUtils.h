@@ -43,8 +43,10 @@ namespace bpp{
         static SingleProcessPhyloLikelihood* createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, string> constraintedParams, std::shared_ptr<DiscreteDistributionInterface> rDist);
         static void setProcessConstraintedParams(std::map<string, string> constraintedParams, AbstractParameterAliasable* process);
         static bool isFixedParam(const std::string& name, const std::vector<string> params);
+        static std::vector<double> calculateExpectedRatePerSite(SingleProcessPhyloLikelihood* lik, const bool normalize);
     private:
         static vector<string> getParametersByName(ParameterList params, string name);
+        static void normalizeVector(vector<double>& data);
   };
 }
 
