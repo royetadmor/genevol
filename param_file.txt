@@ -13,13 +13,13 @@ _branchMul = -999
 
 # Rate Params for classic model
 _gain=2
-_loss=2,0.3,-0.4
+_loss=2,0.1
 _innovation=1
 _elimination=1
 
 # Dependency functions for classic model
 _gainFunc = LINEAR_BD
-_lossFunc = REV_SIGMOID
+_lossFunc = LINEAR
 _innovationFunc = CONST
 _eliminationFunc = CONST
 
@@ -43,5 +43,5 @@ _mixtureEliminationFunc = CONST
 #_constraintedParams=gain,innovation;loss,elimination
 #_mixtureConstraintedParams=alphaGain,betaGain
 
-rate_distribution = Gamma(n=4, alpha=1.5)
+rate_distribution = Gamma(n=8, alpha=1.5)
 #rate_distribution = Constant()

@@ -62,12 +62,17 @@ int main(int args, char **argv) {
         std::cout << "Likelihood is inf, exiting" << std::endl;
         return 1;
     }
+    // Optimization and assessment
     std::cout << "Starting optimization for new model" << std::endl;
     optimizeModelParametersOneDimension(likProc, m, 0.1, 2);
-    auto ratePerSite = LikelihoodUtils::calculateExpectedRatePerSite(likProc, true);
+    std::cout << "AIC score: " << LikelihoodUtils::calculateAIC(likProc) << std::endl;
+
+    // Rate4site
+    std::cout << "Calculating expected rate per site" << std::endl;
+    auto ratePerSite = LikelihoodUtils::calculateExpectedRatePerSite(likProc, false);
     for (size_t i = 0; i < ratePerSite.size(); ++i) {
         std::cout << "Expected rate at site " << i << " is " << ratePerSite[i] << endl;
-    }   
+    }
 
     // Create mixture model, calculate likelihood and optimize
     // auto geneCountManager = std::make_shared<GeneCountManager>(m, tree_);
