@@ -13,6 +13,7 @@ set (CPP_FILES
   GeneCountSubstitutionModel.cpp
   GeneCountAlphabet.cpp
   TreeUtils.cpp
+  ExtendedBrentOptimizer.cpp
   )
 
 IF(BUILD_STATIC)

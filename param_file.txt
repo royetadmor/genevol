@@ -13,13 +13,13 @@ _branchMul = -999
 
 # Rate Params for classic model
 _gain=2
-_loss=2,0.1
+_loss=2
 _innovation=1
 _elimination=1
 
 # Dependency functions for classic model
-_gainFunc = LINEAR_BD
-_lossFunc = LINEAR
+_gainFunc = CONST
+_lossFunc = CONST
 _innovationFunc = CONST
 _eliminationFunc = CONST
 

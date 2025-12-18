@@ -31,6 +31,7 @@
 #include "GeneCountDependencyFunction.h"
 #include "GeneCountSubstitutionModel.h"
 #include "TreeUtils.h"
+#include "ExtendedBrentOptimizer.h"
 
 using namespace bpp;
 using namespace std;
@@ -91,7 +92,8 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
     SecondOrderDerivable* f = likelihoodProcess;
     // This is passed to the optimizer to the original object isn't deleted
     auto fBorrowed = std::shared_ptr<SecondOrderDerivable>(f, [](SecondOrderDerivable*) {});
-    BrentOneDimension* optimizer = new BrentOneDimension(std::shared_ptr<SecondOrderDerivable>(fBorrowed));
+    // Using ExtendedBrentOptimizer to enable BRACKET_SIMPLE. this can be reverted by switching to BrentOneDimension
+    ExtendedBrentOptimizer* optimizer = new ExtendedBrentOptimizer(std::shared_ptr<SecondOrderDerivable>(fBorrowed));
     optimizer->setVerbose(1);
     optimizer->setProfiler(0);
     optimizer->setMessageHandler(0);
@@ -99,7 +101,7 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
     optimizer->setMaximumNumberOfEvaluations(100);
 
     // Can use BRACKET_INWARD or BRACKET_OUTWARD instead
-    optimizer->setBracketing(BrentOneDimension::BRACKET_OUTWARD);
+    optimizer->setBracketing(ExtendedBrentOptimizer::BRACKET_SIMPLE);
 
     // initializing the likelihood values
     double currentLikelihood = likelihoodProcess->getValue();
