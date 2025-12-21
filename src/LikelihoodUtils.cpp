@@ -5,7 +5,6 @@ using namespace std;
 
 
 SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, string> constraintedParams, std::shared_ptr<DiscreteDistributionInterface> rDist) {
-  
     // Create substitution process components
     auto parTree = std::make_shared<ParametrizablePhyloTree>(*tree);
 
@@ -13,8 +12,7 @@ SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelPara
     std::shared_ptr<GeneCountSubstitutionModel> subModel = std::make_shared<GeneCountSubstitutionModel>(m->alphabet_, rateParams, GeneCountSubstitutionModel::rootFreqType::ROOT_LL, rateChangeType, m);
 
     // Calculate and set root frequencies
-    auto alphabetSize = m->alphabet_->getSize();
-    std::vector<double> freq(alphabetSize, (1.0/alphabetSize));
+    auto freq = getRootFrequncies(m, tree, rDist, subModel);
     std::shared_ptr<FixedFrequencySet> rootFreqsFixed = std::make_shared<FixedFrequencySet>(subModel->getStateMap(), freq);
     std::shared_ptr<FrequencySetInterface> rootFrequencies = static_pointer_cast<FrequencySetInterface>(rootFreqsFixed);
 
@@ -197,4 +195,32 @@ double LikelihoodUtils::calculateAIC(SingleProcessPhyloLikelihood* lik) {
     auto numOfParams = lik->getSubstitutionProcess()->getIndependentParameters().size();
     double AIC = 2*(lik->getValue()) + (2*numOfParams);
     return AIC;
+}
+
+std::vector<double> LikelihoodUtils::getRootFrequncies(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::shared_ptr<DiscreteDistributionInterface> rDist, std::shared_ptr<GeneCountSubstitutionModel> model) {
+    std::vector<double> res;
+    size_t nbSite = m->container_->getNumberOfSites();
+    size_t nbState = m->countRange_;
+    auto parTree = std::make_shared<ParametrizablePhyloTree>(*tree);
+    Context* context = new Context();
+
+    std::shared_ptr<NonHomogeneousSubstitutionProcess> subProcesses = std::make_shared<NonHomogeneousSubstitutionProcess>(rDist, parTree);
+    auto mapOfNodeIds = LikelihoodUtils::getMapOfNodeIds(tree);
+    subProcesses->addModel(model, mapOfNodeIds[1]);
+    auto nsubPro = std::shared_ptr<bpp::SubstitutionProcessInterface>(subProcesses->clone());
+
+    auto lik = std::make_shared<LikelihoodCalculationSingleProcess>(*context, m->container_, nsubPro);
+    lik->makeLikelihoods();
+    auto flt = lik->getForwardLikelihoodTree(0);
+    auto sumOfWeights = CWiseAdd<RowLik, MatrixLik>::create(*context, {flt->getForwardLikelihoodArrayAtRoot()}, RowVectorDimension(Eigen::Index(nbSite)));
+    auto rootSumOfWeights = CWiseAdd<DataLik, RowLik>::create(*context, {sumOfWeights}, Dimension<DataLik>());
+    auto converted = Convert<MatrixLik, Transposed<MatrixLik>>::create(*context, {flt->getForwardLikelihoodArrayAtRoot()}, MatrixDimension ((size_t)nbSite, nbState));
+    auto rootCondLik = CWiseAdd<RowLik, MatrixLik>::create(*context, {converted}, RowVectorDimension(Eigen::Index(nbState)));
+    auto freqs_ef = CWiseDiv<RowLik, std::tuple<RowLik, DataLik>>::create(*context,{rootCondLik, rootSumOfWeights}, RowVectorDimension(Eigen::Index(nbState)));
+    auto rFreqs = Convert<Eigen::RowVectorXd, ExtendedFloatRowVectorXd>::create(*context, {freqs_ef}, RowVectorDimension (Eigen::Index (nbState)));
+    for (size_t i = 0; i < rFreqs->targetValue().size(); i++)
+    {
+        res.push_back(rFreqs->targetValue()(i));
+    }
+    return res;
 }

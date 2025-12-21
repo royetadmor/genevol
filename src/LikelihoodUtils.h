@@ -22,6 +22,7 @@
 #include <Bpp/Seq/Container/AlignmentData.h>
 
 #include <Bpp/Phyl/Model/FrequencySet/FrequencySet.h>
+#include <Bpp/Phyl/Likelihood/DataFlow/ForwardLikelihoodTree.h>
 
 #include "ModelParameters.h"
 #include "GeneCountSubstitutionModel.h"
@@ -48,6 +49,7 @@ namespace bpp{
     private:
         static vector<string> getParametersByName(ParameterList params, string name);
         static void normalizeVector(vector<double>& data);
+        static std::vector<double> getRootFrequncies(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::shared_ptr<DiscreteDistributionInterface> rDist, std::shared_ptr<GeneCountSubstitutionModel> model);
   };
 }
 
