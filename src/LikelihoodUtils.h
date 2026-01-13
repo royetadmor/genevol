@@ -46,6 +46,7 @@ namespace bpp{
         static bool isFixedParam(const std::string& name, const std::vector<string> params);
         static std::vector<double> calculateExpectedRatePerSite(SingleProcessPhyloLikelihood* lik, const bool normalize);
         static double calculateAIC(SingleProcessPhyloLikelihood* lik);
+        static void printRootFreqsPerSite(SingleProcessPhyloLikelihood* lik);
     private:
         static vector<string> getParametersByName(ParameterList params, string name);
         static void normalizeVector(vector<double>& data);

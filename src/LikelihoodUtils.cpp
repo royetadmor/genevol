@@ -198,9 +198,10 @@ double LikelihoodUtils::calculateAIC(SingleProcessPhyloLikelihood* lik) {
 }
 
 std::vector<double> LikelihoodUtils::getRootFrequncies(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::shared_ptr<DiscreteDistributionInterface> rDist, std::shared_ptr<GeneCountSubstitutionModel> model) {
-    std::vector<double> res;
     size_t nbSite = m->container_->getNumberOfSites();
     size_t nbState = m->countRange_;
+    size_t nbCat = rDist->getNumberOfCategories();
+    std::vector<double> res(nbState, 0.0);
     auto parTree = std::make_shared<ParametrizablePhyloTree>(*tree);
     Context* context = new Context();
 
@@ -211,16 +212,36 @@ std::vector<double> LikelihoodUtils::getRootFrequncies(ModelParameters* m, std::
 
     auto lik = std::make_shared<LikelihoodCalculationSingleProcess>(*context, m->container_, nsubPro);
     lik->makeLikelihoods();
-    auto flt = lik->getForwardLikelihoodTree(0);
-    auto sumOfWeights = CWiseAdd<RowLik, MatrixLik>::create(*context, {flt->getForwardLikelihoodArrayAtRoot()}, RowVectorDimension(Eigen::Index(nbSite)));
-    auto rootSumOfWeights = CWiseAdd<DataLik, RowLik>::create(*context, {sumOfWeights}, Dimension<DataLik>());
-    auto converted = Convert<MatrixLik, Transposed<MatrixLik>>::create(*context, {flt->getForwardLikelihoodArrayAtRoot()}, MatrixDimension ((size_t)nbSite, nbState));
-    auto rootCondLik = CWiseAdd<RowLik, MatrixLik>::create(*context, {converted}, RowVectorDimension(Eigen::Index(nbState)));
-    auto freqs_ef = CWiseDiv<RowLik, std::tuple<RowLik, DataLik>>::create(*context,{rootCondLik, rootSumOfWeights}, RowVectorDimension(Eigen::Index(nbState)));
-    auto rFreqs = Convert<Eigen::RowVectorXd, ExtendedFloatRowVectorXd>::create(*context, {freqs_ef}, RowVectorDimension (Eigen::Index (nbState)));
-    for (size_t i = 0; i < rFreqs->targetValue().size(); i++)
-    {
-        res.push_back(rFreqs->targetValue()(i));
+
+    for (size_t cat = 0; cat < nbCat; ++cat) {
+        double prior = rDist->getProbability(cat);
+        auto flt = lik->getForwardLikelihoodTree(cat);
+        auto sumOfWeights = CWiseAdd<RowLik, MatrixLik>::create(*context, {flt->getForwardLikelihoodArrayAtRoot()}, RowVectorDimension(Eigen::Index(nbSite)));
+        auto rootSumOfWeights = CWiseAdd<DataLik, RowLik>::create(*context, {sumOfWeights}, Dimension<DataLik>());
+        auto converted = Convert<MatrixLik, Transposed<MatrixLik>>::create(*context, {flt->getForwardLikelihoodArrayAtRoot()}, MatrixDimension ((size_t)nbSite, nbState));
+        auto rootCondLik = CWiseAdd<RowLik, MatrixLik>::create(*context, {converted}, RowVectorDimension(Eigen::Index(nbState)));
+        auto freqs_ef = CWiseDiv<RowLik, std::tuple<RowLik, DataLik>>::create(*context,{rootCondLik, rootSumOfWeights}, RowVectorDimension(Eigen::Index(nbState)));
+        auto rFreqs = Convert<Eigen::RowVectorXd, ExtendedFloatRowVectorXd>::create(*context, {freqs_ef}, RowVectorDimension (Eigen::Index (nbState)));
+        for (size_t i = 0; i < nbState; ++i)
+        {
+            res[i] += prior * rFreqs->targetValue()(i);
+        }
     }
     return res;
+}
+
+// Function mostly for debugging, consider removing in the future
+void LikelihoodUtils::printRootFreqsPerSite(SingleProcessPhyloLikelihood* lik)
+{
+    auto process = lik->getSubstitutionProcess();
+
+    if (process->hasRootFrequencySet())
+    {
+    auto rootFreqSet = process->getRootFrequencySet();
+    const std::vector<double>& freqs = rootFreqSet->getFrequencies();
+
+    std::cout << "Root frequencies:\n";
+    for (size_t i = 0; i < freqs.size(); ++i)
+        std::cout << "  f[" << i << "] = " << freqs[i] << '\n';
+    }
 }

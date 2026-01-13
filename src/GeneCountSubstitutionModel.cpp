@@ -34,7 +34,7 @@ GeneCountSubstitutionModel::GeneCountSubstitutionModel(std::shared_ptr<bpp::Gene
   
   // Initiate generator matrix
   updateParameters(mapOfParamValues, rateChangeType);
-  computeFrequencies(false);//TODO: should we actually do this?
+  computeFrequencies(false);
   isScalable_ = false;
   updateMatrices_();
 }
