@@ -32,6 +32,7 @@
 #include "GeneCountSubstitutionModel.h"
 #include "TreeUtils.h"
 #include "ExtendedBrentOptimizer.h"
+#include "PoissonDistribution.h"
 
 using namespace bpp;
 using namespace std;
@@ -54,7 +55,7 @@ int main(int args, char **argv) {
     auto rateChangeType = m->rateChangeType_;
     auto constraintedParams = m->constraintedParams_;
     auto rDist = m->rDist_;
-    
+    auto pDist = std::make_shared<PoissonDistribution>(2, 15);
 
     // Calculate new likelihood
     auto likProc = LikelihoodUtils::createLikelihoodProcess(m, tree_, paramMap, rateChangeType, constraintedParams, rDist);

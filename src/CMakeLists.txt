@@ -14,6 +14,7 @@ set (CPP_FILES
   GeneCountAlphabet.cpp
   TreeUtils.cpp
   ExtendedBrentOptimizer.cpp
+  PoissonDistribution.cpp
   )
 
 IF(BUILD_STATIC)

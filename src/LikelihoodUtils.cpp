@@ -12,7 +12,8 @@ SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelPara
     std::shared_ptr<GeneCountSubstitutionModel> subModel = std::make_shared<GeneCountSubstitutionModel>(m->alphabet_, rateParams, GeneCountSubstitutionModel::rootFreqType::ROOT_LL, rateChangeType, m);
 
     // Calculate and set root frequencies
-    auto freq = getRootFrequncies(m, tree, rDist, subModel);
+    // Can switch to getRootFrequncies(m, tree, rDist, subModel);
+    auto freq = poissonRootFreq(m); 
     std::shared_ptr<FixedFrequencySet> rootFreqsFixed = std::make_shared<FixedFrequencySet>(subModel->getStateMap(), freq);
     std::shared_ptr<FrequencySetInterface> rootFrequencies = static_pointer_cast<FrequencySetInterface>(rootFreqsFixed);
 
@@ -244,4 +245,32 @@ void LikelihoodUtils::printRootFreqsPerSite(SingleProcessPhyloLikelihood* lik)
     for (size_t i = 0; i < freqs.size(); ++i)
         std::cout << "  f[" << i << "] = " << freqs[i] << '\n';
     }
+}
+
+std::vector<double> LikelihoodUtils::poissonRootFreq(ModelParameters* m) {
+    double total = 0.0;
+    double totalDataSize = 0.0;
+    size_t nbState = m->countRange_;
+    std::vector<double> rFreq(nbState, 0.0);
+    const size_t nSites = m->container_->getNumberOfSites();
+
+    for (size_t i = 0; i < nSites; ++i)
+    {
+        const bpp::Site& site = m->container_->site(i);
+        const size_t siteSize = site.size();
+        totalDataSize += siteSize;
+        for (size_t j = 0; j < siteSize; ++j)
+        {
+            total += site[j];
+        }
+    }
+    double lambda = total/totalDataSize;
+    auto pDist = std::make_shared<PoissonDistribution>(lambda, nbState);
+    for (size_t i = 0; i < nbState; i++)
+    {
+        cout << "Poisson p: " << pDist->probability(i) << endl;
+        rFreq[i] = pDist->probability(i);
+     }
+
+    return rFreq;
 }
