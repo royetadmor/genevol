@@ -2,6 +2,7 @@
 #define GENEVOL_MODELPARAMETERS_H
 
 #define STATE_OVERHEAD 10
+#define STATE_SPACE_UPPER_BOUND 200
 
 #include <string> 
 #include <tuple>
@@ -9,6 +10,7 @@
 
 #include <Bpp/App/BppApplication.h>
 #include <Bpp/App/ApplicationTools.h>
+#include <Bpp/Text/TextTools.h>
 
 
 #include <Bpp/Seq/Sequence.h>

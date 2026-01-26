@@ -56,6 +56,11 @@ void ModelParameters::setAlphabetLimit(BppApplication GenEvol) {
 
     int minState = ApplicationTools::getIntParameter("_minState", GenEvol.getParams(), -1, "", true, 1);
     int maxState = ApplicationTools::getIntParameter("_maxState", GenEvol.getParams(), -1, "", true, 1);
+    
+    if (maxState > STATE_SPACE_UPPER_BOUND)
+    {
+        throw std::runtime_error("The maximal gene family size can be at most " + STATE_SPACE_UPPER_BOUND);
+    }
 
     // Both are given by the user
     if (minState != -1 && maxState != -1) {
@@ -102,11 +107,21 @@ void ModelParameters::setAlphabetLimit(BppApplication GenEvol) {
         }
     }
     file.close();
+
+    // If max state is given by the user, validate we don't exceed it
+    if (maxState < max && maxState != -1) {
+        throw std::runtime_error("There is a gene family exceeding the given limit " + maxState);
+    }
+
     if (minState == -1) {
         ModelParameters::minState_ = min;    
+    } else {
+        ModelParameters::minState_ = minState;
     }
     if (maxState == -1) {
         ModelParameters::maxState_ = max + ModelParameters::stateOverhead_;    
+    } else {
+        ModelParameters::maxState_ = maxState;
     }
 }
 
