@@ -31,8 +31,8 @@ public: // Variables
     string dataFilePath_;
     int minState_;
     int maxState_;
+    bool allowCapState_;
     int stateOverhead_;
-    int countRange_;
     int categories_;
     double branchMul_;
     double alphaGain_;
@@ -89,6 +89,7 @@ private:
     void setRateFunctionTypes(BppApplication GenEvol);
     void validateRateFunctionParameters();
     void setConstraintedParams(BppApplication GenEvol, std::vector<string> inputParams, std::map<string, string>& outputParams);
+    std::string capState(std::string geneCount);
 };
 
 

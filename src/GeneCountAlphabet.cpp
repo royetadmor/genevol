@@ -4,24 +4,25 @@ using namespace bpp;
 
 GeneCountAlphabet::GeneCountAlphabet(unsigned int max, unsigned int min) : MIN_(min), MAX_(max)
 {
-  // Alphabet size definition
-  //reserve(MAX_-MIN_+3); // the vector should be resized such that it will include min, max, unresolved state, and gap
-
-  // Alphabet content definition
   registerState(new AlphabetState(-1, "-", "Gap"));
 
-  for (int i =  static_cast<int>(MIN_); i <= static_cast<int>(MAX_); i++)
+  for (int i = static_cast<int>(MIN_); i <= static_cast<int>(MAX_); ++i)
   {
     registerState(new AlphabetState(i, TextTools::toString(i), ""));
   }
-  registerState(new AlphabetState(MAX_+1, "X", "Unresolved state"));
+
+  // M+ capped state
+  registerState(new AlphabetState(MAX_ + 1, "M+", "Capped state"));
+
+  // Optional unresolved state
+  registerState(new AlphabetState(MAX_ + 2, "X", "Unresolved state"));
 }
 /********************************************************************************/
 std::vector<int> GeneCountAlphabet::getAlias(int state) const{
   if (!isIntInAlphabet(state)) throw BadIntException(state, "GeneCountAlphabet::getAlias(int): Specified integer unknown.", this);
   std::vector<int> v;
-  if (state >= static_cast<int>(MAX_+1)){
-    for (int i = static_cast<int>(MIN_); i <= static_cast<int>(MAX_); i++){
+  if (isUnresolved(state)){
+    for (int i = static_cast<int>(MIN_); i <= static_cast<int>(MAX_+1); i++){
       v.push_back(i);
     }
   }else{
@@ -34,8 +35,8 @@ std::vector<int> GeneCountAlphabet::getAlias(int state) const{
 std::vector<std::string> GeneCountAlphabet::getAlias(const std::string& state) const{
   if (!isCharInAlphabet(state)) throw BadCharException(state, "GeneCountAlphabet::getAlias(char): Specified integer unknown.", this);
   std::vector<std::string> v;
-  if (state == "X"){
-    for (int i = static_cast<int>(MIN_); i <= static_cast<int>(MAX_); i++){
+  if (isUnresolved(state)){
+    for (int i = static_cast<int>(MIN_); i <= static_cast<int>(MAX_+1); i++){
       v.push_back(intToChar(i));
     }
   }else if (charToInt(state) <= static_cast<int>(MAX_)){
@@ -57,7 +58,7 @@ bool GeneCountAlphabet::isResolvedIn(int state1, int state2) const{
   if (isUnresolved(state2))
     throw BadIntException(state2, "GeneCountAlphabet::isResolvedIn: Unresolved base.", this); 
 
-  if (state2 > static_cast<int>(MAX_))
+  if (state2 > static_cast<int>(MAX_+1))
     throw IndexOutOfBoundsException("GeneCountAlphabet::isResolvedIn", state2, 0, getNumberOfTypes() - 1);
   std::vector<int> states = getAlias(state1);
   for (size_t j = 0; j < states.size(); j++)

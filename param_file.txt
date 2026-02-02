@@ -2,13 +2,15 @@
 _treePath = test_data/arthur2020/9dicots/9dicots.newick
 _dataPath = test_data/arthur2020/9dicots/9dicots_25.fasta
 
-#_treePath = test_data/tiley2016/Monocots/tree.newick
-#_dataPath = test_data/tiley2016/Monocots/data.fasta
+#_treePath = test_data/cafe/Birds_of_paradise/tree.newick
+#_dataPath = test_data/cafe/Birds_of_paradise/data.fasta
 
-# General Params
-#_countRange = 50
+# State related params
 #_minState = 0
-#_maxState = 80
+#_maxState = 30
+#_allowCappedState = false
+
+# Branch normalization factor
 _branchMul = -999
 
 # Rate Params for classic model
@@ -40,8 +42,8 @@ _mixtureEliminationFunc = CONST
 
 #_fixedParams = gain
 #_mixtureFixedParams = alphaGain,innovation
-#_constraintedParams=gain,innovation;loss,elimination
+_constraintedParams=gain,innovation;loss,elimination
 #_mixtureConstraintedParams=alphaGain,betaGain
 
-rate_distribution = Gamma(n=8, alpha=1.5)
+rate_distribution = Gamma(n=16, alpha=1.5)
 #rate_distribution = Constant()

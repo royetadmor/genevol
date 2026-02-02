@@ -18,13 +18,13 @@ ModelParameters::ModelParameters(BppApplication GenEvol)
     ModelParameters::treeFilePath_ = ApplicationTools::getAFilePath("_treePath", GenEvol.getParams(), true, true, "", true, "none", 1);
     ModelParameters::dataFilePath_ = ApplicationTools::getAFilePath("_dataPath", GenEvol.getParams(), true, true, "", true, "none", 1);
     ModelParameters::stateOverhead_ = ApplicationTools::getIntParameter("_stateOverhead", GenEvol.getParams(), STATE_OVERHEAD, "", true, -1);
+    ModelParameters::allowCapState_ = ApplicationTools::getBooleanParameter("_allowCappedState", GenEvol.getParams(), false, "", true, -1);
     setAlphabetLimit(GenEvol);
     ModelParameters::alphabet_ = std::make_shared<bpp::GeneCountAlphabet>(ModelParameters::maxState_, ModelParameters::minState_);
     ModelParameters::container_ = readGeneFamilyFile(ModelParameters::dataFilePath_, ModelParameters::alphabet_);
     ModelParameters::rDist_ = std::move(PhylogeneticsApplicationTools::getRateDistribution(GenEvol.getParams(), "", true, true));
 
     // Load customization params
-    ModelParameters::countRange_ = ApplicationTools::getIntParameter("_countRange", GenEvol.getParams(), ModelParameters::maxState_ - ModelParameters::minState_ + 1, "", true, 1);
     ModelParameters::branchMul_ = ApplicationTools::getDoubleParameter("_branchMul", GenEvol.getParams(), -999.0);
 
     // Load MM params
@@ -110,7 +110,13 @@ void ModelParameters::setAlphabetLimit(BppApplication GenEvol) {
 
     // If max state is given by the user, validate we don't exceed it
     if (maxState < max && maxState != -1) {
-        throw std::runtime_error("There is a gene family exceeding the given limit " + maxState);
+        if (ModelParameters::allowCapState_) {
+            cout << "[!] Warning: there are gene families with more than " << maxState << " genes." << endl;
+            cout << "[!] These gene families will mapped to a special state in the model state space" << endl;
+            cout << "[!] so the model can run. If this shouldn't be allowed, please set allowCapState_ to false" << endl;
+        } else {
+            throw std::runtime_error("There is a gene family exceeding the given limit " + maxState);
+        }
     }
 
     if (minState == -1) {
@@ -216,7 +222,7 @@ std::shared_ptr<VectorSiteContainer> ModelParameters::readGeneFamilyFile(const s
 
         // Read gene counts
         while (std::getline(lineStream, columnName, '\t')) {
-            geneCounts.push_back(columnName);
+            geneCounts.push_back(capState(columnName));
         }
 
         // Verify the number of gene counts matches the number of families
@@ -246,4 +252,12 @@ void ModelParameters::setConstraintedParams(BppApplication GenEvol, std::vector<
         }
         outputParams[paramList[0]] = paramList[1];
     }
+}
+
+std::string ModelParameters::capState(std::string geneCount) {
+    if (std::stoi(geneCount) > ModelParameters::maxState_)
+    {
+        return "M+";
+    }
+    return geneCount;
 }

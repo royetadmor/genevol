@@ -98,7 +98,6 @@ namespace bpp
     compositeParameter* elimination_;
     int minState_;
     int maxState_;
-    int countRange_;
     double firstNormQ_;
     mutable bool pijtCalledFromDeriv_;
     rootFreqType freqType_;
@@ -133,7 +132,6 @@ namespace bpp
       elimination_(0),
       minState_(model.minState_),
       maxState_(model.maxState_),
-      countRange_(model.countRange_),
       freqType_(model.freqType_),
       firstNormQ_(model.firstNormQ_),
       pijtCalledFromDeriv_(model.pijtCalledFromDeriv_),

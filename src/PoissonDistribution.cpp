@@ -42,9 +42,9 @@ double PoissonDistribution::logPoissonPMF(int k) const
 void PoissonDistribution::computeNormalization()
 {
     std::vector<double> logVals;
-    logVals.reserve(maxK_ + 1);
+    logVals.reserve(maxK_);
 
-    for (int k = 0; k <= maxK_; ++k)
+    for (int k = 0; k < maxK_; ++k)
         logVals.push_back(logPoissonPMF(k));
 
     logZ_ = logSumExp(logVals);
@@ -57,7 +57,7 @@ double PoissonDistribution::logProbability(int k) const
 
     if (maxK_ >= 0)
     {
-        if (k > maxK_)
+        if (k >= maxK_)
             return -std::numeric_limits<double>::infinity();
 
         return logPoissonPMF(k) - logZ_;

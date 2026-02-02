@@ -42,15 +42,15 @@ public:
   virtual ~GeneCountAlphabet() {}
 
 public:
-  unsigned int getSize() const { return MAX_ - MIN_ +1; }
+  unsigned int getSize() const { return MAX_ - MIN_ +2; }
 
   unsigned int getNumberOfTypes() const { return MAX_ - MIN_ + 1; }
   
   std::string getAlphabetType() const { return "Integer(MIN=" + TextTools::toString(MIN_) + ", MAX=" +  TextTools::toString(MAX_) +")"; }
   
-  int getUnknownCharacterCode() const { return static_cast<int>(MAX_+1); }
+  int getUnknownCharacterCode() const { return static_cast<int>(MAX_+2); }
   
-  bool isUnresolved(int state) const { return state == static_cast<int>(MAX_+1); }
+  bool isUnresolved(int state) const { return state == static_cast<int>(MAX_+2); }
   
   bool isUnresolved(const std::string& state) const { return state == "X"; }
   

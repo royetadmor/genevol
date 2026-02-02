@@ -200,7 +200,7 @@ double LikelihoodUtils::calculateAIC(SingleProcessPhyloLikelihood* lik) {
 
 std::vector<double> LikelihoodUtils::getRootFrequncies(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::shared_ptr<DiscreteDistributionInterface> rDist, std::shared_ptr<GeneCountSubstitutionModel> model) {
     size_t nbSite = m->container_->getNumberOfSites();
-    size_t nbState = m->countRange_;
+    size_t nbState = m->alphabet_->getSize();
     size_t nbCat = rDist->getNumberOfCategories();
     std::vector<double> res(nbState, 0.0);
     auto parTree = std::make_shared<ParametrizablePhyloTree>(*tree);
@@ -250,7 +250,7 @@ void LikelihoodUtils::printRootFreqsPerSite(SingleProcessPhyloLikelihood* lik)
 std::vector<double> LikelihoodUtils::poissonRootFreq(ModelParameters* m) {
     double total = 0.0;
     double totalDataSize = 0.0;
-    size_t nbState = m->countRange_;
+    size_t nbState = m->alphabet_->getSize();
     std::vector<double> rFreq(nbState, 0.0);
     const size_t nSites = m->container_->getNumberOfSites();
 

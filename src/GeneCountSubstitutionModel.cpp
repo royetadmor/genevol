@@ -30,7 +30,6 @@ GeneCountSubstitutionModel::GeneCountSubstitutionModel(std::shared_ptr<bpp::Gene
   // Set class params
   minState_ = m->minState_;
   maxState_ = m->maxState_;
-  countRange_ = m->countRange_;
   
   // Initiate generator matrix
   updateParameters(mapOfParamValues, rateChangeType);
@@ -127,7 +126,7 @@ void GeneCountSubstitutionModel::updateMatrices_() {
   MatrixTools::fill(generator_, 0);
 
   // updating Q matrix
-  for (size_t i = minChrNum; i < maxChrNum+1; i++){
+  for (size_t i = minChrNum; i <= maxChrNum+1; i++){
       if (i == 0) {
         updateQWithInnovation(i);
         continue;
