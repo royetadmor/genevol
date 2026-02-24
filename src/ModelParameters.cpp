@@ -198,8 +198,7 @@ std::shared_ptr<VectorSiteContainer> ModelParameters::readGeneFamilyFile(const s
     std::vector<std::string> familyIds;
     std::string columnName;
 
-    // Skip the first two columns ("Organizem" and "Desc")
-    std::getline(headerStream, columnName, '\t');  
+    // Skip the first column ("Organizem")
     std::getline(headerStream, columnName, '\t');  
 
     while (std::getline(headerStream, columnName, '\t')) {
@@ -216,9 +215,6 @@ std::shared_ptr<VectorSiteContainer> ModelParameters::readGeneFamilyFile(const s
 
         // Read species name
         std::getline(lineStream, speciesName, '\t');
-
-        // Skip "Desc" column
-        std::getline(lineStream, columnName, '\t');
 
         // Read gene counts
         while (std::getline(lineStream, columnName, '\t')) {

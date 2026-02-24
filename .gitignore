@@ -1,14 +1,17 @@
-# Ignoring generated files in root dir
+# Generated files in root dir
 *.cmake
 CMakeCache.txt
 DartConfiguration.tcl
 install_manifest.txt
 Makefile
 
-# Ignoring generated subdirectories
+# Generated build subdirectories
 /build/
 **/CMakeFiles/
 
-# Ignoring generated binaries
+# Generated binaries
 /GenEvol/genEvol
 *.so*
+
+# Result dir
+results*/
