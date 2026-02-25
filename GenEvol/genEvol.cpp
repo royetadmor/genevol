@@ -66,14 +66,6 @@ int main(int args, char **argv) {
     // Optimization and assessment
     std::cout << "Starting optimization for new model" << std::endl;
     optimizeModelParametersOneDimension(likProc, m, 0.1, 2);
-    std::cout << "AIC score: " << LikelihoodUtils::calculateAIC(likProc) << std::endl;
-
-    // Rate4site
-    std::cout << "Calculating expected rate per site" << std::endl;
-    auto ratePerSite = LikelihoodUtils::calculateExpectedRatePerSite(likProc, false);
-    for (size_t i = 0; i < ratePerSite.size(); ++i) {
-        std::cout << "Expected rate at site " << i << " is " << ratePerSite[i] << endl;
-    }
 
     // Create mixture model, calculate likelihood and optimize
     // auto geneCountManager = std::make_shared<GeneCountManager>(m, tree_);
@@ -82,6 +74,7 @@ int main(int args, char **argv) {
     // std::cout << geneCountManager->getLikelihood() << std::endl;
     // std::cout << geneCountManager->calculateAIC() << std::endl;
 
+    LikelihoodUtils::printResults(likProc, m->showRate4Site_);
     GenEvol.done();
     return 0;
 }

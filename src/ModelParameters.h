@@ -32,6 +32,7 @@ public: // Variables
     int minState_;
     int maxState_;
     bool allowCapState_;
+    bool showRate4Site_;
     int stateOverhead_;
     int categories_;
     double branchMul_;

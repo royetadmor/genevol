@@ -198,6 +198,30 @@ double LikelihoodUtils::calculateAIC(SingleProcessPhyloLikelihood* lik) {
     return AIC;
 }
 
+void LikelihoodUtils::printResults(SingleProcessPhyloLikelihood* lik, bool printRate4Site) {
+    double likelihood = lik->getValue();
+    double aic = LikelihoodUtils::calculateAIC(lik);
+
+    std::cout << "Likelihood: " << likelihood << std::endl;
+    std::cout << "AIC score: " << aic << std::endl;
+
+    ParameterList params = lik->getParameters();
+    std::cout << "Parameter values:" << std::endl;
+    for (size_t i = 0; i < params.size(); ++i) {
+        if (params[i].getName().find("BrLen") == std::string::npos) { // Print non-branch length params
+            std::cout << "  " << params[i].getName() << " = " << params[i].getValue() << std::endl;
+        }
+    }
+
+    if (printRate4Site) {
+        std::cout << "Calculating expected rate per site" << std::endl;
+        auto ratePerSite = LikelihoodUtils::calculateExpectedRatePerSite(lik, false);
+        for (size_t i = 0; i < ratePerSite.size(); ++i) {
+            std::cout << "Expected rate at site " << i << " is " << ratePerSite[i] << std::endl;
+        }
+    }
+}
+
 std::vector<double> LikelihoodUtils::getRootFrequncies(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::shared_ptr<DiscreteDistributionInterface> rDist, std::shared_ptr<GeneCountSubstitutionModel> model) {
     size_t nbSite = m->container_->getNumberOfSites();
     size_t nbState = m->alphabet_->getSize();
@@ -268,9 +292,8 @@ std::vector<double> LikelihoodUtils::poissonRootFreq(ModelParameters* m) {
     auto pDist = std::make_shared<PoissonDistribution>(lambda, nbState);
     for (size_t i = 0; i < nbState; i++)
     {
-        cout << "Poisson p: " << pDist->probability(i) << endl;
         rFreq[i] = pDist->probability(i);
-     }
+    }
 
     return rFreq;
 }
