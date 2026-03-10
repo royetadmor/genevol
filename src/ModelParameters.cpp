@@ -20,6 +20,7 @@ ModelParameters::ModelParameters(BppApplication GenEvol)
     ModelParameters::stateOverhead_ = ApplicationTools::getIntParameter("_stateOverhead", GenEvol.getParams(), STATE_OVERHEAD, "", true, -1);
     ModelParameters::allowCapState_ = ApplicationTools::getBooleanParameter("_allowCappedState", GenEvol.getParams(), false, "", true, -1);
     ModelParameters::showRate4Site_ = ApplicationTools::getBooleanParameter("_showRate4Site", GenEvol.getParams(), false, "", true, -1);
+    ModelParameters::rootFreqModel_ = ApplicationTools::getStringParameter("_rootFreqModel", GenEvol.getParams(), "Poisson", "", true, -1);
     setAlphabetLimit(GenEvol);
     ModelParameters::alphabet_ = std::make_shared<bpp::GeneCountAlphabet>(ModelParameters::maxState_, ModelParameters::minState_);
     ModelParameters::container_ = readGeneFamilyFile(ModelParameters::dataFilePath_, ModelParameters::alphabet_);

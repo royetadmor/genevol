@@ -65,7 +65,7 @@ int main(int args, char **argv) {
     }
     // Optimization and assessment
     std::cout << "Starting optimization for new model" << std::endl;
-    optimizeModelParametersOneDimension(likProc, m, 0.1, 2);
+    optimizeModelParametersOneDimension(likProc, m, 1e-4, 5);
 
     // Create mixture model, calculate likelihood and optimize
     // auto geneCountManager = std::make_shared<GeneCountManager>(m, tree_);
@@ -105,8 +105,10 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
 
     
     vector<string> rParamsNames = likelihoodProcess->getRateDistributionParameters().getParameterNames();
+    vector<string> rootFreqParamsNames = likelihoodProcess->getRootFrequenciesParameters().getParameterNames();
     vector<string> parametersNames = likelihoodProcess->getSubstitutionModelParameters().getParameterNames();
-    parametersNames.insert(parametersNames.end(), rParamsNames.begin(), rParamsNames.end()); 
+    parametersNames.insert(parametersNames.end(), rParamsNames.begin(), rParamsNames.end());
+    parametersNames.insert(parametersNames.end(), rootFreqParamsNames.begin(), rootFreqParamsNames.end());
     ParameterList params = likelihoodProcess->getParameters();
 
 
@@ -131,9 +133,12 @@ void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoo
 
             size_t index = LikelihoodUtils::getParamIndex(nameOfParam);
 
-            // Handle bound calculation for gamma dist params
+            // Handle bound calculation for gamma dist params and NegBinomial r
             if (nameOfParam.find("Gamma") != std::string::npos) {
                 lowerBound = 0.05;
+                upperBound = 100;
+            } else if (nameOfParam.find("NegBinomial") != std::string::npos) {
+                lowerBound = 0.01;
                 upperBound = 100;
             } else {
                 GeneCountDependencyFunction* functionOp;

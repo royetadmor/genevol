@@ -15,6 +15,8 @@ set (CPP_FILES
   TreeUtils.cpp
   ExtendedBrentOptimizer.cpp
   PoissonDistribution.cpp
+  NegativeBinomialDistribution.cpp
+  NegBinomialFrequencySet.cpp
   )
 
 IF(BUILD_STATIC)

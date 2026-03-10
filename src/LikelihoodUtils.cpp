@@ -12,10 +12,15 @@ SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelPara
     std::shared_ptr<GeneCountSubstitutionModel> subModel = std::make_shared<GeneCountSubstitutionModel>(m->alphabet_, rateParams, GeneCountSubstitutionModel::rootFreqType::ROOT_LL, rateChangeType, m);
 
     // Calculate and set root frequencies
-    // Can switch to getRootFrequncies(m, tree, rDist, subModel);
-    auto freq = poissonRootFreq(m); 
-    std::shared_ptr<FixedFrequencySet> rootFreqsFixed = std::make_shared<FixedFrequencySet>(subModel->getStateMap(), freq);
-    std::shared_ptr<FrequencySetInterface> rootFrequencies = static_pointer_cast<FrequencySetInterface>(rootFreqsFixed);
+    std::shared_ptr<FrequencySetInterface> rootFrequencies;
+    if (m->rootFreqModel_ == "NegBinomial") {
+        rootFrequencies = negBinRootFreqSet(m, subModel->getStateMap());
+    } else {
+        // Default: Poisson
+        auto freq = poissonRootFreq(m);
+        auto rootFreqsFixed = std::make_shared<FixedFrequencySet>(subModel->getStateMap(), freq);
+        rootFrequencies = static_pointer_cast<FrequencySetInterface>(rootFreqsFixed);
+    }
 
     // Create substitution process
     std::shared_ptr<NonHomogeneousSubstitutionProcess> subProcesses = std::make_shared<NonHomogeneousSubstitutionProcess>(rDist, parTree, rootFrequencies);
@@ -57,13 +62,11 @@ void LikelihoodUtils::deleteLikelihoodProcess(SingleProcessPhyloLikelihood* lik)
 }
 
 int LikelihoodUtils::getParamIndex(string name) {
-    // Special case for gamma distribution parameter names which does not contain an underscore
-    if (name.find("Gamma") != std::string::npos) {
-        return 0;
-    }
+    
+    // find underscore, if non exist that it's a non-substitution parameter
     size_t pos = name.find('_');
     if (pos == std::string::npos || pos == 0) {
-        throw std::runtime_error("No underscore found in string: " + name);
+        return 0;
     }
     char index = name[pos - 1];
     if (!std::isdigit(static_cast<unsigned char>(index))) {
@@ -77,16 +80,11 @@ std::vector<string> LikelihoodUtils::filterParamsByName(std::vector<std::string>
 {
     std::vector<std::string> result;
 
-    // Special case for gamma distribution parameter names which does not contain an underscore
-    if (paramName.find("Gamma") != std::string::npos) {
-        result.push_back(paramName);
-        return result;
-    }
-    
-    // find underscore
+    // find underscore, if non exist that it's a non-substitution parameter
     size_t pos = paramName.find('_');
     if (pos == std::string::npos) {
-        throw std::runtime_error("No underscore found in paramName: " + paramName);
+        result.push_back(paramName);
+        return result;
     }
 
     // extract substring before underscore
@@ -269,6 +267,23 @@ void LikelihoodUtils::printRootFreqsPerSite(SingleProcessPhyloLikelihood* lik)
     for (size_t i = 0; i < freqs.size(); ++i)
         std::cout << "  f[" << i << "] = " << freqs[i] << '\n';
     }
+}
+
+std::shared_ptr<NegBinomialFrequencySet> LikelihoodUtils::negBinRootFreqSet(ModelParameters* m, std::shared_ptr<const StateMapInterface> stateMap) {
+    double total = 0.0;
+    double totalDataSize = 0.0;
+    const size_t nSites = m->container_->getNumberOfSites();
+
+    for (size_t i = 0; i < nSites; ++i)
+    {
+        const bpp::Site& site = m->container_->site(i);
+        const size_t siteSize = site.size();
+        totalDataSize += siteSize;
+        for (size_t j = 0; j < siteSize; ++j)
+            total += site[j];
+    }
+    double mu = total / totalDataSize;
+    return std::make_shared<NegBinomialFrequencySet>(stateMap, 1.0, mu);
 }
 
 std::vector<double> LikelihoodUtils::poissonRootFreq(ModelParameters* m) {

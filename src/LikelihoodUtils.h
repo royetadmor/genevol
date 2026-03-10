@@ -27,6 +27,7 @@
 #include "ModelParameters.h"
 #include "GeneCountSubstitutionModel.h"
 #include "PoissonDistribution.h"
+#include "NegBinomialFrequencySet.h"
 
 
 
@@ -54,6 +55,7 @@ namespace bpp{
         static void normalizeVector(vector<double>& data);
         static std::vector<double> getRootFrequncies(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::shared_ptr<DiscreteDistributionInterface> rDist, std::shared_ptr<GeneCountSubstitutionModel> model);
         static std::vector<double> poissonRootFreq(ModelParameters* m);
+        static std::shared_ptr<NegBinomialFrequencySet> negBinRootFreqSet(ModelParameters* m, std::shared_ptr<const StateMapInterface> stateMap);
   };
 }
 

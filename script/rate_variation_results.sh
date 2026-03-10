@@ -5,26 +5,17 @@ set -euo pipefail
 # USER-CONFIGURABLE PATHS #
 ############################
 
-TEST_DATA_DIR="./test_data"
-
 if [[ $# -ge 1 ]]; then
     RESULTS_DIR="./$1"
 else
     echo ""
     echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
     echo "!! WARNING: No results directory name was provided.  !!"
-    echo "!! Defaulting to './results'.                        !!"
-    echo "!! Usage: $0 <results_dir_name> [dataset_dir]  !!"
+    echo "!! Defaulting to './results_rate_variation'.         !!"
+    echo "!! Usage: $0 <results_dir_name>                !!"
     echo "!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!"
     echo ""
-    RESULTS_DIR="./results"
-fi
-
-# Optional additional arguments: one or more dataset directories to run on
-if [[ $# -ge 2 ]]; then
-    DATASET_DIRS=("${@:2}")
-else
-    DATASET_DIRS=()
+    RESULTS_DIR="./results_rate_variation"
 fi
 
 # Template param file (never modified)
@@ -35,6 +26,10 @@ PARAM_WORKING="./param_file.txt"
 
 RUN_SCRIPT="script/param_build_and_run.sh"
 
+# Gamma distribution parameters
+GAMMA_ALPHA=1.5
+N_VALUES=(16 32)
+
 ################################
 # ENSURE RESULTS ROOT EXISTS
 ################################
@@ -44,43 +39,15 @@ if [[ ! -d "${RESULTS_DIR}" ]]; then
 fi
 
 ################################
-# WALK THROUGH ALL DIRECTORIES
+# ITERATE OVER CATEGORY COUNTS
 ################################
-if [[ ${#DATASET_DIRS[@]} -gt 0 ]]; then
-    DIRS=("${DATASET_DIRS[@]}")
-else
-    mapfile -t DIRS < <(find "${TEST_DATA_DIR}" -type d)
-fi
-
-for dir in "${DIRS[@]}"; do
-    # Find fasta & newick files in this directory (non-recursive)
-    # If multiple FASTA files exist, pick the largest by file size
-    fasta_file=$(find "$dir" -maxdepth 1 -type f \( \
-        -iname "*.fasta" -o -iname "*.fa" -o -iname "*.faa" \
-    \) | while IFS= read -r f; do
-        printf '%s %s\n' "$(wc -c < "$f")" "$f"
-    done | sort -rn | awk 'NR==1{print $2}')
-
-    tree_file=$(find "$dir" -maxdepth 1 -type f \( \
-        -iname "*.newick" -o -iname "*.nwk" -o -iname "*.tree" \
-    \) | head -n 1)
-
-    # Skip directories without both files
-    if [[ -z "${fasta_file}" || -z "${tree_file}" ]]; then
-        continue
-    fi
-
-    echo "Processing directory: ${dir}"
-    echo "  FASTA: ${fasta_file}"
-    echo "  TREE:  ${tree_file}"
+for n in "${N_VALUES[@]}"; do
+    echo "Running with Gamma n=${n} (alpha=${GAMMA_ALPHA}) ..."
 
     ################################
     # PREPARE RESULT DIRECTORY
     ################################
-    # Strip leading ./ to preserve tree structure
-    rel_path="${dir#./}"
-    result_dir="${RESULTS_DIR}/${rel_path}"
-
+    result_dir="${RESULTS_DIR}/n_${n}"
     mkdir -p "${result_dir}"
 
     ################################
@@ -88,10 +55,9 @@ for dir in "${DIRS[@]}"; do
     ################################
     cp "${PARAM_TEMPLATE}" "${PARAM_WORKING}"
 
-    # Replace tree/data paths (even if commented)
+    # Replace rate_distribution with Gamma(n, alpha), regardless of current setting
     sed -i.bak \
-        -e "s|^[#[:space:]]*_treePath *=.*|_treePath = ${tree_file}|g" \
-        -e "s|^[#[:space:]]*_dataPath *=.*|_dataPath = ${fasta_file}|g" \
+        -e "s|^[#[:space:]]*rate_distribution *=.*|rate_distribution = Gamma(n=${n}, alpha=${GAMMA_ALPHA})|g" \
         "${PARAM_WORKING}"
 
     rm -f "${PARAM_WORKING}.bak"
@@ -102,16 +68,24 @@ for dir in "${DIRS[@]}"; do
     cp "${PARAM_WORKING}" "${result_dir}/params.param"
 
     ################################
-    # RUN AND CAPTURE OUTPUT
+    # RUN AND CAPTURE OUTPUT (timed)
     ################################
+    start_time=$(date +%s%N)
+
     (
         cd "$(dirname "${RUN_SCRIPT}")/.."
         bash "${RUN_SCRIPT}"
     ) > "${result_dir}/res.log" 2>&1
+
+    end_time=$(date +%s%N)
+    elapsed_ms=$(( (end_time - start_time) / 1000000 ))
+    elapsed_sec=$(echo "scale=3; ${elapsed_ms} / 1000" | bc)
+
+    echo "  Elapsed time: ${elapsed_sec}s"
+    echo "${elapsed_sec}" > "${result_dir}/time.txt"
 
     echo "  Results saved in: ${result_dir}"
     echo
 done
 
 echo "All runs completed successfully."
-
