@@ -30,6 +30,7 @@ public:
     double getLikelihood() const { return likelihoodFunction_->getValue(); }
     double getParameterValueByName(string name) const { return likelihoodFunction_->getParameterValueByName(name); }
     double calculateAIC();
+    void printResults();
 
 private:
     ModelParameters* m_;

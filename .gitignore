@@ -16,3 +16,5 @@ Makefile
 # Result dir
 *results*/
 figures/
+
+.DS_store

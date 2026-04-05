@@ -191,7 +191,13 @@ bool LikelihoodUtils::isFixedParam(const std::string& name, const std::vector<st
 }
 
 double LikelihoodUtils::calculateAIC(SingleProcessPhyloLikelihood* lik) {
-    auto numOfParams = lik->getSubstitutionProcess()->getIndependentParameters().size();
+    ParameterList params = lik->getSubstitutionProcess()->getIndependentParameters();
+    size_t numOfParams = 0;
+    // Exclude branch length parameters
+    for (size_t i = 0; i < params.size(); ++i) {
+        if (params[i].getName().find("BrLen") == std::string::npos)
+            numOfParams++;
+    }
     double AIC = 2*(lik->getValue()) + (2*numOfParams);
     return AIC;
 }

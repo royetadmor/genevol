@@ -76,6 +76,7 @@ void GeneCountManager::optimizeMixtureModelParametersOneDimension(double tol, un
             optimizer->setInitialInterval(lowerBound, upperBound);            
             optimizer->init(params.createSubList(nameOfParam));
             currentLikelihood = optimizer->optimize();
+            params = f->getIndependentParameters();
             std::cout << "\nCurrent likelihood: " + std::to_string(currentLikelihood) << std::endl;
             std::cout << nameOfParam + " parameter value after optimization "+ std::to_string(f->getParameters().getParameter(nameOfParam)->getValue()) << std::endl;
         }
@@ -92,4 +93,19 @@ double GeneCountManager::calculateAIC() {
     auto numOfParams = likelihoodFunction_->getIndependentParameters().size();
     double AIC = 2*(likelihoodFunction_->getValue()) + (2*numOfParams);
     return AIC;
+}
+
+void GeneCountManager::printResults() {
+    double likelihood = getLikelihood();
+    double aic = calculateAIC();
+
+    std::cout << "Mixture Model Results:" << std::endl;
+    std::cout << "  Likelihood: " << likelihood << std::endl;
+    std::cout << "  AIC score: " << aic << std::endl;
+
+    ParameterList params = likelihoodFunction_->getIndependentParameters();
+    std::cout << "  Parameter values:" << std::endl;
+    for (size_t i = 0; i < params.size(); ++i) {
+        std::cout << "    " << params[i].getName() << " = " << params[i].getValue() << std::endl;
+    }
 }
