@@ -2,7 +2,7 @@
 //
 // SPDX-License-Identifier: CECILL-2.1
 
-#include "NegativeBinomialDistribution.h"
+#include "TruncatedNegBinomialDistribution.h"
 
 #include <Bpp/Numeric/Parameter.h>
 #include <cmath>
@@ -11,7 +11,7 @@
 using namespace bpp;
 using namespace std;
 
-NegativeBinomialDistribution::NegativeBinomialDistribution(
+TruncatedNegBinomialDistribution::TruncatedNegBinomialDistribution(
   double r,
   double mu,
   size_t maxK
@@ -32,25 +32,25 @@ NegativeBinomialDistribution::NegativeBinomialDistribution(
   updateDistribution_();
 }
 
-NegativeBinomialDistribution::NegativeBinomialDistribution(
-  const NegativeBinomialDistribution& nbdd
+TruncatedNegBinomialDistribution::TruncatedNegBinomialDistribution(
+  const TruncatedNegBinomialDistribution& nbdd
 ) :
   AbstractDiscreteDistribution(nbdd),
   maxK_(nbdd.maxK_),
   mu_(nbdd.mu_)
 {}
 
-double NegativeBinomialDistribution::getR() const
+double TruncatedNegBinomialDistribution::getR() const
 {
   return getParameterValue("r");
 }
 
-void NegativeBinomialDistribution::setR(double r)
+void TruncatedNegBinomialDistribution::setR(double r)
 {
   setParameterValue("r", r);
 }
 
-void NegativeBinomialDistribution::setMaxK(size_t maxK)
+void TruncatedNegBinomialDistribution::setMaxK(size_t maxK)
 {
   if (maxK == 0)
     throw Exception("NegativeBinomial: maxK must be >= 1.");
@@ -59,13 +59,13 @@ void NegativeBinomialDistribution::setMaxK(size_t maxK)
   updateDistribution_();
 }
 
-void NegativeBinomialDistribution::fireParameterChanged(const ParameterList& parameters)
+void TruncatedNegBinomialDistribution::fireParameterChanged(const ParameterList& parameters)
 {
   AbstractDiscreteDistribution::fireParameterChanged(parameters);
   updateDistribution_();
 }
 
-void NegativeBinomialDistribution::updateDistribution_()
+void TruncatedNegBinomialDistribution::updateDistribution_()
 {
   distribution_.clear();
 
@@ -97,7 +97,7 @@ void NegativeBinomialDistribution::updateDistribution_()
     kv.second /= sum;
 }
 
-double NegativeBinomialDistribution::pProb(double x) const
+double TruncatedNegBinomialDistribution::pProb(double x) const
 {
   double cdf = 0.0;
   for (const auto& kv : distribution_)
@@ -110,7 +110,7 @@ double NegativeBinomialDistribution::pProb(double x) const
   return cdf;
 }
 
-double NegativeBinomialDistribution::qProb(double p) const
+double TruncatedNegBinomialDistribution::qProb(double p) const
 {
   if (p < 0.0 || p > 1.0)
     throw Exception("NegativeBinomial::qProb(): p must be in [0,1].");
@@ -126,7 +126,7 @@ double NegativeBinomialDistribution::qProb(double p) const
   return distribution_.rbegin()->first;
 }
 
-double NegativeBinomialDistribution::Expectation(double a) const
+double TruncatedNegBinomialDistribution::Expectation(double a) const
 {
   double num = 0.0;
   double den = 0.0;

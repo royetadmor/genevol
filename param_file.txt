@@ -1,6 +1,6 @@
 # Mandatory Params
-_treePath = test_data/cafe/Primates/tree.newick
-_dataPath = test_data/cafe/Primates/data.fasta
+_treePath = test_data/arthur2020/9dicots/9dicots.newick
+_dataPath = test_data/arthur2020/9dicots/9dicots_25.fasta
 
 # State related params
 #_minState = 0
@@ -45,3 +45,4 @@ _mixtureEliminationFunc = CONST
 #_mixtureConstraintedParams=alphaGain,betaGain
 
 rate_distribution = Gamma(n=9, alpha=1.5)
+#_rootFreqModel = NegBinomial

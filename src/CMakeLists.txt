@@ -15,7 +15,7 @@ set (CPP_FILES
   TreeUtils.cpp
   ExtendedBrentOptimizer.cpp
   PoissonDistribution.cpp
-  NegativeBinomialDistribution.cpp
+  TruncatedNegBinomialDistribution.cpp
   NegBinomialFrequencySet.cpp
   )
 

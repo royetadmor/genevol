@@ -2,8 +2,8 @@
 //
 // SPDX-License-Identifier: CECILL-2.1
 
-#ifndef BPP_NUMERIC_PROB_NEGATIVEBINOMIALDISTRIBUTION_H
-#define BPP_NUMERIC_PROB_NEGATIVEBINOMIALDISTRIBUTION_H
+#ifndef BPP_NUMERIC_PROB_TRUNCATEDNEGBINOMIALDISTRIBUTION_H
+#define BPP_NUMERIC_PROB_TRUNCATEDNEGBINOMIALDISTRIBUTION_H
 
 #include <Bpp/Numeric/Prob/AbstractDiscreteDistribution.h>
 
@@ -21,9 +21,9 @@ namespace bpp
  * parameter for numerical optimization. The success probability p is derived
  * analytically from r and the empirical mean μ, which is fixed from the data.
  *
- * @author GenEvol
+ * @author Roye Tadmor
  */
-class NegativeBinomialDistribution :
+class TruncatedNegBinomialDistribution :
   public AbstractDiscreteDistribution
 {
 private:
@@ -36,11 +36,11 @@ public:
    * @param mu   Empirical mean of the data (> 0); fixed — used to derive p.
    * @param maxK Number of categories (support is {0, 1, ..., maxK-1}).
    */
-  NegativeBinomialDistribution(double r, double mu, size_t maxK);
+  TruncatedNegBinomialDistribution(double r, double mu, size_t maxK);
 
-  NegativeBinomialDistribution(const NegativeBinomialDistribution&);
+  TruncatedNegBinomialDistribution(const TruncatedNegBinomialDistribution&);
 
-  NegativeBinomialDistribution* clone() const { return new NegativeBinomialDistribution(*this); }
+  TruncatedNegBinomialDistribution* clone() const { return new TruncatedNegBinomialDistribution(*this); }
 
 public:
   std::string getName() const { return "NegativeBinomial"; }
@@ -65,4 +65,4 @@ private:
 
 } // namespace bpp
 
-#endif // BPP_NUMERIC_PROB_NEGATIVEBINOMIALDISTRIBUTION_H
+#endif // BPP_NUMERIC_PROB_TRUNCATEDNEGBINOMIALDISTRIBUTION_H
