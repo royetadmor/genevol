@@ -33,6 +33,7 @@
 #include "TreeUtils.h"
 #include "ExtendedBrentOptimizer.h"
 #include "PoissonDistribution.h"
+#include "WGDManager.h"
 
 using namespace bpp;
 using namespace std;
@@ -68,12 +69,22 @@ int main(int args, char **argv) {
     optimizeModelParametersOneDimension(likProc, m, 1e-4, 5);
 
     // Create mixture model, calculate likelihood and optimize
-    auto geneCountManager = std::make_shared<GeneCountManager>(m, tree_);
-    std::cout << "MM Likelihood: " << geneCountManager->getLikelihood() << std::endl;
-    geneCountManager->optimizeMixtureModelParametersOneDimension(1e-4, 2);
-    geneCountManager->printResults();
+    // auto geneCountManager = std::make_shared<GeneCountManager>(m, tree_);
+    // std::cout << "MM Likelihood: " << geneCountManager->getLikelihood() << std::endl;
+    // geneCountManager->optimizeMixtureModelParametersOneDimension(1e-4, 2);
+    // geneCountManager->printResults();
 
     LikelihoodUtils::printResults(likProc, m->showRate4Site_);
+
+    // WGD detection (only if _wgdThreshold is set to a positive value)
+    if (m->wgdThreshold_ > 0.0) {
+        std::cout << "\nStarting WGD detection (threshold=" << m->wgdThreshold_ << ")" << std::endl;
+        bpp::WGDManager wgdManager(m, tree_, likProc, m->wgdThreshold_);
+        wgdManager.forwardPass();
+        wgdManager.printResults();
+        wgdManager.writeTree();
+    }
+
     GenEvol.done();
     return 0;
 }

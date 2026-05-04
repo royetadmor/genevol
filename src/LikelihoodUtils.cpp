@@ -4,55 +4,55 @@ using namespace bpp;
 using namespace std;
 
 
-SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, string> constraintedParams, std::shared_ptr<DiscreteDistributionInterface> rDist) {
+SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, string> constraintedParams, std::shared_ptr<DiscreteDistributionInterface> rDist, double qInit) {
     // Create substitution process components
     auto parTree = std::make_shared<ParametrizablePhyloTree>(*tree);
 
     // Create substitution model
-    std::shared_ptr<GeneCountSubstitutionModel> subModel = std::make_shared<GeneCountSubstitutionModel>(m->alphabet_, rateParams, GeneCountSubstitutionModel::rootFreqType::ROOT_LL, rateChangeType, m);
+    auto subModel = std::make_shared<GeneCountSubstitutionModel>(
+        m->alphabet_, rateParams, GeneCountSubstitutionModel::rootFreqType::ROOT_LL, rateChangeType, m);
 
     // Calculate and set root frequencies
     std::shared_ptr<FrequencySetInterface> rootFrequencies;
     if (m->rootFreqModel_ == "NegBinomial") {
         rootFrequencies = negBinRootFreqSet(m, subModel->getStateMap());
     } else {
-        // Default: Poisson
         auto freq = poissonRootFreq(m);
-        auto rootFreqsFixed = std::make_shared<FixedFrequencySet>(subModel->getStateMap(), freq);
-        rootFrequencies = static_pointer_cast<FrequencySetInterface>(rootFreqsFixed);
+        auto fixed = std::make_shared<FixedFrequencySet>(subModel->getStateMap(), freq);
+        rootFrequencies = static_pointer_cast<FrequencySetInterface>(fixed);
     }
 
     // Create substitution process
-    std::shared_ptr<NonHomogeneousSubstitutionProcess> subProcesses = std::make_shared<NonHomogeneousSubstitutionProcess>(rDist, parTree, rootFrequencies);
-    auto mapOfNodeIds = LikelihoodUtils::getMapOfNodeIds(tree);
-    subProcesses->addModel(subModel, mapOfNodeIds[1]);
-    auto nsubPro = std::shared_ptr<bpp::SubstitutionProcessInterface>(subProcesses->clone());
+    auto subProcesses = std::make_shared<NonHomogeneousSubstitutionProcess>(rDist, parTree, rootFrequencies);
 
-    // Check for constrainted params
-    if (!constraintedParams.empty()) {
+    std::vector<uint> regularEdgeIds;
+    std::vector<uint> wgdEdgeIds;
+    for (auto& node : tree->getAllNodes()) {
+        if (tree->getNodeIndex(node) == tree->getRootIndex()) continue;
+        auto edge = tree->getEdgeToFather(node);
+        if (edge->getLength() != 0)
+            regularEdgeIds.push_back(tree->getEdgeIndex(edge));
+        else
+            wgdEdgeIds.push_back(tree->getEdgeIndex(edge));
+    }
+
+    subProcesses->addModel(subModel, regularEdgeIds);
+    if (!wgdEdgeIds.empty()) {
+        auto wgdSubModel = std::make_shared<WGDSubstitutionModel>(subModel, qInit, m->maxState_);
+        subProcesses->addModel(wgdSubModel, wgdEdgeIds);
+    }
+
+    auto nsubPro = std::shared_ptr<SubstitutionProcessInterface>(subProcesses->clone());
+    // Check for constrainted params, avoid constraining when computing WGD
+    if (!constraintedParams.empty() && wgdEdgeIds.empty()) {
         auto aliasable = dynamic_cast<AbstractParameterAliasable*>(nsubPro.get());
-        LikelihoodUtils::setProcessConstraintedParams(constraintedParams, aliasable);
+        setProcessConstraintedParams(constraintedParams, aliasable);
     }
 
     // Create likelihood object
     Context* context = new Context();
     auto lik = std::make_shared<LikelihoodCalculationSingleProcess>(*context, m->container_, nsubPro);
-    SingleProcessPhyloLikelihood* newLik = new SingleProcessPhyloLikelihood(*context, lik, lik->getParameters());
-    return newLik;
-}
-
-std::map<uint, vector<uint>> LikelihoodUtils::getMapOfNodeIds(std::shared_ptr<bpp::PhyloTree> tree) {
-    std::map<uint, vector<uint>> mapModelNodesIds;
-    auto nodes = tree->getAllNodes();
-    for (size_t i = 0; i < nodes.size(); i++){
-        uint nodeId = tree->getNodeIndex(nodes[i]);
-        if (nodeId == tree->getRootIndex()){
-            continue;
-        }
-        mapModelNodesIds[1].push_back(nodeId);
-    }
-    // mapModelNodesIds[1].push_back(tree->getRootIndex());
-    return mapModelNodesIds;
+    return new SingleProcessPhyloLikelihood(*context, lik, lik->getParameters());
 }
 
 void LikelihoodUtils::deleteLikelihoodProcess(SingleProcessPhyloLikelihood* lik) {
@@ -224,39 +224,6 @@ void LikelihoodUtils::printResults(SingleProcessPhyloLikelihood* lik, bool print
             std::cout << "Expected rate at site " << i << " is " << ratePerSite[i] << std::endl;
         }
     }
-}
-
-std::vector<double> LikelihoodUtils::getRootFrequncies(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::shared_ptr<DiscreteDistributionInterface> rDist, std::shared_ptr<GeneCountSubstitutionModel> model) {
-    size_t nbSite = m->container_->getNumberOfSites();
-    size_t nbState = m->alphabet_->getSize();
-    size_t nbCat = rDist->getNumberOfCategories();
-    std::vector<double> res(nbState, 0.0);
-    auto parTree = std::make_shared<ParametrizablePhyloTree>(*tree);
-    Context* context = new Context();
-
-    std::shared_ptr<NonHomogeneousSubstitutionProcess> subProcesses = std::make_shared<NonHomogeneousSubstitutionProcess>(rDist, parTree);
-    auto mapOfNodeIds = LikelihoodUtils::getMapOfNodeIds(tree);
-    subProcesses->addModel(model, mapOfNodeIds[1]);
-    auto nsubPro = std::shared_ptr<bpp::SubstitutionProcessInterface>(subProcesses->clone());
-
-    auto lik = std::make_shared<LikelihoodCalculationSingleProcess>(*context, m->container_, nsubPro);
-    lik->makeLikelihoods();
-
-    for (size_t cat = 0; cat < nbCat; ++cat) {
-        double prior = rDist->getProbability(cat);
-        auto flt = lik->getForwardLikelihoodTree(cat);
-        auto sumOfWeights = CWiseAdd<RowLik, MatrixLik>::create(*context, {flt->getForwardLikelihoodArrayAtRoot()}, RowVectorDimension(Eigen::Index(nbSite)));
-        auto rootSumOfWeights = CWiseAdd<DataLik, RowLik>::create(*context, {sumOfWeights}, Dimension<DataLik>());
-        auto converted = Convert<MatrixLik, Transposed<MatrixLik>>::create(*context, {flt->getForwardLikelihoodArrayAtRoot()}, MatrixDimension ((size_t)nbSite, nbState));
-        auto rootCondLik = CWiseAdd<RowLik, MatrixLik>::create(*context, {converted}, RowVectorDimension(Eigen::Index(nbState)));
-        auto freqs_ef = CWiseDiv<RowLik, std::tuple<RowLik, DataLik>>::create(*context,{rootCondLik, rootSumOfWeights}, RowVectorDimension(Eigen::Index(nbState)));
-        auto rFreqs = Convert<Eigen::RowVectorXd, ExtendedFloatRowVectorXd>::create(*context, {freqs_ef}, RowVectorDimension (Eigen::Index (nbState)));
-        for (size_t i = 0; i < nbState; ++i)
-        {
-            res[i] += prior * rFreqs->targetValue()(i);
-        }
-    }
-    return res;
 }
 
 // Function mostly for debugging, consider removing in the future

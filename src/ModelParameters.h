@@ -37,6 +37,7 @@ public: // Variables
     int stateOverhead_;
     int categories_;
     double branchMul_;
+    double wgdThreshold_;
     double alphaGain_;
     double betaGain_;
     double alphaLoss_;

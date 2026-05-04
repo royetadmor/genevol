@@ -27,7 +27,8 @@ ModelParameters::ModelParameters(BppApplication GenEvol)
     ModelParameters::rDist_ = std::move(PhylogeneticsApplicationTools::getRateDistribution(GenEvol.getParams(), "", true, true));
 
     // Load customization params
-    ModelParameters::branchMul_ = ApplicationTools::getDoubleParameter("_branchMul", GenEvol.getParams(), -999.0);
+    ModelParameters::branchMul_    = ApplicationTools::getDoubleParameter("_branchMul",    GenEvol.getParams(), -999.0);
+    ModelParameters::wgdThreshold_ = ApplicationTools::getDoubleParameter("_wgdThreshold", GenEvol.getParams(), -1.0);
 
     // Load MM params
     ModelParameters::alphaGain_ = ApplicationTools::getDoubleParameter("_alphaGain", GenEvol.getParams(), 1.0);

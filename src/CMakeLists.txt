@@ -17,6 +17,8 @@ set (CPP_FILES
   PoissonDistribution.cpp
   TruncatedNegBinomialDistribution.cpp
   NegBinomialFrequencySet.cpp
+  WGDSubstitutionModel.cpp
+  WGDManager.cpp
   )
 
 IF(BUILD_STATIC)

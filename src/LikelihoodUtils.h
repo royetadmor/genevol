@@ -28,6 +28,7 @@
 #include "GeneCountSubstitutionModel.h"
 #include "PoissonDistribution.h"
 #include "NegBinomialFrequencySet.h"
+#include "WGDSubstitutionModel.h"
 
 
 
@@ -39,11 +40,10 @@ namespace bpp{
       virtual ~LikelihoodUtils() {}
 
     public:
-        static std::map<uint, vector<uint>> getMapOfNodeIds(std::shared_ptr<bpp::PhyloTree> tree);
         static void deleteLikelihoodProcess(SingleProcessPhyloLikelihood* lik);
         static int getParamIndex(string name);
         static std::vector<string> filterParamsByName(std::vector<std::string> listOfParams, std::string paramName);
-        static SingleProcessPhyloLikelihood* createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, string> constraintedParams, std::shared_ptr<DiscreteDistributionInterface> rDist);
+        static SingleProcessPhyloLikelihood* createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, string> constraintedParams, std::shared_ptr<DiscreteDistributionInterface> rDist, double qInit = 0.5);
         static void setProcessConstraintedParams(std::map<string, string> constraintedParams, AbstractParameterAliasable* process);
         static bool isFixedParam(const std::string& name, const std::vector<string> params);
         static std::vector<double> calculateExpectedRatePerSite(SingleProcessPhyloLikelihood* lik, const bool normalize);
@@ -53,7 +53,6 @@ namespace bpp{
     private:
         static vector<string> getParametersByName(ParameterList params, string name);
         static void normalizeVector(vector<double>& data);
-        static std::vector<double> getRootFrequncies(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::shared_ptr<DiscreteDistributionInterface> rDist, std::shared_ptr<GeneCountSubstitutionModel> model);
         static std::vector<double> poissonRootFreq(ModelParameters* m);
         static std::shared_ptr<NegBinomialFrequencySet> negBinRootFreqSet(ModelParameters* m, std::shared_ptr<const StateMapInterface> stateMap);
   };
