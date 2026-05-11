@@ -78,6 +78,7 @@ int main(int args, char **argv) {
 
     // WGD detection (only if _wgdThreshold is set to a positive value)
     if (m->wgdThreshold_ > 0.0) {
+        TreeUtils::printTopology(tree_);
         std::cout << "\nStarting WGD detection (threshold=" << m->wgdThreshold_ << ")" << std::endl;
         bpp::WGDManager wgdManager(m, tree_, likProc, m->wgdThreshold_);
         wgdManager.forwardPass();

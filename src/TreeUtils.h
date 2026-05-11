@@ -13,6 +13,12 @@ using namespace std;
 using namespace bpp;
 
 
+struct WGDInsertion {
+    std::shared_ptr<bpp::PhyloNode> wgdUpper;  // connected to original parent by L/2 edge
+    std::shared_ptr<bpp::PhyloNode> wgdLower;  // connected to original child by L/2 edge; zero-length edge above it
+    double origLen;
+};
+
 class TreeUtils {
     public:
         static double getTreeScalingFactor(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree);
@@ -20,12 +26,11 @@ class TreeUtils {
         static double getTotalLength(std::shared_ptr<bpp::PhyloTree> tree);
         static void printTopology(std::shared_ptr<bpp::PhyloTree> tree);
 
-        static std::pair<std::shared_ptr<bpp::PhyloNode>, double>
-        insertWGDNode(std::shared_ptr<bpp::PhyloTree> tree, std::shared_ptr<bpp::PhyloNode> child,
+        static WGDInsertion insertWGDNode(std::shared_ptr<bpp::PhyloTree> tree, std::shared_ptr<bpp::PhyloNode> child,
                       uint& nextNodeIdx, uint& nextEdgeIdx);
 
-        static void removeWGDNode(std::shared_ptr<bpp::PhyloTree> tree, std::shared_ptr<bpp::PhyloNode> wgdNode,
-                                  double origLen, uint& nextEdgeIdx);
+        static void removeWGDNode(std::shared_ptr<bpp::PhyloTree> tree,
+                                  const WGDInsertion& ins, uint& nextEdgeIdx);
 };
 
 

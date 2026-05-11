@@ -100,7 +100,7 @@ void WGDManager::forwardPass()
     std::cout << "WGD forward pass — baseline AIC: " << baseAIC << std::endl;
 
     while (true) {
-        double bestLRT      = 0.0;
+        double bestDeltaAIC = 0.0;
         uint   bestChildId  = 0;
         double bestQ        = 0.5;
         SingleProcessPhyloLikelihood* bestLik = nullptr;
@@ -111,24 +111,14 @@ void WGDManager::forwardPass()
 
         for (uint childId : candidateIds) {
             auto candChild = tree_->getNode(childId);
-            auto [wgdNode, origLen] = TreeUtils::insertWGDNode(tree_, candChild, nextNodeIdx_, nextEdgeIdx_);
+            auto ins = TreeUtils::insertWGDNode(tree_, candChild, nextNodeIdx_, nextEdgeIdx_);
 
-            // Null: q fixed at 0
-            auto nullLik = LikelihoodUtils::createLikelihoodProcess(
-                m_, tree_, currentParams, m_->rateChangeType_,
-                m_->constraintedParams_, currentRDist, 0.0);
-            
-            // Alternative: q optimized
             auto altLik = LikelihoodUtils::createLikelihoodProcess(
                 m_, tree_, currentParams, m_->rateChangeType_,
                 m_->constraintedParams_, currentRDist, 0.5);
             optimizeQ(altLik);
 
-            // LRT = 2 * (logL_alt - logL_null); getValue() returns -logL
-            double lrt      = 2.0 * (nullLik->getValue() - altLik->getValue());
             double deltaAIC = baseAIC - LikelihoodUtils::calculateAIC(altLik);
-
-            LikelihoodUtils::deleteLikelihoodProcess(nullLik);
 
             double q = 0.5;
             ParameterList ps = altLik->getParameters();
@@ -139,22 +129,22 @@ void WGDManager::forwardPass()
             }
 
             std::cout << "  Branch to node " << childId
-                      << ": LRT=" << lrt << " ΔAIC=" << deltaAIC << " q=" << q << std::endl;
+                      << ": ΔAIC=" << deltaAIC << " q=" << q << std::endl;
 
-            if (lrt > bestLRT) {
+            if (deltaAIC > bestDeltaAIC) {
                 if (bestLik) LikelihoodUtils::deleteLikelihoodProcess(bestLik);
-                bestLRT     = lrt;
-                bestChildId = childId;
-                bestQ       = q;
-                bestLik     = altLik;
+                bestDeltaAIC = deltaAIC;
+                bestChildId  = childId;
+                bestQ        = q;
+                bestLik      = altLik;
             } else {
                 LikelihoodUtils::deleteLikelihoodProcess(altLik);
             }
 
-            TreeUtils::removeWGDNode(tree_, wgdNode, origLen, nextEdgeIdx_);
+            TreeUtils::removeWGDNode(tree_, ins, nextEdgeIdx_);
         }
 
-        if (bestLRT <= threshold_ || bestChildId == 0) {
+        if (bestDeltaAIC <= threshold_ || bestChildId == 0) {
             if (bestLik) LikelihoodUtils::deleteLikelihoodProcess(bestLik);
             std::cout << "WGD forward pass complete. Found " << results_.size() << " duplications." << std::endl;
             break;
@@ -164,9 +154,8 @@ void WGDManager::forwardPass()
         auto bestChild = tree_->getNode(bestChildId);
         TreeUtils::insertWGDNode(tree_, bestChild, nextNodeIdx_, nextEdgeIdx_);
 
-        double bestDeltaAIC = baseAIC - LikelihoodUtils::calculateAIC(bestLik);
         std::cout << "Accepted WGD on branch to node " << bestChildId
-                  << "  LRT=" << bestLRT << "  ΔAIC=" << bestDeltaAIC << "  q=" << bestQ << std::endl;
+                  << "  ΔAIC=" << bestDeltaAIC << "  q=" << bestQ << std::endl;
 
         baseAIC = LikelihoodUtils::calculateAIC(bestLik);
         ownedLiks_.push_back(bestLik);
@@ -175,7 +164,6 @@ void WGDManager::forwardPass()
         WGDResult res;
         res.childNodeId = bestChildId;
         res.q           = bestQ;
-        res.lrt         = bestLRT;
         res.deltaAIC    = bestDeltaAIC;
         results_.push_back(res);
     }
@@ -190,8 +178,6 @@ std::vector<uint> WGDManager::getCandidates() const
         if (nid == rootId) continue;
         auto edge = tree_->getEdgeToFather(node);
         if (edge->getLength() <= 0.0) continue;
-        auto parent = tree_->getFatherOfNode(node);
-        if (parent->hasName() && parent->getName() == "WGD") continue;
         candidateIds.push_back(nid);
     }
     return candidateIds;
@@ -204,13 +190,12 @@ void WGDManager::printResults() const
         return;
     }
     std::cout << "\n=== WGD Detection Results ===" << std::endl;
-    std::cout << "  #   Child-node       q        LRT      ΔAIC" << std::endl;
+    std::cout << "  #   Child-node       q        ΔAIC" << std::endl;
     for (size_t i = 0; i < results_.size(); ++i) {
         const auto& r = results_[i];
         std::cout << "  " << (i + 1)
                   << "       " << r.childNodeId
                   << "      " << r.q
-                  << "   " << r.lrt
                   << "   " << r.deltaAIC << std::endl;
     }
     TreeUtils::printTopology(tree_);

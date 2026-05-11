@@ -36,7 +36,7 @@ void TreeUtils::printTopology(std::shared_ptr<bpp::PhyloTree> tree)
     }
 }
 
-std::pair<std::shared_ptr<bpp::PhyloNode>, double>
+WGDInsertion
 TreeUtils::insertWGDNode(std::shared_ptr<bpp::PhyloTree> tree, std::shared_ptr<bpp::PhyloNode> child,
                          uint& nextNodeIdx, uint& nextEdgeIdx)
 {
@@ -52,21 +52,30 @@ TreeUtils::insertWGDNode(std::shared_ptr<bpp::PhyloTree> tree, std::shared_ptr<b
         throw std::runtime_error("insertWGDNode: child has no incoming edge.");
 
     double origLen = edgeToParent->getLength();
+    double halfLen = origLen / 2.0;
 
+    // Detach child from parent
     tree->removeSon(parent, child);
 
-    auto wgdNode    = std::make_shared<bpp::PhyloNode>("WGD");
-    auto zeroBranch = std::make_shared<bpp::PhyloBranch>(0.0);
-    tree->createNode(parent, wgdNode, zeroBranch);
+    // Insert wgdUpper between parent and the WGD site (upper half of original branch)
+    auto wgdUpper      = std::make_shared<bpp::PhyloNode>("WGD");
+    auto upperBranch   = std::make_shared<bpp::PhyloBranch>(halfLen);
+    tree->createNode(parent, wgdUpper, upperBranch);
 
-    auto newBranch = std::make_shared<bpp::PhyloBranch>(origLen);
-    tree->link(wgdNode, child, newBranch);
+    // Insert wgdLower below wgdUpper with a zero-length edge (this is the WGD event edge)
+    auto wgdLower      = std::make_shared<bpp::PhyloNode>("WGD");
+    auto zeroBranch    = std::make_shared<bpp::PhyloBranch>(0.0);
+    tree->createNode(wgdUpper, wgdLower, zeroBranch);
 
+    // Re-attach child below wgdLower (lower half of original branch)
+    auto lowerBranch   = std::make_shared<bpp::PhyloBranch>(halfLen);
+    tree->link(wgdLower, child, lowerBranch);
+
+    // Assign indices to any new nodes and edges
     for (auto& n : tree->getAllNodes()) {
         if (!tree->hasNodeIndex(n))
             tree->setNodeIndex(n, nextNodeIdx++);
     }
-
     for (auto& n : tree->getAllNodes()) {
         if (tree->getNodeIndex(n) == tree->getRootIndex()) continue;
         auto e = tree->getEdgeToFather(n);
@@ -74,28 +83,32 @@ TreeUtils::insertWGDNode(std::shared_ptr<bpp::PhyloTree> tree, std::shared_ptr<b
             tree->setEdgeIndex(e, nextEdgeIdx++);
     }
 
-    return {wgdNode, origLen};
+    return {wgdUpper, wgdLower, origLen};
 }
 
-void TreeUtils::removeWGDNode(std::shared_ptr<bpp::PhyloTree> tree, std::shared_ptr<bpp::PhyloNode> wgdNode,
-                               double origLen, uint& nextEdgeIdx)
+void TreeUtils::removeWGDNode(std::shared_ptr<bpp::PhyloTree> tree,
+                               const WGDInsertion& ins, uint& nextEdgeIdx)
 {
-    auto parent = tree->getFatherOfNode(wgdNode);
+    auto parent = tree->getFatherOfNode(ins.wgdUpper);
     if (!parent)
-        throw std::runtime_error("removeWGDNode: WGD node has no parent.");
+        throw std::runtime_error("removeWGDNode: wgdUpper has no parent.");
 
-    auto sons = tree->getSons(wgdNode);
+    auto sons = tree->getSons(ins.wgdLower);
     if (sons.size() != 1)
-        throw std::runtime_error("removeWGDNode: expected exactly one child.");
+        throw std::runtime_error("removeWGDNode: wgdLower expected exactly one child.");
     auto child = sons[0];
 
-    tree->removeSon(wgdNode, child);
-    tree->removeSon(parent, wgdNode);
+    // Detach child from wgdLower, wgdLower from wgdUpper, wgdUpper from parent
+    tree->removeSon(ins.wgdLower, child);
+    tree->removeSon(ins.wgdUpper, ins.wgdLower);
+    tree->removeSon(parent, ins.wgdUpper);
 
-    auto restoredBranch = std::make_shared<bpp::PhyloBranch>(origLen);
+    // Restore original edge
+    auto restoredBranch = std::make_shared<bpp::PhyloBranch>(ins.origLen);
     tree->link(parent, child, restoredBranch);
 
-    tree->deleteNode(wgdNode);
+    tree->deleteNode(ins.wgdUpper);
+    tree->deleteNode(ins.wgdLower);
 
     if (!tree->hasEdgeIndex(restoredBranch))
         tree->setEdgeIndex(restoredBranch, nextEdgeIdx++);

@@ -32,7 +32,6 @@ public:
     struct WGDResult {
         uint   childNodeId;
         double q;
-        double lrt;
         double deltaAIC;
     };
 
@@ -42,10 +41,10 @@ public:
      * @param tree     The tree (will be modified in-place as WGDs are accepted).
      * @param baseLik  Already-optimized likelihood; parameter values are read
      *                 from here to seed each candidate evaluation.
-     * @param threshold Minimum LRT (or ΔAIC) score required to accept a WGD placement.
-     *                  Default is 3.841, the χ²(1) critical value at α=0.05.
+     * @param threshold Minimum ΔAIC required to accept a WGD placement (LRT is also
+     *                  computed and stored for reference). Default is 2 (one free parameter).
      */
-    WGDManager(ModelParameters* m, std::shared_ptr<PhyloTree> tree, SingleProcessPhyloLikelihood* baseLik, double threshold = 3.841);
+    WGDManager(ModelParameters* m, std::shared_ptr<PhyloTree> tree, SingleProcessPhyloLikelihood* baseLik, double threshold = 2.0);
 
     ~WGDManager() {
         for (auto* p : ownedLiks_) {
