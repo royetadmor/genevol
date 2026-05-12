@@ -43,11 +43,12 @@ namespace bpp{
         static void deleteLikelihoodProcess(SingleProcessPhyloLikelihood* lik);
         static int getParamIndex(string name);
         static std::vector<string> filterParamsByName(std::vector<std::string> listOfParams, std::string paramName);
-        static SingleProcessPhyloLikelihood* createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, string> constraintedParams, std::shared_ptr<DiscreteDistributionInterface> rDist, double qInit = 0.5);
+        static SingleProcessPhyloLikelihood* createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, string> constraintedParams, std::shared_ptr<DiscreteDistributionInterface> rDist, std::map<uint, double> wgdQMap = {}, double qInit = 0.5);
         static void setProcessConstraintedParams(std::map<string, string> constraintedParams, AbstractParameterAliasable* process);
         static bool isFixedParam(const std::string& name, const std::vector<string> params);
         static std::vector<double> calculateExpectedRatePerSite(SingleProcessPhyloLikelihood* lik, const bool normalize);
         static double calculateAIC(SingleProcessPhyloLikelihood* lik);
+        static double calculateAICc(SingleProcessPhyloLikelihood* lik);
         static void printResults(SingleProcessPhyloLikelihood* lik, bool printRate4Site = false);
         static void printRootFreqsPerSite(SingleProcessPhyloLikelihood* lik);
     private:

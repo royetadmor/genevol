@@ -6,13 +6,14 @@ using namespace std;
 WGDSubstitutionModel::WGDSubstitutionModel(
     std::shared_ptr<GeneCountSubstitutionModel> baseModel,
     double q,
-    int maxState)
-    : AbstractParameterAliasable("WGD."),
-      AbstractSubstitutionModel(baseModel->getAlphabet(), baseModel->getStateMap(), "WGD."),
+    int maxState,
+    const std::string& modelId)
+    : AbstractParameterAliasable(modelId + "."),
+      AbstractSubstitutionModel(baseModel->getAlphabet(), baseModel->getStateMap(), modelId + "."),
       W_(baseModel->getNumberOfStates(), baseModel->getNumberOfStates()),
       maxState_(maxState)
 {
-    addParameter_(new Parameter("WGD.q", q, make_shared<IntervalConstraint>(0, 1.0, true, true)));
+    addParameter_(new Parameter(modelId + ".q", q, make_shared<IntervalConstraint>(0, 1.0, true, true)));
     isScalable_ = false;
     computeWMatrix_();
 }

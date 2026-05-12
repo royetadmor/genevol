@@ -29,7 +29,9 @@ private:
     int maxState_;
 
 public:
-    WGDSubstitutionModel(std::shared_ptr<GeneCountSubstitutionModel> baseModel, double q, int maxState);
+    // modelId is used as the parameter namespace, e.g. "WGD_42" → parameter "WGD_42.q"
+    WGDSubstitutionModel(std::shared_ptr<GeneCountSubstitutionModel> baseModel, double q, int maxState,
+                         const std::string& modelId = "WGD");
     WGDSubstitutionModel(const WGDSubstitutionModel& model) = default;
     WGDSubstitutionModel& operator=(const WGDSubstitutionModel&) = default;
     virtual ~WGDSubstitutionModel() {}

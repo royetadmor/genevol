@@ -83,7 +83,8 @@ TreeUtils::insertWGDNode(std::shared_ptr<bpp::PhyloTree> tree, std::shared_ptr<b
             tree->setEdgeIndex(e, nextEdgeIdx++);
     }
 
-    return {wgdUpper, wgdLower, origLen};
+    uint wgdEdgeIdx = tree->getEdgeIndex(tree->getEdgeToFather(wgdLower));
+    return {wgdUpper, wgdLower, origLen, wgdEdgeIdx};
 }
 
 void TreeUtils::removeWGDNode(std::shared_ptr<bpp::PhyloTree> tree,

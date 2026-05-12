@@ -4,7 +4,7 @@ using namespace bpp;
 using namespace std;
 
 
-SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, string> constraintedParams, std::shared_ptr<DiscreteDistributionInterface> rDist, double qInit) {
+SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, string> constraintedParams, std::shared_ptr<DiscreteDistributionInterface> rDist, std::map<uint, double> wgdQMap, double qInit) {
     // Create substitution process components
     auto parTree = std::make_shared<ParametrizablePhyloTree>(*tree);
 
@@ -37,9 +37,11 @@ SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelPara
     }
 
     subProcesses->addModel(subModel, regularEdgeIds);
-    if (!wgdEdgeIds.empty()) {
-        auto wgdSubModel = std::make_shared<WGDSubstitutionModel>(subModel, qInit, m->maxState_);
-        subProcesses->addModel(wgdSubModel, wgdEdgeIds);
+    for (uint edgeId : wgdEdgeIds) {
+        double q = (!wgdQMap.empty() && wgdQMap.count(edgeId)) ? wgdQMap.at(edgeId) : qInit;
+        std::string modelId = "WGD_" + std::to_string(edgeId);
+        auto wgdSubModel = std::make_shared<WGDSubstitutionModel>(subModel, q, m->maxState_, modelId);
+        subProcesses->addModel(wgdSubModel, std::vector<uint>{edgeId});
     }
 
     auto nsubPro = std::shared_ptr<SubstitutionProcessInterface>(subProcesses->clone());
@@ -200,6 +202,19 @@ double LikelihoodUtils::calculateAIC(SingleProcessPhyloLikelihood* lik) {
     }
     double AIC = 2*(lik->getValue()) + (2*numOfParams);
     return AIC;
+}
+
+double LikelihoodUtils::calculateAICc(SingleProcessPhyloLikelihood* lik) {
+    double aic = calculateAIC(lik);
+    ParameterList params = lik->getSubstitutionProcess()->getIndependentParameters();
+    double k = 0;
+    for (size_t i = 0; i < params.size(); ++i) {
+        if (params[i].getName().find("BrLen") == std::string::npos)
+            k++;
+    }
+    double n = static_cast<double>(lik->getData()->getNumberOfSequences() * lik->getData()->getNumberOfSites());
+    double correction = (2.0 * k * (k + 1.0)) / (n - k - 1.0);
+    return aic + correction;
 }
 
 void LikelihoodUtils::printResults(SingleProcessPhyloLikelihood* lik, bool printRate4Site) {

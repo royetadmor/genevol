@@ -69,14 +69,16 @@ int main(int args, char **argv) {
     optimizeModelParametersOneDimension(likProc, m, 1e-4, 5);
 
     // Create mixture model, calculate likelihood and optimize
-    // auto geneCountManager = std::make_shared<GeneCountManager>(m, tree_);
-    // std::cout << "MM Likelihood: " << geneCountManager->getLikelihood() << std::endl;
-    // geneCountManager->optimizeMixtureModelParametersOneDimension(1e-4, 2);
-    // geneCountManager->printResults();
+    if (m->useMixtureModel_) {
+        auto geneCountManager = std::make_shared<GeneCountManager>(m, tree_);
+        std::cout << "MM Likelihood: " << geneCountManager->getLikelihood() << std::endl;
+        geneCountManager->optimizeMixtureModelParametersOneDimension(1e-4, 2);
+        geneCountManager->printResults();
+    }
 
     LikelihoodUtils::printResults(likProc, m->showRate4Site_);
 
-    // WGD detection (only if _wgdThreshold is set to a positive value)
+    // WGD detection
     if (m->wgdThreshold_ > 0.0) {
         TreeUtils::printTopology(tree_);
         std::cout << "\nStarting WGD detection (threshold=" << m->wgdThreshold_ << ")" << std::endl;

@@ -17,6 +17,7 @@ struct WGDInsertion {
     std::shared_ptr<bpp::PhyloNode> wgdUpper;  // connected to original parent by L/2 edge
     std::shared_ptr<bpp::PhyloNode> wgdLower;  // connected to original child by L/2 edge; zero-length edge above it
     double origLen;
+    uint   wgdEdgeIdx;  // index of the zero-length edge between wgdUpper and wgdLower
 };
 
 class TreeUtils {

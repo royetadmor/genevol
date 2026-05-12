@@ -31,6 +31,7 @@ class WGDManager {
 public:
     struct WGDResult {
         uint   childNodeId;
+        uint   wgdEdgeIdx;  // index of the zero-length WGD edge, used to seed q in future iterations
         double q;
         double deltaAIC;
     };
@@ -58,8 +59,8 @@ public:
     void writeTree(const std::string& outputPath = "wgd_tree.nwk") const;
 
 private:
-    /** Optimize only the WGD.q parameter via Brent. */
-    void optimizeQ(SingleProcessPhyloLikelihood* lik);
+    /** Optimize only the q parameter for the new candidate WGD edge (identified by newEdgeIdx). */
+    void optimizeQ(SingleProcessPhyloLikelihood* lik, uint newEdgeIdx);
 
     /** Read current rate parameter values from a likelihood object. */
     std::map<int, std::vector<double>> extractRateParams(SingleProcessPhyloLikelihood* lik) const;
@@ -77,6 +78,9 @@ private:
     double threshold_;
 
     std::vector<WGDResult> results_;
+
+    // Maps accepted WGD zero-length edge index → optimal q; updated after each acceptance
+    std::map<uint, double> wgdQMap_;
 
     // Monotonically increasing edge index — never reuses values so ghost
     // entries left behind by removeSon() never cause setEdgeIndex conflicts.

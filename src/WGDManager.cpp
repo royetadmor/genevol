@@ -25,27 +25,33 @@ WGDManager::WGDManager(ModelParameters* m,
 }
 
 
-void WGDManager::optimizeQ(SingleProcessPhyloLikelihood* lik)
+void WGDManager::optimizeQ(SingleProcessPhyloLikelihood* lik, uint newEdgeIdx)
 {
-    auto f = std::shared_ptr<SecondOrderDerivable>(lik, [](SecondOrderDerivable*) {});
-    ExtendedBrentOptimizer optimizer(f);
-    optimizer.setVerbose(0);
-    optimizer.setProfiler(0);
-    optimizer.setMessageHandler(0);
-    optimizer.setConstraintPolicy(AutoParameter::CONSTRAINTS_AUTO);
-    optimizer.setMaximumNumberOfEvaluations(100);
-    optimizer.setBracketing(ExtendedBrentOptimizer::BRACKET_SIMPLE);
-    optimizer.getStopCondition()->setTolerance(1e-4);
-    optimizer.setInitialInterval(0, 1.0);
+    const std::string targetParam = "WGD_" + std::to_string(newEdgeIdx) + ".q";
 
     ParameterList params = lik->getParameters();
+    bool found = false;
     for (size_t i = 0; i < params.size(); ++i) {
-        if (params[i].getName().find("WGD.q") != std::string::npos) {
-            optimizer.init(params.createSubList(params[i].getName()));
+        if (params[i].getName().find(targetParam) != std::string::npos) {
+            const std::string actualParam = params[i].getName();
+            auto f = std::shared_ptr<SecondOrderDerivable>(lik, [](SecondOrderDerivable*) {});
+            ExtendedBrentOptimizer optimizer(f);
+            optimizer.setVerbose(0);
+            optimizer.setProfiler(0);
+            optimizer.setMessageHandler(0);
+            optimizer.setConstraintPolicy(AutoParameter::CONSTRAINTS_AUTO);
+            optimizer.setMaximumNumberOfEvaluations(100);
+            optimizer.setBracketing(ExtendedBrentOptimizer::BRACKET_SIMPLE);
+            optimizer.getStopCondition()->setTolerance(1e-4);
+            optimizer.setInitialInterval(0, 1.0);
+            optimizer.init(params.createSubList(actualParam));
             optimizer.optimize();
+            found = true;
             break;
         }
     }
+    if (!found)
+        throw std::runtime_error("optimizeQ: parameter '" + targetParam + "' not found in likelihood.");
 }
 
 std::map<int, std::vector<double>> WGDManager::extractRateParams(SingleProcessPhyloLikelihood* lik) const
@@ -115,21 +121,22 @@ void WGDManager::forwardPass()
 
             auto altLik = LikelihoodUtils::createLikelihoodProcess(
                 m_, tree_, currentParams, m_->rateChangeType_,
-                m_->constraintedParams_, currentRDist, 0.5);
-            optimizeQ(altLik);
+                m_->constraintedParams_, currentRDist, wgdQMap_, 0.5);
+            optimizeQ(altLik, ins.wgdEdgeIdx);
 
             double deltaAIC = baseAIC - LikelihoodUtils::calculateAIC(altLik);
 
+            const std::string qParamName = "WGD_" + std::to_string(ins.wgdEdgeIdx) + ".q";
             double q = 0.5;
             ParameterList ps = altLik->getParameters();
             for (size_t pi = 0; pi < ps.size(); ++pi) {
-                if (ps[pi].getName().find("WGD.q") != std::string::npos) {
+                if (ps[pi].getName().find(qParamName) != std::string::npos) {
                     q = ps[pi].getValue(); break;
                 }
             }
 
             std::cout << "  Branch to node " << childId
-                      << ": ΔAIC=" << deltaAIC << " q=" << q << std::endl;
+                      << ": ΔAIC=" << deltaAIC << "  q=" << q << std::endl;
 
             if (deltaAIC > bestDeltaAIC) {
                 if (bestLik) LikelihoodUtils::deleteLikelihoodProcess(bestLik);
@@ -152,19 +159,22 @@ void WGDManager::forwardPass()
 
         // Accept best WGD: insert permanently into tree_
         auto bestChild = tree_->getNode(bestChildId);
-        TreeUtils::insertWGDNode(tree_, bestChild, nextNodeIdx_, nextEdgeIdx_);
+        auto acceptedIns = TreeUtils::insertWGDNode(tree_, bestChild, nextNodeIdx_, nextEdgeIdx_);
 
         std::cout << "Accepted WGD on branch to node " << bestChildId
                   << "  ΔAIC=" << bestDeltaAIC << "  q=" << bestQ << std::endl;
+
+        wgdQMap_[acceptedIns.wgdEdgeIdx] = bestQ;
 
         baseAIC = LikelihoodUtils::calculateAIC(bestLik);
         ownedLiks_.push_back(bestLik);
         baseLik_ = bestLik;
 
         WGDResult res;
-        res.childNodeId = bestChildId;
-        res.q           = bestQ;
-        res.deltaAIC    = bestDeltaAIC;
+        res.childNodeId  = bestChildId;
+        res.wgdEdgeIdx   = acceptedIns.wgdEdgeIdx;
+        res.q            = bestQ;
+        res.deltaAIC     = bestDeltaAIC;
         results_.push_back(res);
     }
 }
