@@ -29,6 +29,8 @@
 #include "PoissonDistribution.h"
 #include "NegBinomialFrequencySet.h"
 #include "WGDSubstitutionModel.h"
+#include "ExtendedBrentOptimizer.h"
+#include "GeneCountDependencyFunction.h"
 
 
 
@@ -51,6 +53,7 @@ namespace bpp{
         static double calculateAICc(SingleProcessPhyloLikelihood* lik);
         static void printResults(SingleProcessPhyloLikelihood* lik, bool printRate4Site = false);
         static void printRootFreqsPerSite(SingleProcessPhyloLikelihood* lik);
+        static void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoodProcess, ModelParameters* m,double tol, unsigned int maxNumOfIterations);
     private:
         static vector<string> getParametersByName(ParameterList params, string name);
         static void normalizeVector(vector<double>& data);

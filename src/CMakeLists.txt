@@ -15,7 +15,6 @@ set (CPP_FILES
   TreeUtils.cpp
   ExtendedBrentOptimizer.cpp
   PoissonDistribution.cpp
-  TruncatedNegBinomialDistribution.cpp
   NegBinomialFrequencySet.cpp
   WGDSubstitutionModel.cpp
   WGDManager.cpp

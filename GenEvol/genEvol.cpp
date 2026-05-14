@@ -28,17 +28,12 @@
 #include "LikelihoodUtils.h"
 #include "MixtureModelLikelihoodFunction.h"
 #include "GeneCountManager.h"
-#include "GeneCountDependencyFunction.h"
-#include "GeneCountSubstitutionModel.h"
 #include "TreeUtils.h"
-#include "ExtendedBrentOptimizer.h"
 #include "PoissonDistribution.h"
 #include "WGDManager.h"
 
 using namespace bpp;
 using namespace std;
-
-void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoodProcess, ModelParameters* m,double tol, unsigned int maxNumOfIterations, bool mixed=false, unsigned curentIterNum=0);
 
 int main(int args, char **argv) {
     // Set model data and parameters
@@ -66,7 +61,7 @@ int main(int args, char **argv) {
     }
     // Optimization and assessment
     std::cout << "Starting optimization for new model" << std::endl;
-    optimizeModelParametersOneDimension(likProc, m, 1e-4, 5);
+    LikelihoodUtils::optimizeModelParametersOneDimension(likProc, m, 1e-4, 5);
 
     // Create mixture model, calculate likelihood and optimize
     if (m->useMixtureModel_) {
@@ -90,92 +85,4 @@ int main(int args, char **argv) {
 
     GenEvol.done();
     return 0;
-}
-
-void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoodProcess, ModelParameters* m,double tol, unsigned int maxNumOfIterations, bool mixed, unsigned curentIterNum)
-{
-    // Initialize optimizer
-    SecondOrderDerivable* f = likelihoodProcess;
-    // This is passed to the optimizer to the original object isn't deleted
-    auto fBorrowed = std::shared_ptr<SecondOrderDerivable>(f, [](SecondOrderDerivable*) {});
-    // Using ExtendedBrentOptimizer to enable BRACKET_SIMPLE. this can be reverted by switching to BrentOneDimension
-    ExtendedBrentOptimizer* optimizer = new ExtendedBrentOptimizer(std::shared_ptr<SecondOrderDerivable>(fBorrowed));
-    optimizer->setVerbose(1);
-    optimizer->setProfiler(0);
-    optimizer->setMessageHandler(0);
-    optimizer->setConstraintPolicy(AutoParameter::CONSTRAINTS_AUTO);
-    optimizer->setMaximumNumberOfEvaluations(100);
-
-    // Can use BRACKET_INWARD or BRACKET_OUTWARD instead
-    optimizer->setBracketing(ExtendedBrentOptimizer::BRACKET_SIMPLE);
-
-    // initializing the likelihood values
-    double currentLikelihood = likelihoodProcess->getValue();
-    double prevLikelihood;
-    int minDomain = m->minState_;
-    int maxDomain = m->maxState_;
-    std::vector<int> rateChangeType = m->rateChangeType_;
-
-    
-    vector<string> rParamsNames = likelihoodProcess->getRateDistributionParameters().getParameterNames();
-    vector<string> rootFreqParamsNames = likelihoodProcess->getRootFrequenciesParameters().getParameterNames();
-    vector<string> parametersNames = likelihoodProcess->getSubstitutionModelParameters().getParameterNames();
-    parametersNames.insert(parametersNames.end(), rParamsNames.begin(), rParamsNames.end());
-    parametersNames.insert(parametersNames.end(), rootFreqParamsNames.begin(), rootFreqParamsNames.end());
-    ParameterList params = likelihoodProcess->getParameters();
-
-
-    size_t nbParams = parametersNames.size();
-    // starting iterations of optimization
-    for (size_t i = 0; i < maxNumOfIterations; i++)
-    {
-        prevLikelihood = currentLikelihood;
-        for (size_t j = 0; j < nbParams; j ++)
-        {
-            double lowerBound, upperBound;            
-            const string nameOfParam = parametersNames[j];
-            std::cout << "Previous value of "+ nameOfParam + " is: "+ std::to_string(likelihoodProcess->getParameters().getParameter(nameOfParam)->getValue()) << std::endl;
-
-            if (LikelihoodUtils::isFixedParam(nameOfParam, m->fixedParams_)) {
-                std::cout << "Skipping " << nameOfParam << std::endl;
-                continue;
-            }
-
-            // param names corresponding to the parameter type
-            std::vector<string> paramsNames = LikelihoodUtils::filterParamsByName(parametersNames, nameOfParam);
-
-            size_t index = LikelihoodUtils::getParamIndex(nameOfParam);
-
-            // Handle bound calculation for gamma dist params and NegBinomial r
-            if (nameOfParam.find("Gamma") != std::string::npos) {
-                lowerBound = 0.05;
-                upperBound = 100;
-            } else if (nameOfParam.find("NegBinomial") != std::string::npos) {
-                lowerBound = 0.01;
-                upperBound = 100;
-            } else {
-                GeneCountDependencyFunction* functionOp;
-                GeneCountDependencyFunction::FunctionType funcType = static_cast<GeneCountDependencyFunction::FunctionType>(rateChangeType[GeneCountSubstitutionModel::getParamIndexByName(nameOfParam)]);
-                functionOp = compositeParameter::getDependencyFunction(funcType);
-                functionOp->setDomainsIfNeeded(minDomain, maxDomain);
-                functionOp->updateBounds(params, paramsNames, index, &lowerBound, &upperBound, maxDomain);
-                functionOp->updateBounds(f, nameOfParam, lowerBound, upperBound);
-                delete functionOp;
-            };
-            
-            std::cout << "Parameter name is: " + nameOfParam << std::endl;
-            optimizer->getStopCondition()->setTolerance(tol);
-            optimizer->setInitialInterval(lowerBound, upperBound);
-            optimizer->init(params.createSubList(nameOfParam));
-            currentLikelihood = optimizer->optimize();
-            std::cout << "\nCurrent likelihood: " + std::to_string(currentLikelihood) << std::endl;
-            std::cout << nameOfParam + " parameter value after optimization "+ std::to_string(likelihoodProcess->getParameters().getParameter(nameOfParam)->getValue()) << std::endl;
-        }
-
-        if (std::abs(prevLikelihood-currentLikelihood) < tol){
-            break;
-        }
-
-    }
-    delete optimizer;
 }

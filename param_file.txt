@@ -1,26 +1,28 @@
 # Mandatory Params
-_treePath = test_data/arthur2020/9dicots/9dicots.newick
-_dataPath = test_data/arthur2020/9dicots/9dicots_25.fasta
+_treePath = test_data/tiley2016/Brassicaceae/tree.newick
+_dataPath = test_data/tiley2016/Brassicaceae/data.fasta
+
+#_treePath = test_data/arthur2020/9dicots/9dicots.newick
+#_dataPath = test_data/arthur2020/9dicots/9dicots_100.fasta
 
 # State related params
 #_minState = 0
 #_maxState = 30
 #_allowCappedState = false
-#_showRate4Site = false
 
 # Branch normalization factor
 _branchMul = -999
 
 # Rate Params for classic model
-_gain=2,0.1
-_loss=2,0.1
+_gain=2
+_loss=2
 _innovation=1
 _elimination=1
 
 
 # Dependency functions for classic model
-_gainFunc = LINEAR
-_lossFunc = LINEAR
+_gainFunc = CONST
+_lossFunc = CONST
 _innovationFunc = CONST
 _eliminationFunc = CONST
 
@@ -44,5 +46,11 @@ _mixtureEliminationFunc = CONST
 #_constraintedParams=gain,innovation;loss,elimination
 #_mixtureConstraintedParams=alphaGain,betaGain
 
-rate_distribution = Gamma(n=9, alpha=1.5)
+#rate_distribution = Constant()
+#rate_distribution = Gamma(n=4, alpha=1.5)
 #_rootFreqModel = NegBinomial
+
+#_showRate4Site = true
+
+# WGD detection threshold
+_wgdThreshold = 10
