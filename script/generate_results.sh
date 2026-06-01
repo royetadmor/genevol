@@ -49,7 +49,7 @@ fi
 if [[ ${#DATASET_DIRS[@]} -gt 0 ]]; then
     DIRS=("${DATASET_DIRS[@]}")
 else
-    mapfile -t DIRS < <(find "${TEST_DATA_DIR}" -type d)
+    while IFS= read -r line; do DIRS+=("$line"); done < <(find "${TEST_DATA_DIR}" -type d)
 fi
 
 for dir in "${DIRS[@]}"; do

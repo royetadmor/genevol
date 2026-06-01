@@ -61,7 +61,7 @@ int main(int args, char **argv) {
     }
     // Optimization and assessment
     std::cout << "Starting optimization for new model" << std::endl;
-    LikelihoodUtils::optimizeModelParametersOneDimension(likProc, m, 1e-4, 5);
+    LikelihoodUtils::optimizeModelParametersOneDimension(likProc, m, m->optTolerance_, m->optNumIterations_);
 
     // Create mixture model, calculate likelihood and optimize
     if (m->useMixtureModel_) {

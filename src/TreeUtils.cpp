@@ -52,14 +52,16 @@ TreeUtils::insertWGDNode(std::shared_ptr<bpp::PhyloTree> tree, std::shared_ptr<b
         throw std::runtime_error("insertWGDNode: child has no incoming edge.");
 
     double origLen = edgeToParent->getLength();
-    double halfLen = origLen / 2.0;
+    double t = 0.5;
+    double upper = origLen*t;
+    double lower = origLen*(1-t);
 
     // Detach child from parent
     tree->removeSon(parent, child);
 
     // Insert wgdUpper between parent and the WGD site (upper half of original branch)
     auto wgdUpper      = std::make_shared<bpp::PhyloNode>("WGD");
-    auto upperBranch   = std::make_shared<bpp::PhyloBranch>(halfLen);
+    auto upperBranch   = std::make_shared<bpp::PhyloBranch>(upper);
     tree->createNode(parent, wgdUpper, upperBranch);
 
     // Insert wgdLower below wgdUpper with a zero-length edge (this is the WGD event edge)
@@ -68,7 +70,7 @@ TreeUtils::insertWGDNode(std::shared_ptr<bpp::PhyloTree> tree, std::shared_ptr<b
     tree->createNode(wgdUpper, wgdLower, zeroBranch);
 
     // Re-attach child below wgdLower (lower half of original branch)
-    auto lowerBranch   = std::make_shared<bpp::PhyloBranch>(halfLen);
+    auto lowerBranch   = std::make_shared<bpp::PhyloBranch>(lower);
     tree->link(wgdLower, child, lowerBranch);
 
     // Assign indices to any new nodes and edges

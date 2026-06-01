@@ -21,6 +21,8 @@ ModelParameters::ModelParameters(BppApplication GenEvol)
     ModelParameters::allowCapState_ = ApplicationTools::getBooleanParameter("_allowCappedState", GenEvol.getParams(), false, "", true, -1);
     ModelParameters::showRate4Site_ = ApplicationTools::getBooleanParameter("_showRate4Site", GenEvol.getParams(), false, "", true, -1);
     ModelParameters::useMixtureModel_ = ApplicationTools::getBooleanParameter("_useMixtureModel", GenEvol.getParams(), false, "", true, -1);
+    ModelParameters::optNumIterations_ = ApplicationTools::getIntParameter("_optNumIterations", GenEvol.getParams(), 3, "", true, -1);
+    ModelParameters::optTolerance_ = ApplicationTools::getDoubleParameter("_optTolerance", GenEvol.getParams(), 0.01, "", true, -1);
     ModelParameters::rootFreqModel_ = ApplicationTools::getStringParameter("_rootFreqModel", GenEvol.getParams(), "Poisson", "", true, -1);
     setAlphabetLimit(GenEvol);
     ModelParameters::alphabet_ = std::make_shared<bpp::GeneCountAlphabet>(ModelParameters::maxState_, ModelParameters::minState_);
@@ -82,9 +84,8 @@ void ModelParameters::setAlphabetLimit(BppApplication GenEvol) {
     std::istringstream headerStream(line);
     std::string columnName;
 
-    // Skip the first two columns ("Organizem" and "Desc")
-    std::getline(headerStream, columnName, '\t');  
-    std::getline(headerStream, columnName, '\t');  
+    // Skip the first column ("Organizem")
+    std::getline(headerStream, columnName, '\t');
 
     int max = 1;
     int min = 500;
@@ -95,9 +96,6 @@ void ModelParameters::setAlphabetLimit(BppApplication GenEvol) {
 
         // Read species name
         std::getline(lineStream, speciesName, '\t');
-
-        // Skip "Desc" column
-        std::getline(lineStream, columnName, '\t');
 
         // Read gene counts
         while (std::getline(lineStream, columnName, '\t')) {

@@ -107,7 +107,7 @@ void WGDManager::forwardPass()
 
     while (true) {
         double bestDeltaAIC = 0.0;
-        uint   bestChildId  = 0;
+        int    bestChildId  = -1;
         double bestQ        = 0.5;
         SingleProcessPhyloLikelihood* bestLik = nullptr;
 
@@ -151,14 +151,14 @@ void WGDManager::forwardPass()
             TreeUtils::removeWGDNode(tree_, ins, nextEdgeIdx_);
         }
 
-        if (bestDeltaAIC <= threshold_ || bestChildId == 0) {
+        if (bestDeltaAIC <= threshold_ || bestChildId == -1) {
             if (bestLik) LikelihoodUtils::deleteLikelihoodProcess(bestLik);
             std::cout << "WGD forward pass complete. Found " << results_.size() << " duplications." << std::endl;
             break;
         }
 
         // Accept best WGD: insert permanently into tree_
-        auto bestChild = tree_->getNode(bestChildId);
+        auto bestChild = tree_->getNode(static_cast<uint>(bestChildId));
         auto acceptedIns = TreeUtils::insertWGDNode(tree_, bestChild, nextNodeIdx_, nextEdgeIdx_);
 
         std::cout << "Accepted WGD on branch to node " << bestChildId
@@ -171,7 +171,7 @@ void WGDManager::forwardPass()
         baseLik_ = bestLik;
 
         WGDResult res;
-        res.childNodeId  = bestChildId;
+        res.childNodeId  = static_cast<uint>(bestChildId);
         res.wgdEdgeIdx   = acceptedIns.wgdEdgeIdx;
         res.q            = bestQ;
         res.deltaAIC     = bestDeltaAIC;

@@ -34,6 +34,8 @@ public: // Variables
     bool allowCapState_;
     bool showRate4Site_;
     bool useMixtureModel_;
+    int optNumIterations_;
+    double optTolerance_;
     string rootFreqModel_;
     int stateOverhead_;
     int categories_;
