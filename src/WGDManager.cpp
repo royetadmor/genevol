@@ -25,52 +25,21 @@ WGDManager::WGDManager(ModelParameters* m,
 }
 
 
-void WGDManager::optimizeQ(SingleProcessPhyloLikelihood* lik, uint newEdgeIdx)
+void WGDManager::optimizeParam(FunctionInterface* func, const std::string& paramName,
+                               double lo, double hi, double tolerance)
 {
-    const std::string targetParam = "WGD_" + std::to_string(newEdgeIdx) + ".q";
-
-    ParameterList params = lik->getParameters();
-    bool found = false;
+    ParameterList params = func->getParameters();
+    std::string actualName;
     for (size_t i = 0; i < params.size(); ++i) {
-        if (params[i].getName().find(targetParam) != std::string::npos) {
-            const std::string actualParam = params[i].getName();
-            auto f = std::shared_ptr<SecondOrderDerivable>(lik, [](SecondOrderDerivable*) {});
-            ExtendedBrentOptimizer optimizer(f);
-            optimizer.setVerbose(0);
-            optimizer.setProfiler(0);
-            optimizer.setMessageHandler(0);
-            optimizer.setConstraintPolicy(AutoParameter::CONSTRAINTS_AUTO);
-            optimizer.setMaximumNumberOfEvaluations(100);
-            optimizer.setBracketing(ExtendedBrentOptimizer::BRACKET_SIMPLE);
-            optimizer.getStopCondition()->setTolerance(1e-4);
-            optimizer.setInitialInterval(0, 1.0);
-            optimizer.init(params.createSubList(actualParam));
-            optimizer.optimize();
-            found = true;
+        if (params[i].getName().find(paramName) != std::string::npos) {
+            actualName = params[i].getName();
             break;
         }
     }
-    if (!found)
-        throw std::runtime_error("optimizeQ: parameter '" + targetParam + "' not found in likelihood.");
-}
+    if (actualName.empty())
+        throw std::runtime_error("optimizeParam: parameter '" + paramName + "' not found.");
 
-void WGDManager::optimizeT(WGDPositionFunction* posFunc)
-{
-    ParameterList params = posFunc->getParameters();
-    std::string tParamName;
-    for (size_t i = 0; i < params.size(); ++i) {
-        if (params[i].getName() == "t") {
-            tParamName = params[i].getName();
-            break;
-        }
-    }
-    if (tParamName.empty())
-        throw std::runtime_error("optimizeT: 't' parameter not found in WGDPositionFunction.");
-
-    auto constraint = dynamic_pointer_cast<IntervalConstraint>(params.getParameter(tParamName)->getConstraint());
-    double tMin = constraint->getLowerBound();
-    double tMax = constraint->getUpperBound();
-    auto f = std::shared_ptr<FunctionInterface>(posFunc, [](FunctionInterface*) {});
+    auto f = std::shared_ptr<FunctionInterface>(func, [](FunctionInterface*) {});
     ExtendedBrentOptimizer optimizer(f);
     optimizer.setVerbose(0);
     optimizer.setProfiler(0);
@@ -78,9 +47,9 @@ void WGDManager::optimizeT(WGDPositionFunction* posFunc)
     optimizer.setConstraintPolicy(AutoParameter::CONSTRAINTS_AUTO);
     optimizer.setMaximumNumberOfEvaluations(100);
     optimizer.setBracketing(ExtendedBrentOptimizer::BRACKET_SIMPLE);
-    optimizer.getStopCondition()->setTolerance(m_->optTolerance_);
-    optimizer.setInitialInterval(tMin, tMax);
-    optimizer.init(params.createSubList(tParamName));
+    optimizer.getStopCondition()->setTolerance(tolerance);
+    optimizer.setInitialInterval(lo, hi);
+    optimizer.init(params.createSubList(actualName));
     optimizer.optimize();
 }
 
@@ -149,14 +118,16 @@ WGDManager::CandidateResult WGDManager::evaluateCandidate(
 
     // Alternating optimization: 2 rounds of (q, t)
     WGDPositionFunction posFunc(altLik, upperBranchId, lowerBranchId, ins.origLen, 0.5);
+    const std::string qParamName = "WGD_" + std::to_string(ins.wgdEdgeIdx) + ".q";
+    auto tConstraint = dynamic_pointer_cast<IntervalConstraint>(
+        posFunc.getParameters().getParameter("t")->getConstraint());
     for (int round = 0; round < 2; ++round) {
-        optimizeQ(altLik, ins.wgdEdgeIdx);
-        optimizeT(&posFunc);
+        optimizeParam(altLik, qParamName, 0.0, 1.0, 1e-4);
+        optimizeParam(&posFunc, "t", tConstraint->getLowerBound(), tConstraint->getUpperBound(), m_->optTolerance_);
     }
 
     // t adds one extra parameter not counted by calculateAIC, so penalize by +2
     double deltaAIC = baseAIC - (LikelihoodUtils::calculateAIC(altLik, acceptedTCount_) + 2.0);
-    const std::string qParamName = "WGD_" + std::to_string(ins.wgdEdgeIdx) + ".q";
     double q = 0.5;
     ParameterList ps = altLik->getParameters();
     for (size_t pi = 0; pi < ps.size(); ++pi) {

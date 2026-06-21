@@ -61,11 +61,9 @@ public:
     void writeTree(const std::string& outputPath = "wgd_tree.nwk") const;
 
 private:
-    /** Optimize only the q parameter for the new candidate WGD edge (identified by newEdgeIdx). */
-    void optimizeQ(SingleProcessPhyloLikelihood* lik, uint newEdgeIdx);
-
-    /** Optimize the t parameter (WGD position along branch) via the position wrapper. */
-    void optimizeT(WGDPositionFunction* posFunc);
+    /** Run Brent optimization on a single named parameter of func over [lo, hi]. */
+    void optimizeParam(FunctionInterface* func, const std::string& paramName,
+                       double lo, double hi, double tolerance);
 
     struct CandidateResult {
         double deltaAIC = 0;
