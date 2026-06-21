@@ -54,6 +54,36 @@ void WGDManager::optimizeQ(SingleProcessPhyloLikelihood* lik, uint newEdgeIdx)
         throw std::runtime_error("optimizeQ: parameter '" + targetParam + "' not found in likelihood.");
 }
 
+void WGDManager::optimizeT(WGDPositionFunction* posFunc)
+{
+    ParameterList params = posFunc->getParameters();
+    std::string tParamName;
+    for (size_t i = 0; i < params.size(); ++i) {
+        if (params[i].getName() == "t") {
+            tParamName = params[i].getName();
+            break;
+        }
+    }
+    if (tParamName.empty())
+        throw std::runtime_error("optimizeT: 't' parameter not found in WGDPositionFunction.");
+
+    auto constraint = dynamic_pointer_cast<IntervalConstraint>(params.getParameter(tParamName)->getConstraint());
+    double tMin = constraint->getLowerBound();
+    double tMax = constraint->getUpperBound();
+    auto f = std::shared_ptr<FunctionInterface>(posFunc, [](FunctionInterface*) {});
+    ExtendedBrentOptimizer optimizer(f);
+    optimizer.setVerbose(0);
+    optimizer.setProfiler(0);
+    optimizer.setMessageHandler(0);
+    optimizer.setConstraintPolicy(AutoParameter::CONSTRAINTS_AUTO);
+    optimizer.setMaximumNumberOfEvaluations(100);
+    optimizer.setBracketing(ExtendedBrentOptimizer::BRACKET_SIMPLE);
+    optimizer.getStopCondition()->setTolerance(m_->optTolerance_);
+    optimizer.setInitialInterval(tMin, tMax);
+    optimizer.init(params.createSubList(tParamName));
+    optimizer.optimize();
+}
+
 std::map<int, std::vector<double>> WGDManager::extractRateParams(SingleProcessPhyloLikelihood* lik) const
 {
     static const std::vector<std::pair<std::string, int>> nameToType = {
@@ -100,6 +130,54 @@ std::shared_ptr<DiscreteDistributionInterface> WGDManager::extractRDist(SinglePr
     return std::make_shared<GammaDiscreteRateDistribution>(nCat, alpha);
 }
 
+WGDManager::CandidateResult WGDManager::evaluateCandidate(
+    uint childId, double baseAIC,
+    const std::map<int, std::vector<double>>& currentParams,
+    std::shared_ptr<DiscreteDistributionInterface> currentRDist)
+{
+    auto candChild = tree_->getNode(childId);
+    CandidateResult best;
+
+    auto ins = TreeUtils::insertWGDNode(tree_, candChild, nextNodeIdx_, nextEdgeIdx_, 0.5);
+
+    auto altLik = LikelihoodUtils::createLikelihoodProcess(
+        m_, tree_, currentParams, m_->rateChangeType_,
+        m_->constraintedParams_, currentRDist, wgdQMap_, 0.5);
+
+    uint upperBranchId = tree_->getEdgeIndex(tree_->getEdgeToFather(ins.wgdUpper));
+    uint lowerBranchId = tree_->getEdgeIndex(tree_->getEdgeToFather(candChild));
+
+    // Alternating optimization: 2 rounds of (q, t)
+    WGDPositionFunction posFunc(altLik, upperBranchId, lowerBranchId, ins.origLen, 0.5);
+    for (int round = 0; round < 2; ++round) {
+        optimizeQ(altLik, ins.wgdEdgeIdx);
+        optimizeT(&posFunc);
+    }
+
+    // t adds one extra parameter not counted by calculateAIC, so penalize by +2
+    double deltaAIC = baseAIC - (LikelihoodUtils::calculateAIC(altLik, acceptedTCount_) + 2.0);
+    const std::string qParamName = "WGD_" + std::to_string(ins.wgdEdgeIdx) + ".q";
+    double q = 0.5;
+    ParameterList ps = altLik->getParameters();
+    for (size_t pi = 0; pi < ps.size(); ++pi) {
+        if (ps[pi].getName().find(qParamName) != std::string::npos) {
+            q = ps[pi].getValue(); break;
+        }
+    }
+
+    best.deltaAIC = deltaAIC;
+    best.q        = q;
+    best.t        = posFunc.getParameterValue("t");
+    best.lik      = altLik;
+
+    TreeUtils::removeWGDNode(tree_, ins, nextEdgeIdx_);
+
+    std::cout << "  Branch to node " << childId
+              << ": best t=" << best.t << "  ΔAIC=" << best.deltaAIC << "  q=" << best.q << std::endl;
+
+    return best;
+}
+
 void WGDManager::forwardPass()
 {
     double baseAIC = LikelihoodUtils::calculateAIC(baseLik_);
@@ -109,46 +187,25 @@ void WGDManager::forwardPass()
         double bestDeltaAIC = 0.0;
         int    bestChildId  = -1;
         double bestQ        = 0.5;
+        double bestT        = 0.5;
         SingleProcessPhyloLikelihood* bestLik = nullptr;
 
         auto currentParams = extractRateParams(baseLik_);
         auto currentRDist  = extractRDist(baseLik_);
-        auto candidateIds  = getCandidates();
 
-        for (uint childId : candidateIds) {
-            auto candChild = tree_->getNode(childId);
-            auto ins = TreeUtils::insertWGDNode(tree_, candChild, nextNodeIdx_, nextEdgeIdx_);
+        for (uint childId : getCandidates()) {
+            CandidateResult res = evaluateCandidate(childId, baseAIC, currentParams, currentRDist);
 
-            auto altLik = LikelihoodUtils::createLikelihoodProcess(
-                m_, tree_, currentParams, m_->rateChangeType_,
-                m_->constraintedParams_, currentRDist, wgdQMap_, 0.5);
-            optimizeQ(altLik, ins.wgdEdgeIdx);
-
-            double deltaAIC = baseAIC - LikelihoodUtils::calculateAIC(altLik);
-
-            const std::string qParamName = "WGD_" + std::to_string(ins.wgdEdgeIdx) + ".q";
-            double q = 0.5;
-            ParameterList ps = altLik->getParameters();
-            for (size_t pi = 0; pi < ps.size(); ++pi) {
-                if (ps[pi].getName().find(qParamName) != std::string::npos) {
-                    q = ps[pi].getValue(); break;
-                }
-            }
-
-            std::cout << "  Branch to node " << childId
-                      << ": ΔAIC=" << deltaAIC << "  q=" << q << std::endl;
-
-            if (deltaAIC > bestDeltaAIC) {
+            if (res.deltaAIC > bestDeltaAIC) {
                 if (bestLik) LikelihoodUtils::deleteLikelihoodProcess(bestLik);
-                bestDeltaAIC = deltaAIC;
+                bestDeltaAIC = res.deltaAIC;
                 bestChildId  = childId;
-                bestQ        = q;
-                bestLik      = altLik;
+                bestQ        = res.q;
+                bestT        = res.t;
+                bestLik      = res.lik;
             } else {
-                LikelihoodUtils::deleteLikelihoodProcess(altLik);
+                if (res.lik) LikelihoodUtils::deleteLikelihoodProcess(res.lik);
             }
-
-            TreeUtils::removeWGDNode(tree_, ins, nextEdgeIdx_);
         }
 
         if (bestDeltaAIC <= threshold_ || bestChildId == -1) {
@@ -157,23 +214,24 @@ void WGDManager::forwardPass()
             break;
         }
 
-        // Accept best WGD: insert permanently into tree_
         auto bestChild = tree_->getNode(static_cast<uint>(bestChildId));
-        auto acceptedIns = TreeUtils::insertWGDNode(tree_, bestChild, nextNodeIdx_, nextEdgeIdx_);
+        auto acceptedIns = TreeUtils::insertWGDNode(tree_, bestChild, nextNodeIdx_, nextEdgeIdx_, bestT);
 
         std::cout << "Accepted WGD on branch to node " << bestChildId
-                  << "  ΔAIC=" << bestDeltaAIC << "  q=" << bestQ << std::endl;
+                  << "  t=" << bestT << "  ΔAIC=" << bestDeltaAIC << "  q=" << bestQ << std::endl;
 
         wgdQMap_[acceptedIns.wgdEdgeIdx] = bestQ;
 
-        baseAIC = LikelihoodUtils::calculateAIC(bestLik);
         ownedLiks_.push_back(bestLik);
         baseLik_ = bestLik;
+        acceptedTCount_++;
+        baseAIC = LikelihoodUtils::calculateAIC(baseLik_, acceptedTCount_);
 
         WGDResult res;
         res.childNodeId  = static_cast<uint>(bestChildId);
         res.wgdEdgeIdx   = acceptedIns.wgdEdgeIdx;
         res.q            = bestQ;
+        res.t            = bestT;
         res.deltaAIC     = bestDeltaAIC;
         results_.push_back(res);
     }

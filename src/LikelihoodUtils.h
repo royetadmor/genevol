@@ -49,8 +49,7 @@ namespace bpp{
         static void setProcessConstraintedParams(std::map<string, string> constraintedParams, AbstractParameterAliasable* process);
         static bool isFixedParam(const std::string& name, const std::vector<string> params);
         static std::vector<double> calculateExpectedRatePerSite(SingleProcessPhyloLikelihood* lik, const bool normalize);
-        static double calculateAIC(SingleProcessPhyloLikelihood* lik);
-        static double calculateAICc(SingleProcessPhyloLikelihood* lik);
+        static double calculateAIC(SingleProcessPhyloLikelihood* lik, size_t extraParams = 0);
         static void printResults(SingleProcessPhyloLikelihood* lik, bool printRate4Site = false);
         static void printRootFreqsPerSite(SingleProcessPhyloLikelihood* lik);
         static void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoodProcess, ModelParameters* m,double tol, unsigned int maxNumOfIterations);

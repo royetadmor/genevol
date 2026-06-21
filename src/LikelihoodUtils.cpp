@@ -192,7 +192,7 @@ bool LikelihoodUtils::isFixedParam(const std::string& name, const std::vector<st
     return false;
 }
 
-double LikelihoodUtils::calculateAIC(SingleProcessPhyloLikelihood* lik) {
+double LikelihoodUtils::calculateAIC(SingleProcessPhyloLikelihood* lik, size_t extraParams) {
     ParameterList params = lik->getSubstitutionProcess()->getIndependentParameters();
     size_t numOfParams = 0;
     // Exclude branch length parameters
@@ -200,22 +200,11 @@ double LikelihoodUtils::calculateAIC(SingleProcessPhyloLikelihood* lik) {
         if (params[i].getName().find("BrLen") == std::string::npos)
             numOfParams++;
     }
+    numOfParams += extraParams;
     double AIC = 2*(lik->getValue()) + (2*numOfParams);
     return AIC;
 }
 
-double LikelihoodUtils::calculateAICc(SingleProcessPhyloLikelihood* lik) {
-    double aic = calculateAIC(lik);
-    ParameterList params = lik->getSubstitutionProcess()->getIndependentParameters();
-    double k = 0;
-    for (size_t i = 0; i < params.size(); ++i) {
-        if (params[i].getName().find("BrLen") == std::string::npos)
-            k++;
-    }
-    double n = static_cast<double>(lik->getData()->getNumberOfSequences() * lik->getData()->getNumberOfSites());
-    double correction = (2.0 * k * (k + 1.0)) / (n - k - 1.0);
-    return aic + correction;
-}
 
 void LikelihoodUtils::printResults(SingleProcessPhyloLikelihood* lik, bool printRate4Site) {
     double likelihood = lik->getValue();

@@ -28,7 +28,7 @@ class TreeUtils {
         static void printTopology(std::shared_ptr<bpp::PhyloTree> tree);
 
         static WGDInsertion insertWGDNode(std::shared_ptr<bpp::PhyloTree> tree, std::shared_ptr<bpp::PhyloNode> child,
-                      uint& nextNodeIdx, uint& nextEdgeIdx);
+                      uint& nextNodeIdx, uint& nextEdgeIdx, double t);
 
         static void removeWGDNode(std::shared_ptr<bpp::PhyloTree> tree,
                                   const WGDInsertion& ins, uint& nextEdgeIdx);

@@ -38,7 +38,7 @@ void TreeUtils::printTopology(std::shared_ptr<bpp::PhyloTree> tree)
 
 WGDInsertion
 TreeUtils::insertWGDNode(std::shared_ptr<bpp::PhyloTree> tree, std::shared_ptr<bpp::PhyloNode> child,
-                         uint& nextNodeIdx, uint& nextEdgeIdx)
+                         uint& nextNodeIdx, uint& nextEdgeIdx, double t)
 {
     if (!child)
         throw std::runtime_error("insertWGDNode: child is null.");
@@ -52,9 +52,8 @@ TreeUtils::insertWGDNode(std::shared_ptr<bpp::PhyloTree> tree, std::shared_ptr<b
         throw std::runtime_error("insertWGDNode: child has no incoming edge.");
 
     double origLen = edgeToParent->getLength();
-    double t = 0.5;
-    double upper = origLen*t;
-    double lower = origLen*(1-t);
+    double upper = origLen * t;
+    double lower = origLen * (1 - t);
 
     // Detach child from parent
     tree->removeSon(parent, child);

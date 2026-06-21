@@ -12,6 +12,7 @@
 #include "ModelParameters.h"
 #include "GeneCountSubstitutionModel.h"
 #include "LikelihoodUtils.h"
+#include "WGDPositionFunction.h"
 
 namespace bpp {
 
@@ -33,6 +34,7 @@ public:
         uint   childNodeId;
         uint   wgdEdgeIdx;  // index of the zero-length WGD edge, used to seed q in future iterations
         double q;
+        double t;           // optimal split position along the branch
         double deltaAIC;
     };
 
@@ -62,6 +64,22 @@ private:
     /** Optimize only the q parameter for the new candidate WGD edge (identified by newEdgeIdx). */
     void optimizeQ(SingleProcessPhyloLikelihood* lik, uint newEdgeIdx);
 
+    /** Optimize the t parameter (WGD position along branch) via the position wrapper. */
+    void optimizeT(WGDPositionFunction* posFunc);
+
+    struct CandidateResult {
+        double deltaAIC = 0;
+        double q        = 0.5;
+        double t        = 0.5;
+        SingleProcessPhyloLikelihood* lik = nullptr;
+    };
+
+    /** Evaluate a single candidate branch via continuous joint optimization of q and t.
+     *  Returns the best (deltaAIC, q, t, lik) found; caller owns the returned lik. */
+    CandidateResult evaluateCandidate(uint childId, double baseAIC,
+                                      const std::map<int, std::vector<double>>& currentParams,
+                                      std::shared_ptr<DiscreteDistributionInterface> currentRDist);
+
     /** Read current rate parameter values from a likelihood object. */
     std::map<int, std::vector<double>> extractRateParams(SingleProcessPhyloLikelihood* lik) const;
 
@@ -86,6 +104,9 @@ private:
     // entries left behind by removeSon() never cause setEdgeIndex conflicts.
     uint nextEdgeIdx_ = 0;
     uint nextNodeIdx_ = 0;
+
+    // Number of accepted WGDs — each contributes one `t` parameter not tracked by the likelihood object
+    size_t acceptedTCount_ = 0;
 
     // Likelihood objects created internally after accepting WGDs (owned by us)
     std::vector<SingleProcessPhyloLikelihood*> ownedLiks_;
