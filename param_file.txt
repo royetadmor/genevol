@@ -1,28 +1,26 @@
 # Mandatory Params
-_treePath = test_data/tiley2016/Brassicaceae/tree.newick
-_dataPath = test_data/tiley2016/Brassicaceae/data.fasta
-
-#_treePath = test_data/arthur2020/9dicots/9dicots.newick
-#_dataPath = test_data/arthur2020/9dicots/9dicots_100.fasta
+_treePath = test_data/tiley2016/Monocots/tree.newick
+_dataPath = test_data/tiley2016/Monocots/data.fasta
 
 # State related params
 #_minState = 0
 #_maxState = 30
 #_allowCappedState = false
+#_showRate4Site = false
 
 # Branch normalization factor
 _branchMul = -999
 
 # Rate Params for classic model
-_gain=2
-_loss=2
+_gain = 0.1,2,1
+_loss = 1,-0.5
 _innovation=1
 _elimination=1
 
 
 # Dependency functions for classic model
-_gainFunc = CONST
-_lossFunc = CONST
+_gainFunc = POLYNOMIAL
+_lossFunc = EXP
 _innovationFunc = CONST
 _eliminationFunc = CONST
 
@@ -36,8 +34,8 @@ _mixtureInnovation = 1
 _mixtureElimination = 1
 
 # Dependency functions for mixture model
-_mixtureGainFunc = LINEAR
-_mixtureLossFunc = LINEAR
+_mixtureGainFunc = CONST
+_mixtureLossFunc = CONST
 _mixtureInnovationFunc = CONST
 _mixtureEliminationFunc = CONST
 
@@ -47,10 +45,14 @@ _mixtureEliminationFunc = CONST
 #_mixtureConstraintedParams=alphaGain,betaGain
 
 #rate_distribution = Constant()
-#rate_distribution = Gamma(n=4, alpha=1.5)
+rate_distribution = Gamma(n=4, alpha=1.5)
 #_rootFreqModel = NegBinomial
 
 #_showRate4Site = true
+
+# Optimization settings
+_optNumIterations = 3
+_optTolerance = 0.001
 
 # WGD detection threshold
 _wgdThreshold = 10
