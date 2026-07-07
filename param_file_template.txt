@@ -12,15 +12,15 @@ _dataPath = test_data/cafe/Primates/data.fasta
 _branchMul = -999
 
 # Rate Params for classic model
-_gain=2,0.1
-_loss=2,0.1
+_gain=1
+_loss=1
 _innovation=1
 _elimination=1
 
 
 # Dependency functions for classic model
-_gainFunc = LINEAR
-_lossFunc = LINEAR
+_gainFunc = CONST
+_lossFunc = CONST
 _innovationFunc = CONST
 _eliminationFunc = CONST
 
@@ -34,8 +34,8 @@ _mixtureInnovation = 1
 _mixtureElimination = 1
 
 # Dependency functions for mixture model
-_mixtureGainFunc = LINEAR
-_mixtureLossFunc = LINEAR
+_mixtureGainFunc = CONST
+_mixtureLossFunc = CONST
 _mixtureInnovationFunc = CONST
 _mixtureEliminationFunc = CONST
 
@@ -44,4 +44,15 @@ _mixtureEliminationFunc = CONST
 #_constraintedParams=gain,innovation;loss,elimination
 #_mixtureConstraintedParams=alphaGain,betaGain
 
-rate_distribution = Gamma(n=9, alpha=1.5)
+#rate_distribution = Constant()
+#rate_distribution = Gamma(n=4, alpha=1.5)
+#_rootFreqModel = NegBinomial
+
+#_showRate4Site = true
+
+# Optimization settings
+_optNumIterations = 3
+_optTolerance = 0.001
+
+# WGD detection threshold
+#_wgdThreshold = 10

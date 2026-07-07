@@ -68,9 +68,11 @@ private:
                        double lo, double hi, double tolerance);
 
     struct CandidateResult {
-        double deltaAIC = 0;
-        double q        = 0.5;
-        double t        = 0.5;
+        uint   childId   = 0;
+        uint   leafCount = 0;
+        double deltaAIC  = 0;
+        double q         = 0.5;
+        double t         = 0.5;
         SingleProcessPhyloLikelihood* lik = nullptr;
     };
 
@@ -88,6 +90,13 @@ private:
 
     // Return relevant node IDs for WGD testing
     std::vector<uint> getCandidates() const;
+
+    // Number of leaves in the subtree rooted at nodeId; computed fresh each iteration
+    uint getLeafCount(uint nodeId) const;
+
+    // True if `a` should displace the current best `b` (more leaves wins; ΔAIC breaks ties)
+    static bool beats(const CandidateResult& a, const CandidateResult& b)
+    { return a.leafCount > b.leafCount || (a.leafCount == b.leafCount && a.deltaAIC > b.deltaAIC); }
 
 private:
     ModelParameters* m_;

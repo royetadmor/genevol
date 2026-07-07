@@ -136,6 +136,7 @@ WGDManager::CandidateResult WGDManager::evaluateCandidate(
         }
     }
 
+    best.childId  = childId;
     best.deltaAIC = deltaAIC;
     best.q        = q;
     best.t        = posFunc.getParameterValue("t");
@@ -149,61 +150,70 @@ WGDManager::CandidateResult WGDManager::evaluateCandidate(
     return best;
 }
 
+uint WGDManager::getLeafCount(uint nodeId) const
+{
+    auto node = tree_->getNode(nodeId);
+    if (tree_->isLeaf(node))
+        return 1;
+    uint count = 0;
+    for (const auto& child : tree_->getSons(node))
+        count += getLeafCount(tree_->getNodeIndex(child));
+    return count;
+}
+
 void WGDManager::forwardPass()
 {
     double baseAIC = ModelAdequacyUtils::calculateAIC(baseLik_);
     std::cout << "WGD forward pass — baseline AIC: " << baseAIC << std::endl;
 
     while (true) {
-        double bestDeltaAIC = 0.0;
-        int    bestChildId  = -1;
-        double bestQ        = 0.5;
-        double bestT        = 0.5;
-        SingleProcessPhyloLikelihood* bestLik = nullptr;
-
         auto currentParams = extractRateParams(baseLik_);
         auto currentRDist  = extractRDist(baseLik_);
 
+        // Track the best candidate incrementally: shallowest depth, then highest ΔAIC
+        CandidateResult best;
+
         for (uint childId : getCandidates()) {
             CandidateResult res = evaluateCandidate(childId, baseAIC, currentParams, currentRDist);
+            res.leafCount = getLeafCount(childId);
 
-            if (res.deltaAIC > bestDeltaAIC) {
-                if (bestLik) LikelihoodUtils::deleteLikelihoodProcess(bestLik);
-                bestDeltaAIC = res.deltaAIC;
-                bestChildId  = childId;
-                bestQ        = res.q;
-                bestT        = res.t;
-                bestLik      = res.lik;
-            } else {
+            if (res.deltaAIC <= threshold_) {
                 if (res.lik) LikelihoodUtils::deleteLikelihoodProcess(res.lik);
+                continue;
+            }
+
+            if (best.lik == nullptr || beats(res, best)) {
+                if (best.lik) LikelihoodUtils::deleteLikelihoodProcess(best.lik);
+                best = std::move(res);
+            } else {
+                LikelihoodUtils::deleteLikelihoodProcess(res.lik);
             }
         }
 
-        if (bestDeltaAIC <= threshold_ || bestChildId == -1) {
-            if (bestLik) LikelihoodUtils::deleteLikelihoodProcess(bestLik);
+        if (best.lik == nullptr) {
             std::cout << "WGD forward pass complete. Found " << results_.size() << " duplications." << std::endl;
             break;
         }
 
-        auto bestChild = tree_->getNode(static_cast<uint>(bestChildId));
-        auto acceptedIns = TreeUtils::insertWGDNode(tree_, bestChild, nextNodeIdx_, nextEdgeIdx_, bestT);
+        auto bestChild = tree_->getNode(best.childId);
+        auto acceptedIns = TreeUtils::insertWGDNode(tree_, bestChild, nextNodeIdx_, nextEdgeIdx_, best.t);
 
-        std::cout << "Accepted WGD on branch to node " << bestChildId
-                  << "  t=" << bestT << "  ΔAIC=" << bestDeltaAIC << "  q=" << bestQ << std::endl;
+        std::cout << "Accepted WGD on branch to node " << best.childId
+                  << "  t=" << best.t << "  ΔAIC=" << best.deltaAIC << "  q=" << best.q << std::endl;
 
-        wgdQMap_[acceptedIns.wgdEdgeIdx] = bestQ;
+        wgdQMap_[acceptedIns.wgdEdgeIdx] = best.q;
 
-        ownedLiks_.push_back(bestLik);
-        baseLik_ = bestLik;
+        ownedLiks_.push_back(best.lik);
+        baseLik_ = best.lik;
         acceptedTCount_++;
         baseAIC = ModelAdequacyUtils::calculateAIC(baseLik_, acceptedTCount_);
 
         WGDResult res;
-        res.childNodeId  = static_cast<uint>(bestChildId);
-        res.wgdEdgeIdx   = acceptedIns.wgdEdgeIdx;
-        res.q            = bestQ;
-        res.t            = bestT;
-        res.deltaAIC     = bestDeltaAIC;
+        res.childNodeId = best.childId;
+        res.wgdEdgeIdx  = acceptedIns.wgdEdgeIdx;
+        res.q           = best.q;
+        res.t           = best.t;
+        res.deltaAIC    = best.deltaAIC;
         results_.push_back(res);
     }
 }
