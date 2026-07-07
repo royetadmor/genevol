@@ -127,7 +127,7 @@ WGDManager::CandidateResult WGDManager::evaluateCandidate(
     }
 
     // t adds one extra parameter not counted by calculateAIC, so penalize by +2
-    double deltaAIC = baseAIC - (LikelihoodUtils::calculateAIC(altLik, acceptedTCount_) + 2.0);
+    double deltaAIC = baseAIC - (ModelAdequacyUtils::calculateAIC(altLik, acceptedTCount_) + 2.0);
     double q = 0.5;
     ParameterList ps = altLik->getParameters();
     for (size_t pi = 0; pi < ps.size(); ++pi) {
@@ -151,7 +151,7 @@ WGDManager::CandidateResult WGDManager::evaluateCandidate(
 
 void WGDManager::forwardPass()
 {
-    double baseAIC = LikelihoodUtils::calculateAIC(baseLik_);
+    double baseAIC = ModelAdequacyUtils::calculateAIC(baseLik_);
     std::cout << "WGD forward pass — baseline AIC: " << baseAIC << std::endl;
 
     while (true) {
@@ -196,7 +196,7 @@ void WGDManager::forwardPass()
         ownedLiks_.push_back(bestLik);
         baseLik_ = bestLik;
         acceptedTCount_++;
-        baseAIC = LikelihoodUtils::calculateAIC(baseLik_, acceptedTCount_);
+        baseAIC = ModelAdequacyUtils::calculateAIC(baseLik_, acceptedTCount_);
 
         WGDResult res;
         res.childNodeId  = static_cast<uint>(bestChildId);
@@ -220,6 +220,70 @@ std::vector<uint> WGDManager::getCandidates() const
         candidateIds.push_back(nid);
     }
     return candidateIds;
+}
+
+void WGDManager::testWGD()
+{
+    // Collect zero-length edge IDs (user-specified WGD events)
+    std::vector<uint> wgdEdgeIds;
+    for (auto& node : tree_->getAllNodes()) {
+        if (tree_->getNodeIndex(node) == tree_->getRootIndex()) continue;
+        auto edge = tree_->getEdgeToFather(node);
+        if (edge->getLength() == 0.0)
+            wgdEdgeIds.push_back(tree_->getEdgeIndex(edge));
+    }
+
+    if (wgdEdgeIds.empty()) {
+        return;
+    }
+
+    int k = static_cast<int>(wgdEdgeIds.size());
+    std::cout << "\nWGD test mode: " << k << " event(s) found in input tree." << std::endl;
+
+    // Build null model: all q = 0, re-optimize rate params only
+    std::map<uint, double> nullQMap;
+    for (uint edgeId : wgdEdgeIds)
+        nullQMap[edgeId] = 0.0;
+
+    auto nullLik = LikelihoodUtils::createLikelihoodProcess(
+        m_, tree_, m_->paramMap_, m_->rateChangeType_, m_->constraintedParams_, m_->rDist_, nullQMap, 0.0);
+
+    m_->fixedParams_.push_back("WGD");
+    LikelihoodUtils::optimizeModelParametersOneDimension(nullLik, m_, m_->optTolerance_, m_->optNumIterations_);
+    m_->fixedParams_.pop_back();
+
+    // Print per-event q values from alt model
+    std::cout << "\n=== WGD Test Results ===" << std::endl;
+    ParameterList altParams = baseLik_->getParameters();
+    for (uint edgeId : wgdEdgeIds) {
+        std::string qName = "WGD_" + std::to_string(edgeId) + ".q";
+        double q = -1.0;
+        for (size_t i = 0; i < altParams.size(); ++i) {
+            if (altParams[i].getName().find(qName) != std::string::npos) {
+                q = altParams[i].getValue(); break;
+            }
+        }
+        std::cout << "  Edge " << edgeId << ": q = " << q << std::endl;
+    }
+
+    if (m_->modelCriterion_ == "AIC") {
+        double altAIC  = ModelAdequacyUtils::calculateAIC(baseLik_);
+        double nullAIC = ModelAdequacyUtils::calculateAIC(nullLik);
+        double deltaAIC = nullAIC - altAIC;
+        std::cout << "  Alt  AIC=" << altAIC  << std::endl;
+        std::cout << "  Null AIC=" << nullAIC << std::endl;
+        std::cout << "  ΔAIC (null - alt) = " << deltaAIC << std::endl;
+        std::cout << "  Decision (AIC, threshold=" << m_->wgdThreshold_ << "): "
+                  << (deltaAIC > m_->wgdThreshold_ ? "WGD supported" : "WGD not supported") << std::endl;
+    } else {
+        double lrt  = 2.0 * (nullLik->getValue() - baseLik_->getValue());
+        double pval = ModelAdequacyUtils::chi2pvalue(lrt, k);
+        std::cout << "  LRT = " << lrt << "  df = " << k << std::endl;
+        std::cout << "  p-value = " << pval << std::endl;
+        std::cout << "  Decision (LRT, α=0.05): " << (pval < 0.05 ? "WGD supported" : "WGD not supported") << std::endl;
+    }
+
+    LikelihoodUtils::deleteLikelihoodProcess(nullLik);
 }
 
 void WGDManager::printResults() const

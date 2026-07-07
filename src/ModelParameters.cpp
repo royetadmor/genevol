@@ -31,7 +31,11 @@ ModelParameters::ModelParameters(BppApplication GenEvol)
 
     // Load customization params
     ModelParameters::branchMul_    = ApplicationTools::getDoubleParameter("_branchMul",    GenEvol.getParams(), -999.0);
-    ModelParameters::wgdThreshold_ = ApplicationTools::getDoubleParameter("_wgdThreshold", GenEvol.getParams(), -1.0);
+    ModelParameters::wgdThreshold_    = ApplicationTools::getDoubleParameter("_wgdThreshold",   GenEvol.getParams(), 10.0);
+    ModelParameters::wgdMode_         = ApplicationTools::getStringParameter ("_wgdMode",         GenEvol.getParams(), "detect", "", true, -1);
+    ModelParameters::modelCriterion_  = ApplicationTools::getStringParameter ("_modelCriterion",  GenEvol.getParams(), "AIC",    "", true, -1);
+    validateWgdMode();
+    validateModelCriterion();
 
     // Load MM params
     ModelParameters::alphaGain_ = ApplicationTools::getDoubleParameter("_alphaGain", GenEvol.getParams(), 1.0);
@@ -249,6 +253,37 @@ void ModelParameters::setConstraintedParams(BppApplication GenEvol, std::vector<
             throw std::runtime_error("Each constraint should contain exactly 2 parameters");
         }
         outputParams[paramList[0]] = paramList[1];
+    }
+}
+
+void ModelParameters::validateTree(std::shared_ptr<bpp::PhyloTree> tree) {
+    bool hasZeroLengthBranch = false;
+    for (auto& node : tree->getAllNodes()) {
+        if (tree->getNodeIndex(node) == tree->getRootIndex()) continue;
+        if (tree->getEdgeToFather(node)->getLength() == 0.0) {
+            hasZeroLengthBranch = true;
+            break;
+        }
+    }
+    if (wgdMode_ == "detect" && hasZeroLengthBranch)
+        throw std::runtime_error(
+            "Input tree contains zero-length branches but _wgdMode=detect. "
+            "Remove them or use _wgdMode=test to test pre-specified WGD events.");
+    if (wgdMode_ == "test" && !hasZeroLengthBranch)
+        std::cout << "[!] Warning: _wgdMode=test but no zero-length branches found in tree. Nothing to test." << std::endl;
+}
+
+void ModelParameters::validateWgdMode() {
+    if (wgdMode_ != "detect" && wgdMode_ != "test") {
+        throw std::runtime_error(
+            "Invalid value for _wgdMode: '" + wgdMode_ + "'. Must be 'detect' or 'test'.");
+    }
+}
+
+void ModelParameters::validateModelCriterion() {
+    if (modelCriterion_ != "AIC" && modelCriterion_ != "LRT") {
+        throw std::runtime_error(
+            "Invalid value for _modelCriterion: '" + modelCriterion_ + "'. Must be 'AIC' or 'LRT'.");
     }
 }
 

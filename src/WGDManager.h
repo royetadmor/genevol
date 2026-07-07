@@ -12,6 +12,7 @@
 #include "ModelParameters.h"
 #include "GeneCountSubstitutionModel.h"
 #include "LikelihoodUtils.h"
+#include "ModelAdequacyUtils.h"
 #include "WGDPositionFunction.h"
 
 namespace bpp {
@@ -56,6 +57,7 @@ public:
     }
 
     void forwardPass();
+    void testWGD();
     const std::vector<WGDResult>& getResults() const { return results_; }
     void printResults() const;
     void writeTree(const std::string& outputPath = "wgd_tree.nwk") const;

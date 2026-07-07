@@ -17,6 +17,7 @@
 #include <Bpp/Seq/Container/VectorSiteContainer.h>
 
 #include <Bpp/Phyl/App/PhylogeneticsApplicationTools.h>
+#include <Bpp/Phyl/Tree/PhyloTree.h>
 
 #include "GeneCountDependencyFunction.h"
 #include "GeneCountAlphabet.h"
@@ -41,6 +42,8 @@ public: // Variables
     int categories_;
     double branchMul_;
     double wgdThreshold_;
+    string wgdMode_; 
+    string modelCriterion_;
     double alphaGain_;
     double betaGain_;
     double alphaLoss_;
@@ -88,12 +91,16 @@ public:
     ModelParameters(BppApplication GenEvol);
     ~ModelParameters(){};
 
+    void validateTree(std::shared_ptr<bpp::PhyloTree> tree);
+
 private:
     void setAlphabetLimit(BppApplication GenEvol);
     void setBaseModelParameters(BppApplication GenEvol);
     std::shared_ptr<VectorSiteContainer> readGeneFamilyFile(const std::string& filePath, std::shared_ptr<const bpp::Alphabet> alphabet);
     void setRateFunctionTypes(BppApplication GenEvol);
     void validateRateFunctionParameters();
+    void validateWgdMode();
+    void validateModelCriterion();
     void setConstraintedParams(BppApplication GenEvol, std::vector<string> inputParams, std::map<string, string>& outputParams);
     std::string capState(std::string geneCount);
 };

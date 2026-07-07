@@ -18,6 +18,7 @@ set (CPP_FILES
   NegBinomialFrequencySet.cpp
   WGDSubstitutionModel.cpp
   WGDManager.cpp
+  ModelAdequacyUtils.cpp
   )
 
 IF(BUILD_STATIC)

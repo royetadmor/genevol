@@ -192,23 +192,9 @@ bool LikelihoodUtils::isFixedParam(const std::string& name, const std::vector<st
     return false;
 }
 
-double LikelihoodUtils::calculateAIC(SingleProcessPhyloLikelihood* lik, size_t extraParams) {
-    ParameterList params = lik->getSubstitutionProcess()->getIndependentParameters();
-    size_t numOfParams = 0;
-    // Exclude branch length parameters
-    for (size_t i = 0; i < params.size(); ++i) {
-        if (params[i].getName().find("BrLen") == std::string::npos)
-            numOfParams++;
-    }
-    numOfParams += extraParams;
-    double AIC = 2*(lik->getValue()) + (2*numOfParams);
-    return AIC;
-}
-
-
 void LikelihoodUtils::printResults(SingleProcessPhyloLikelihood* lik, bool printRate4Site) {
     double likelihood = lik->getValue();
-    double aic = LikelihoodUtils::calculateAIC(lik);
+    double aic = ModelAdequacyUtils::calculateAIC(lik);
 
     std::cout << "Likelihood: " << likelihood << std::endl;
     std::cout << "AIC score: " << aic << std::endl;
@@ -334,33 +320,41 @@ void LikelihoodUtils::optimizeModelParametersOneDimension(SingleProcessPhyloLike
             const string nameOfParam = parametersNames[j];
             std::cout << "Previous value of "+ nameOfParam + " is: "+ std::to_string(likelihoodProcess->getParameters().getParameter(nameOfParam)->getValue()) << std::endl;
 
-            if (LikelihoodUtils::isFixedParam(nameOfParam, m->fixedParams_) || nameOfParam.find("WGD") != std::string::npos) {
+            if (LikelihoodUtils::isFixedParam(nameOfParam, m->fixedParams_)) {
                 std::cout << "Skipping " << nameOfParam << std::endl;
                 continue;
             }
 
-            // param names corresponding to the parameter type
-            std::vector<string> paramsNames = LikelihoodUtils::filterParamsByName(parametersNames, nameOfParam);
-
-            size_t index = LikelihoodUtils::getParamIndex(nameOfParam);
-
-            // Handle bound calculation for gamma dist params and NegBinomial r
-            if (nameOfParam.find("Gamma") != std::string::npos) {
-                lowerBound = 0.05;
-                upperBound = 100;
-            } else if (nameOfParam.find("NegBinomial") != std::string::npos) {
-                lowerBound = 0.01;
-                upperBound = 100;
+            if (nameOfParam.find("WGD") != std::string::npos) {
+                if (m->wgdMode_ != "test") {
+                    continue;
+                }
+                lowerBound = 0.0;
+                upperBound = 1.0;
             } else {
-                GeneCountDependencyFunction* functionOp;
-                GeneCountDependencyFunction::FunctionType funcType = static_cast<GeneCountDependencyFunction::FunctionType>(rateChangeType[GeneCountSubstitutionModel::getParamIndexByName(nameOfParam)]);
-                functionOp = compositeParameter::getDependencyFunction(funcType);
-                functionOp->setDomainsIfNeeded(minDomain, maxDomain);
-                functionOp->updateBounds(params, paramsNames, index, &lowerBound, &upperBound, maxDomain);
-                functionOp->updateBounds(f, nameOfParam, lowerBound, upperBound);
-                delete functionOp;
-            };
-            
+                // param names corresponding to the parameter type
+                std::vector<string> paramsNames = LikelihoodUtils::filterParamsByName(parametersNames, nameOfParam);
+
+                size_t index = LikelihoodUtils::getParamIndex(nameOfParam);
+
+                // Handle bound calculation for gamma dist params and NegBinomial r
+                if (nameOfParam.find("Gamma") != std::string::npos) {
+                    lowerBound = 0.05;
+                    upperBound = 100;
+                } else if (nameOfParam.find("NegBinomial") != std::string::npos) {
+                    lowerBound = 0.01;
+                    upperBound = 100;
+                } else {
+                    GeneCountDependencyFunction* functionOp;
+                    GeneCountDependencyFunction::FunctionType funcType = static_cast<GeneCountDependencyFunction::FunctionType>(rateChangeType[GeneCountSubstitutionModel::getParamIndexByName(nameOfParam)]);
+                    functionOp = compositeParameter::getDependencyFunction(funcType);
+                    functionOp->setDomainsIfNeeded(minDomain, maxDomain);
+                    functionOp->updateBounds(params, paramsNames, index, &lowerBound, &upperBound, maxDomain);
+                    functionOp->updateBounds(f, nameOfParam, lowerBound, upperBound);
+                    delete functionOp;
+                };
+            }
+
             std::cout << "Parameter name is: " + nameOfParam << std::endl;
             optimizer->getStopCondition()->setTolerance(tol);
             optimizer->setInitialInterval(lowerBound, upperBound);

@@ -1,5 +1,5 @@
 #include <iostream>
-#include <string> 
+#include <string>
 #include <set>
 
 // From bpp-core
@@ -43,6 +43,7 @@ int main(int args, char **argv) {
     // Get tree and rescale it
     Newick reader;
     std::shared_ptr<bpp::PhyloTree> tree_ = std::move(reader.readPhyloTree(m->treeFilePath_));
+    m->validateTree(tree_);
     double scale_tree_factor = TreeUtils::getTreeScalingFactor(m, tree_);
     tree_->scaleTree(scale_tree_factor);
 
@@ -73,14 +74,17 @@ int main(int args, char **argv) {
 
     LikelihoodUtils::printResults(likProc, m->showRate4Site_);
 
-    // WGD detection
-    if (m->wgdThreshold_ > 0.0) {
+    // WGD analysis
+    if (m->wgdMode_ == "detect") {
         TreeUtils::printTopology(tree_);
         std::cout << "\nStarting WGD detection (threshold=" << m->wgdThreshold_ << ")" << std::endl;
         bpp::WGDManager wgdManager(m, tree_, likProc, m->wgdThreshold_);
         wgdManager.forwardPass();
         wgdManager.printResults();
         wgdManager.writeTree();
+    } else if (m->wgdMode_ == "test") {
+        WGDManager wgdManager(m, tree_, likProc, m->wgdThreshold_);
+        wgdManager.testWGD();
     }
 
     GenEvol.done();
