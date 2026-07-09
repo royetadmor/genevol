@@ -14,8 +14,8 @@ _dataPath = test_data/tiley2016/Brassicaceae/data.fasta
 _branchMul = -999
 
 # Rate Params for classic model
-_gain=2
-_loss=2
+_gain=1
+_loss=1
 _innovation=1
 _elimination=1
 
@@ -36,8 +36,8 @@ _mixtureInnovation = 1
 _mixtureElimination = 1
 
 # Dependency functions for mixture model
-_mixtureGainFunc = LINEAR
-_mixtureLossFunc = LINEAR
+_mixtureGainFunc = CONST
+_mixtureLossFunc = CONST
 _mixtureInnovationFunc = CONST
 _mixtureEliminationFunc = CONST
 
@@ -54,3 +54,6 @@ _mixtureEliminationFunc = CONST
 
 # WGD detection threshold
 _wgdThreshold = 10
+_wgdMode = test
+_modelCriterion = LRT
+#_fixedWgdQ = 0.5

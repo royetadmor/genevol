@@ -107,6 +107,8 @@ int main(int args, char **argv) {
             }
         }
 
+        // If there are free q values, we optimize them here.
+        // Otherwise, we just print the results and exit
         WGDManager wgdManager(m, tree_, baseLik, m->wgdThreshold_);
         wgdManager.testWGD(fixedEdges, freeEdgeIds);
     }
