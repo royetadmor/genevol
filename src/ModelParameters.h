@@ -60,6 +60,7 @@ public: // Variables
     std::map<string, string> constraintedParams_;
     std::map<string, string> mixtureConstraintedParams_;
     std::shared_ptr<DiscreteDistributionInterface> rDist_;
+    std::vector<double> fixedWgdQ_;
 
     // Translates rate functions from string to int
     const std::map<std::string, int> func_string_to_enum = {
@@ -101,6 +102,7 @@ private:
     void validateRateFunctionParameters();
     void validateWgdMode();
     void validateModelCriterion();
+    void parseFixedWgdQ(const std::vector<double>& values);
     void setConstraintedParams(BppApplication GenEvol, std::vector<string> inputParams, std::map<string, string>& outputParams);
     std::string capState(std::string geneCount);
 };

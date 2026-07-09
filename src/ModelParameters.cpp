@@ -32,10 +32,11 @@ ModelParameters::ModelParameters(BppApplication GenEvol)
     // Load customization params
     ModelParameters::branchMul_    = ApplicationTools::getDoubleParameter("_branchMul",    GenEvol.getParams(), -999.0);
     ModelParameters::wgdThreshold_    = ApplicationTools::getDoubleParameter("_wgdThreshold",   GenEvol.getParams(), 10.0);
-    ModelParameters::wgdMode_         = ApplicationTools::getStringParameter ("_wgdMode",         GenEvol.getParams(), "detect", "", true, -1);
+    ModelParameters::wgdMode_         = ApplicationTools::getStringParameter ("_wgdMode",         GenEvol.getParams(), "", "", true, -1);
     ModelParameters::modelCriterion_  = ApplicationTools::getStringParameter ("_modelCriterion",  GenEvol.getParams(), "AIC",    "", true, -1);
     validateWgdMode();
     validateModelCriterion();
+    parseFixedWgdQ(ApplicationTools::getVectorParameter<double>("_fixedWgdQ", GenEvol.getParams(), ',', "", "", true, 1));
 
     // Load MM params
     ModelParameters::alphaGain_ = ApplicationTools::getDoubleParameter("_alphaGain", GenEvol.getParams(), 1.0);
@@ -285,6 +286,14 @@ void ModelParameters::validateModelCriterion() {
         throw std::runtime_error(
             "Invalid value for _modelCriterion: '" + modelCriterion_ + "'. Must be 'AIC' or 'LRT'.");
     }
+}
+
+void ModelParameters::parseFixedWgdQ(const std::vector<double>& values) {
+    for (size_t i = 0; i < values.size(); ++i) {
+        if (values[i] < 0.0 || values[i] > 1.0)
+            throw std::runtime_error("_fixedWgdQ value at position " + std::to_string(i) + " must be in [0, 1]");
+    }
+    fixedWgdQ_ = values;
 }
 
 std::string ModelParameters::capState(std::string geneCount) {

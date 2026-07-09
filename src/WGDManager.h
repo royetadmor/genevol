@@ -57,9 +57,13 @@ public:
     }
 
     void forwardPass();
-    void testWGD();
+    void testWGD(const std::map<uint, double>& fixedEdges, const std::vector<uint>& freeEdgeIds);
     const std::vector<WGDResult>& getResults() const { return results_; }
-    void printResults() const;
+    void printDetectionResults() const;
+    void printTestResults(SingleProcessPhyloLikelihood* altLik,
+                          SingleProcessPhyloLikelihood* baseLik,
+                          const std::map<uint, double>& fixedEdges,
+                          const std::vector<uint>& freeEdgeIds) const;
     void writeTree(const std::string& outputPath = "wgd_tree.nwk") const;
 
 private:
@@ -86,7 +90,7 @@ private:
     /** Clone m_->rDist_ and sync its parameters from the optimized likelihood. */
     std::shared_ptr<DiscreteDistributionInterface> extractRDist(SingleProcessPhyloLikelihood* lik) const;
 
-    // Return relevant node IDs for WGD testing
+    // Return relevant node IDs for WGD detection
     std::vector<uint> getCandidates() const;
 
 private:

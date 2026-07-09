@@ -1,5 +1,6 @@
 #include "TreeUtils.h"
 
+#include <functional>
 #include <Bpp/Phyl/Tree/PhyloNode.h>
 #include <Bpp/Phyl/Tree/PhyloBranch.h>
 
@@ -36,8 +37,7 @@ void TreeUtils::printTopology(std::shared_ptr<bpp::PhyloTree> tree)
     }
 }
 
-WGDInsertion
-TreeUtils::insertWGDNode(std::shared_ptr<bpp::PhyloTree> tree, std::shared_ptr<bpp::PhyloNode> child,
+WGDInsertion TreeUtils::insertWGDNode(std::shared_ptr<bpp::PhyloTree> tree, std::shared_ptr<bpp::PhyloNode> child,
                          uint& nextNodeIdx, uint& nextEdgeIdx, double t)
 {
     if (!child)
@@ -114,6 +114,24 @@ void TreeUtils::removeWGDNode(std::shared_ptr<bpp::PhyloTree> tree,
 
     if (!tree->hasEdgeIndex(restoredBranch))
         tree->setEdgeIndex(restoredBranch, nextEdgeIdx++);
+}
+
+std::vector<uint> TreeUtils::collectWgdEdgesInOrder(std::shared_ptr<bpp::PhyloTree> tree)
+{
+    std::vector<uint> result;
+    std::function<void(std::shared_ptr<bpp::PhyloNode>)> dfs = [&](std::shared_ptr<bpp::PhyloNode> node) {
+        if (tree->getNodeIndex(node) != tree->getRootIndex()) {
+            auto edge = tree->getEdgeToFather(node);
+            if (edge->getLength() == 0.0) {
+                result.push_back(tree->getEdgeIndex(edge));
+            }
+        }
+        for (auto& son : tree->getSons(node)) {
+            dfs(son);
+        }
+    };
+    dfs(tree->getRoot());
+    return result;
 }
 
 double TreeUtils::getTreeScalingFactor(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree) {

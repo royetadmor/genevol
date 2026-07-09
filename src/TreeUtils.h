@@ -32,6 +32,9 @@ class TreeUtils {
 
         static void removeWGDNode(std::shared_ptr<bpp::PhyloTree> tree,
                                   const WGDInsertion& ins, uint& nextEdgeIdx);
+
+        // Returns zero-length edge IDs in left-to-right DFS order (used for WGD test mode)
+        static std::vector<uint> collectWgdEdgesInOrder(std::shared_ptr<bpp::PhyloTree> tree);
 };
 
 

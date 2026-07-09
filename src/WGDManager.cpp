@@ -2,6 +2,7 @@
 #include "ExtendedBrentOptimizer.h"
 #include "TreeUtils.h"
 
+#include <functional>
 #include <Bpp/Numeric/AutoParameter.h>
 
 using namespace bpp;
@@ -36,12 +37,14 @@ void WGDManager::optimizeParam(FunctionInterface* func, const std::string& param
             break;
         }
     }
-    if (actualName.empty())
+    if (actualName.empty()){
         throw std::runtime_error("optimizeParam: parameter '" + paramName + "' not found.");
+    }
 
+    cout << "Optimizing " << paramName << endl;
     auto f = std::shared_ptr<FunctionInterface>(func, [](FunctionInterface*) {});
     ExtendedBrentOptimizer optimizer(f);
-    optimizer.setVerbose(0);
+    optimizer.setVerbose(1);
     optimizer.setProfiler(0);
     optimizer.setMessageHandler(0);
     optimizer.setConstraintPolicy(AutoParameter::CONSTRAINTS_AUTO);
@@ -51,6 +54,7 @@ void WGDManager::optimizeParam(FunctionInterface* func, const std::string& param
     optimizer.setInitialInterval(lo, hi);
     optimizer.init(params.createSubList(actualName));
     optimizer.optimize();
+    cout << endl << actualName + " value after optimization " + std::to_string(func->getParameters().getParameter(actualName)->getValue()) << endl;
 }
 
 std::map<int, std::vector<double>> WGDManager::extractRateParams(SingleProcessPhyloLikelihood* lik) const
@@ -222,71 +226,108 @@ std::vector<uint> WGDManager::getCandidates() const
     return candidateIds;
 }
 
-void WGDManager::testWGD()
+void WGDManager::testWGD(const std::map<uint, double>& fixedEdges, const std::vector<uint>& freeEdgeIds)
 {
-    // Collect zero-length edge IDs (user-specified WGD events)
-    std::vector<uint> wgdEdgeIds;
-    for (auto& node : tree_->getAllNodes()) {
-        if (tree_->getNodeIndex(node) == tree_->getRootIndex()) continue;
-        auto edge = tree_->getEdgeToFather(node);
-        if (edge->getLength() == 0.0)
-            wgdEdgeIds.push_back(tree_->getEdgeIndex(edge));
-    }
-
-    if (wgdEdgeIds.empty()) {
+    // All WGDs have fixed q, nothing to do.
+    if (freeEdgeIds.empty()) {
+        std::cout << "\nWGD likelihood evaluation: all " << fixedEdges.size()
+                  << " event(s) have fixed q values." << std::endl;
+        printTestResults(baseLik_, nullptr, fixedEdges, freeEdgeIds);
         return;
     }
 
-    int k = static_cast<int>(wgdEdgeIds.size());
-    std::cout << "\nWGD test mode: " << k << " event(s) found in input tree." << std::endl;
+    std::cout << "\nWGD test mode: testing " << freeEdgeIds.size() << " event(s)";
+    if (!fixedEdges.empty()) {
+        std::cout << " (conditioning on " << fixedEdges.size() << " fixed event(s))";
+    }
+    std::cout << "." << std::endl;
 
-    // Build null model: all q = 0, re-optimize rate params only
-    std::map<uint, double> nullQMap;
-    for (uint edgeId : wgdEdgeIds)
-        nullQMap[edgeId] = 0.0;
+    // altQMap: fixed edges at their q values, free edges seeded at 0.5
+    std::map<uint, double> altQMap = fixedEdges;;
+    for (uint edgeId : freeEdgeIds) {
+        altQMap[edgeId] = 0.0;
+    }
 
-    auto nullLik = LikelihoodUtils::createLikelihoodProcess(
-        m_, tree_, m_->paramMap_, m_->rateChangeType_, m_->constraintedParams_, m_->rDist_, nullQMap, 0.0);
+    // Create and optimize alternative likelihood object (new hypothesis)
+    auto altLik = LikelihoodUtils::createLikelihoodProcess(
+        m_, tree_, extractRateParams(baseLik_), m_->rateChangeType_,
+        m_->constraintedParams_, extractRDist(baseLik_), altQMap, 0.0);
 
-    m_->fixedParams_.push_back("WGD");
-    LikelihoodUtils::optimizeModelParametersOneDimension(nullLik, m_, m_->optTolerance_, m_->optNumIterations_);
-    m_->fixedParams_.pop_back();
+    // Set fixed q values
+    for (const auto& kv : fixedEdges) {
+        m_->fixedParams_.push_back("WGD_" + std::to_string(kv.first) + ".q");
+    }
+    cout << "Optimizing alternative model" << endl;
+    LikelihoodUtils::optimizeModelParametersOneDimension(altLik, m_, m_->optTolerance_, m_->optNumIterations_);
+    for (size_t i = 0; i < fixedEdges.size(); ++i) {
+        m_->fixedParams_.pop_back();
+    }
 
-    // Print per-event q values from alt model
+    // Optimize free q values
+    for (uint edgeId : freeEdgeIds) {
+        optimizeParam(altLik, "WGD_" + std::to_string(edgeId) + ".q", 0.0, 1.0, m_->optTolerance_);
+    }
+
+    printTestResults(altLik, baseLik_, fixedEdges, freeEdgeIds);
+    LikelihoodUtils::deleteLikelihoodProcess(altLik);
+}
+
+void WGDManager::printTestResults(SingleProcessPhyloLikelihood* altLik,
+                                  SingleProcessPhyloLikelihood* baseLik,
+                                  const std::map<uint, double>& fixedEdges,
+                                  const std::vector<uint>& freeEdgeIds) const
+{
+    int k = static_cast<int>(freeEdgeIds.size());
     std::cout << "\n=== WGD Test Results ===" << std::endl;
-    ParameterList altParams = baseLik_->getParameters();
-    for (uint edgeId : wgdEdgeIds) {
-        std::string qName = "WGD_" + std::to_string(edgeId) + ".q";
-        double q = -1.0;
-        for (size_t i = 0; i < altParams.size(); ++i) {
-            if (altParams[i].getName().find(qName) != std::string::npos) {
-                q = altParams[i].getValue(); break;
-            }
+
+    if (!fixedEdges.empty()) {
+        std::cout << "Conditioned upon:" << std::endl;
+        for (const auto& kv : fixedEdges) {
+            std::cout << "  Edge " << kv.first << ": q = " << kv.second << " (fixed)" << std::endl;
         }
-        std::cout << "  Edge " << edgeId << ": q = " << q << std::endl;
+    }
+
+    if (!freeEdgeIds.empty()) {
+        std::cout << "Tested events:" << std::endl;
+        ParameterList altParams = altLik->getParameters();
+        for (uint edgeId : freeEdgeIds) {
+            std::string qName = "WGD_" + std::to_string(edgeId) + ".q";
+            double q = -1.0;
+            for (size_t i = 0; i < altParams.size(); ++i) {
+                if (altParams[i].getName().find(qName) != std::string::npos) {
+                    q = altParams[i].getValue();
+                    break;
+                }
+            }
+            std::cout << "  Edge " << edgeId << ": q = " << q << std::endl;
+        }
+    }
+
+    double altAIC = ModelAdequacyUtils::calculateAIC(altLik);
+    std::cout << "  Alt  likelihood=" << altLik->getValue() << "  AIC=" << altAIC << std::endl;
+
+    if (baseLik == nullptr) {
+        std::cout << "  (No hypothesis test: all WGD q values were fixed by the user.)" << std::endl;
+        return;
     }
 
     if (m_->modelCriterion_ == "AIC") {
-        double altAIC  = ModelAdequacyUtils::calculateAIC(baseLik_);
-        double nullAIC = ModelAdequacyUtils::calculateAIC(nullLik);
-        double deltaAIC = nullAIC - altAIC;
-        std::cout << "  Alt  AIC=" << altAIC  << std::endl;
-        std::cout << "  Null AIC=" << nullAIC << std::endl;
-        std::cout << "  ΔAIC (null - alt) = " << deltaAIC << std::endl;
+        double baseAIC  = ModelAdequacyUtils::calculateAIC(baseLik);
+        double deltaAIC = baseAIC - altAIC;
+        std::cout << "  Base AIC=" << baseAIC << std::endl;
+        std::cout << "  ΔAIC (base - alt) = " << deltaAIC << std::endl;
         std::cout << "  Decision (AIC, threshold=" << m_->wgdThreshold_ << "): "
                   << (deltaAIC > m_->wgdThreshold_ ? "WGD supported" : "WGD not supported") << std::endl;
     } else {
-        double lrt  = 2.0 * (nullLik->getValue() - baseLik_->getValue());
+        double lrt  = 2.0 * (baseLik->getValue() - altLik->getValue());
         double pval = ModelAdequacyUtils::chi2pvalue(lrt, k);
         std::cout << "  LRT = " << lrt << "  df = " << k << std::endl;
         std::cout << "  p-value = " << pval << std::endl;
         std::cout << "  Decision (LRT, α=0.05): " << (pval < 0.05 ? "WGD supported" : "WGD not supported") << std::endl;
     }
-
-    LikelihoodUtils::deleteLikelihoodProcess(nullLik);
 }
 
-void WGDManager::printResults() const
+void WGDManager::printDetectionResults() const
 {
     if (results_.empty()) {
         std::cout << "No WGD events detected." << std::endl;

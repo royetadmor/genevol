@@ -80,11 +80,35 @@ int main(int args, char **argv) {
         std::cout << "\nStarting WGD detection (threshold=" << m->wgdThreshold_ << ")" << std::endl;
         bpp::WGDManager wgdManager(m, tree_, likProc, m->wgdThreshold_);
         wgdManager.forwardPass();
-        wgdManager.printResults();
+        wgdManager.printDetectionResults();
         wgdManager.writeTree();
     } else if (m->wgdMode_ == "test") {
-        WGDManager wgdManager(m, tree_, likProc, m->wgdThreshold_);
-        wgdManager.testWGD();
+        std::vector<uint> wgdEdgeIds = TreeUtils::collectWgdEdgesInOrder(tree_);
+        std::map<uint, double> fixedEdges;
+        std::vector<uint> freeEdgeIds;
+        for (size_t i = 0; i < wgdEdgeIds.size(); ++i) {
+            if (i < m->fixedWgdQ_.size())
+                fixedEdges[wgdEdgeIds[i]] = m->fixedWgdQ_[i];
+            else
+                freeEdgeIds.push_back(wgdEdgeIds[i]);
+        }
+
+        SingleProcessPhyloLikelihood* baseLik = likProc;
+        // Assiging all fixed WGDs (if any) and reoptimizing parameters
+        if (!fixedEdges.empty()) {
+            baseLik = LikelihoodUtils::createLikelihoodProcess(
+                m, tree_, paramMap, rateChangeType, constraintedParams, rDist, fixedEdges, 0.0);
+            for (const auto& kv : fixedEdges) {
+                m->fixedParams_.push_back("WGD_" + std::to_string(kv.first) + ".q");
+            }
+            LikelihoodUtils::optimizeModelParametersOneDimension(baseLik, m, m->optTolerance_, m->optNumIterations_);
+            for (size_t i = 0; i < fixedEdges.size(); ++i) {
+                m->fixedParams_.pop_back();
+            }
+        }
+
+        WGDManager wgdManager(m, tree_, baseLik, m->wgdThreshold_);
+        wgdManager.testWGD(fixedEdges, freeEdgeIds);
     }
 
     GenEvol.done();
