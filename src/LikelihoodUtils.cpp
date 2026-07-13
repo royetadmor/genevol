@@ -17,9 +17,7 @@ SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelPara
     if (m->rootFreqModel_ == "NegBinomial") {
         rootFrequencies = negBinRootFreqSet(m, subModel->getStateMap());
     } else {
-        auto freq = poissonRootFreq(m);
-        auto fixed = std::make_shared<FixedFrequencySet>(subModel->getStateMap(), freq);
-        rootFrequencies = static_pointer_cast<FrequencySetInterface>(fixed);
+        rootFrequencies = poissonRootFreqSet(m, subModel->getStateMap());
     }
 
     // Create substitution process
@@ -232,6 +230,23 @@ void LikelihoodUtils::printRootFreqsPerSite(SingleProcessPhyloLikelihood* lik)
     }
 }
 
+std::shared_ptr<PoissonFrequencySet> LikelihoodUtils::poissonRootFreqSet(ModelParameters* m, std::shared_ptr<const StateMapInterface> stateMap) {
+    double total = 0.0;
+    double totalDataSize = 0.0;
+    const size_t nSites = m->container_->getNumberOfSites();
+
+    for (size_t i = 0; i < nSites; ++i)
+    {
+        const bpp::Site& site = m->container_->site(i);
+        const size_t siteSize = site.size();
+        totalDataSize += siteSize;
+        for (size_t j = 0; j < siteSize; ++j)
+            total += site[j];
+    }
+    double lambda = total / totalDataSize;
+    return std::make_shared<PoissonFrequencySet>(stateMap, lambda);
+}
+
 std::shared_ptr<NegBinomialFrequencySet> LikelihoodUtils::negBinRootFreqSet(ModelParameters* m, std::shared_ptr<const StateMapInterface> stateMap) {
     double total = 0.0;
     double totalDataSize = 0.0;
@@ -249,32 +264,6 @@ std::shared_ptr<NegBinomialFrequencySet> LikelihoodUtils::negBinRootFreqSet(Mode
     return std::make_shared<NegBinomialFrequencySet>(stateMap, 1.0, mu);
 }
 
-std::vector<double> LikelihoodUtils::poissonRootFreq(ModelParameters* m) {
-    double total = 0.0;
-    double totalDataSize = 0.0;
-    size_t nbState = m->alphabet_->getSize();
-    std::vector<double> rFreq(nbState, 0.0);
-    const size_t nSites = m->container_->getNumberOfSites();
-
-    for (size_t i = 0; i < nSites; ++i)
-    {
-        const bpp::Site& site = m->container_->site(i);
-        const size_t siteSize = site.size();
-        totalDataSize += siteSize;
-        for (size_t j = 0; j < siteSize; ++j)
-        {
-            total += site[j];
-        }
-    }
-    double lambda = total/totalDataSize;
-    auto pDist = std::make_shared<PoissonDistribution>(lambda, nbState);
-    for (size_t i = 0; i < nbState; i++)
-    {
-        rFreq[i] = pDist->probability(i);
-    }
-
-    return rFreq;
-}
 
 void LikelihoodUtils::optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoodProcess, ModelParameters* m,double tol, unsigned int maxNumOfIterations)
 {

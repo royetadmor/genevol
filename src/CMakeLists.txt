@@ -14,8 +14,8 @@ set (CPP_FILES
   GeneCountAlphabet.cpp
   TreeUtils.cpp
   ExtendedBrentOptimizer.cpp
-  PoissonDistribution.cpp
   NegBinomialFrequencySet.cpp
+  PoissonFrequencySet.cpp
   WGDSubstitutionModel.cpp
   WGDManager.cpp
   ModelAdequacyUtils.cpp

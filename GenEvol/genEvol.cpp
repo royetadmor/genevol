@@ -29,7 +29,6 @@
 #include "MixtureModelLikelihoodFunction.h"
 #include "GeneCountManager.h"
 #include "TreeUtils.h"
-#include "PoissonDistribution.h"
 #include "WGDManager.h"
 
 using namespace bpp;
