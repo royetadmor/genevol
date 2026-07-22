@@ -80,7 +80,7 @@ int main(int args, char **argv) {
         bpp::WGDManager wgdManager(m, tree_, likProc, m->wgdThreshold_);
         wgdManager.forwardPass();
         wgdManager.printDetectionResults();
-        wgdManager.writeTree();
+        TreeUtils::writeTree(tree_, "wgd_tree.nwk");
     } else if (m->wgdMode_ == "test") {
         std::vector<uint> wgdEdgeIds = TreeUtils::collectWgdEdgesInOrder(tree_);
         std::map<uint, double> fixedEdges;

@@ -4,7 +4,7 @@ using namespace bpp;
 using namespace std;
 
 
-SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, string> constraintedParams, std::shared_ptr<DiscreteDistributionInterface> rDist, std::map<uint, double> wgdQMap, double qInit) {
+std::shared_ptr<NonHomogeneousSubstitutionProcess> LikelihoodUtils::createSubstitutionProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::shared_ptr<DiscreteDistributionInterface> rDist, std::map<uint, double> wgdQMap, double qInit, double rootLambda) {
     // Create substitution process components
     auto parTree = std::make_shared<ParametrizablePhyloTree>(*tree);
 
@@ -17,7 +17,7 @@ SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelPara
     if (m->rootFreqModel_ == "NegBinomial") {
         rootFrequencies = negBinRootFreqSet(m, subModel->getStateMap());
     } else {
-        rootFrequencies = poissonRootFreqSet(m, subModel->getStateMap());
+        rootFrequencies = poissonRootFreqSet(m, subModel->getStateMap(), rootLambda);
     }
 
     // Create substitution process
@@ -42,14 +42,25 @@ SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelPara
         subProcesses->addModel(wgdSubModel, std::vector<uint>{edgeId});
     }
 
+    return subProcesses;
+}
+
+SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, string> constraintedParams, std::shared_ptr<DiscreteDistributionInterface> rDist, std::map<uint, double> wgdQMap, double qInit) {
+    auto subProcesses = createSubstitutionProcess(m, tree, rateParams, rateChangeType, rDist, wgdQMap, qInit, m->rootLambda_);
+
     auto nsubPro = std::shared_ptr<SubstitutionProcessInterface>(subProcesses->clone());
     // Check for constrainted params, avoid constraining when computing WGD
+    std::vector<uint> wgdEdgeIds;
+    for (auto& node : tree->getAllNodes()) {
+        if (tree->getNodeIndex(node) == tree->getRootIndex()) continue;
+        if (tree->getEdgeToFather(node)->getLength() == 0)
+            wgdEdgeIds.push_back(tree->getEdgeIndex(tree->getEdgeToFather(node)));
+    }
     if (!constraintedParams.empty() && wgdEdgeIds.empty()) {
         auto aliasable = dynamic_cast<AbstractParameterAliasable*>(nsubPro.get());
         setProcessConstraintedParams(constraintedParams, aliasable);
     }
 
-    // Create likelihood object
     Context* context = new Context();
     auto lik = std::make_shared<LikelihoodCalculationSingleProcess>(*context, m->container_, nsubPro);
     return new SingleProcessPhyloLikelihood(*context, lik, lik->getParameters());
@@ -230,7 +241,11 @@ void LikelihoodUtils::printRootFreqsPerSite(SingleProcessPhyloLikelihood* lik)
     }
 }
 
-std::shared_ptr<PoissonFrequencySet> LikelihoodUtils::poissonRootFreqSet(ModelParameters* m, std::shared_ptr<const StateMapInterface> stateMap) {
+std::shared_ptr<PoissonFrequencySet> LikelihoodUtils::poissonRootFreqSet(ModelParameters* m, std::shared_ptr<const StateMapInterface> stateMap, double rootLambda) {
+    if (rootLambda > 0.0) {
+        return std::make_shared<PoissonFrequencySet>(stateMap, rootLambda);
+    }
+
     double total = 0.0;
     double totalDataSize = 0.0;
     const size_t nSites = m->container_->getNumberOfSites();

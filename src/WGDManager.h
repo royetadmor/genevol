@@ -64,8 +64,6 @@ public:
                           SingleProcessPhyloLikelihood* baseLik,
                           const std::map<uint, double>& fixedEdges,
                           const std::vector<uint>& freeEdgeIds) const;
-    void writeTree(const std::string& outputPath = "wgd_tree.nwk") const;
-
 private:
     /** Run Brent optimization on a single named parameter of func over [lo, hi]. */
     void optimizeParam(FunctionInterface* func, const std::string& paramName,

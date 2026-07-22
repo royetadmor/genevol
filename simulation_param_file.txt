@@ -1,23 +1,25 @@
-# Mandatory Params
-_treePath = test_data/tiley2016/Brassicaceae/tree.newick
-_dataPath = sim_output/simulated.fasta
+# inputs
+_treePath = test_data/tiley2016/Brassicaceae/tree_wgd.newick
 
-#_treePath = test_data/arthur2020/9dicots/9dicots.newick
-#_dataPath = sim_output/simulated.fasta
+# output paths
+_outputFasta = /app/genevol/sim_output/simulated.fasta
+_outputTree  = /app/genevol/sim_output/simulated.nwk
 
-# State related params
-#_minState = 0
-#_maxState = 30
-#_allowCappedState = false
+# Simulation settings
+_numSites   = 2000
+_seed       = 42
+_rootLambda = 1.5
+_minState = 0
+_maxState = 50
 
 # Branch normalization factor
 _branchMul = 1
 
 # Rate Params for classic model
-_gain=1.5
-_loss=1.5
-_innovation=0.1
-_elimination=0.1
+_gain=1
+_loss=1
+_innovation=0.0001
+_elimination=0.0001
 
 
 # Dependency functions for classic model
@@ -53,9 +55,4 @@ _mixtureEliminationFunc = CONST
 #_showRate4Site = true
 
 # WGD detection threshold
-_wgdThreshold = 10
-_wgdMode = detect
-_modelCriterion = AIC
-#_fixedWgdQ = 0.5
-
-_rootLambda = 1.5
+_fixedWgdQ = 0.8

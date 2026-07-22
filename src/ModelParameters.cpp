@@ -16,7 +16,7 @@ ModelParameters::ModelParameters(BppApplication GenEvol)
 {
     // Load general params
     ModelParameters::treeFilePath_ = ApplicationTools::getAFilePath("_treePath", GenEvol.getParams(), true, true, "", true, "none", 1);
-    ModelParameters::dataFilePath_ = ApplicationTools::getAFilePath("_dataPath", GenEvol.getParams(), true, true, "", true, "none", 1);
+    ModelParameters::dataFilePath_ = ApplicationTools::getAFilePath("_dataPath", GenEvol.getParams(), false, false, "", true, "", 1);
     ModelParameters::stateOverhead_ = ApplicationTools::getIntParameter("_stateOverhead", GenEvol.getParams(), STATE_OVERHEAD, "", true, -1);
     ModelParameters::allowCapState_ = ApplicationTools::getBooleanParameter("_allowCappedState", GenEvol.getParams(), false, "", true, -1);
     ModelParameters::showRate4Site_ = ApplicationTools::getBooleanParameter("_showRate4Site", GenEvol.getParams(), false, "", true, -1);
@@ -24,9 +24,12 @@ ModelParameters::ModelParameters(BppApplication GenEvol)
     ModelParameters::optNumIterations_ = ApplicationTools::getIntParameter("_optNumIterations", GenEvol.getParams(), 3, "", true, -1);
     ModelParameters::optTolerance_ = ApplicationTools::getDoubleParameter("_optTolerance", GenEvol.getParams(), 0.01, "", true, -1);
     ModelParameters::rootFreqModel_ = ApplicationTools::getStringParameter("_rootFreqModel", GenEvol.getParams(), "Poisson", "", true, -1);
+    ModelParameters::rootLambda_ = ApplicationTools::getDoubleParameter("_rootLambda", GenEvol.getParams(), -1.0, "", true, -1);
     setAlphabetLimit(GenEvol);
     ModelParameters::alphabet_ = std::make_shared<bpp::GeneCountAlphabet>(ModelParameters::maxState_, ModelParameters::minState_);
-    ModelParameters::container_ = readGeneFamilyFile(ModelParameters::dataFilePath_, ModelParameters::alphabet_);
+    if (ModelParameters::dataFilePath_ != "none") {
+        ModelParameters::container_ = readGeneFamilyFile(ModelParameters::dataFilePath_, ModelParameters::alphabet_);
+    }
     ModelParameters::rDist_ = std::move(PhylogeneticsApplicationTools::getRateDistribution(GenEvol.getParams(), "", true, true));
 
     // Load customization params
@@ -73,12 +76,20 @@ void ModelParameters::setAlphabetLimit(BppApplication GenEvol) {
         throw std::runtime_error("The maximal gene family size can be at most " + STATE_SPACE_UPPER_BOUND);
     }
 
-    // Both are given by the user
-    if (minState != -1 && maxState != -1) {
-        ModelParameters::minState_ = minState;
+    // maxState given explicitly: use it; minState defaults to 0
+    if (maxState != -1) {
+        ModelParameters::minState_ = (minState == -1) ? 0 : minState;
         ModelParameters::maxState_ = maxState;
         return;
     }
+
+    // No data file and no maxState: fall back to full state space
+    if (ModelParameters::dataFilePath_.empty()) {
+        ModelParameters::minState_ = (minState == -1) ? 0 : minState;
+        ModelParameters::maxState_ = STATE_SPACE_UPPER_BOUND;
+        return;
+    }
+
     std::ifstream file(ModelParameters::dataFilePath_);
     if (!file.is_open()) {
         throw std::runtime_error("Could not open file: " + ModelParameters::dataFilePath_);
@@ -275,9 +286,9 @@ void ModelParameters::validateTree(std::shared_ptr<bpp::PhyloTree> tree) {
 }
 
 void ModelParameters::validateWgdMode() {
-    if (wgdMode_ != "detect" && wgdMode_ != "test") {
+    if (!wgdMode_.empty() && wgdMode_ != "detect" && wgdMode_ != "test") {
         throw std::runtime_error(
-            "Invalid value for _wgdMode: '" + wgdMode_ + "'. Must be 'detect' or 'test'.");
+            "Invalid value for _wgdMode: '" + wgdMode_ + "'. Must be 'detect', 'test', or empty.");
     }
 }
 

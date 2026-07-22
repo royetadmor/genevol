@@ -154,6 +154,7 @@ enable_testing ()
 include (CTest)
 if (BUILD_TESTING)
   add_subdirectory ( GenEvol )
+  add_subdirectory ( Simulator )
 endif (BUILD_TESTING)
 
 ENDIF(NOT NO_DEP_CHECK)

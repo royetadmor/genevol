@@ -149,3 +149,43 @@ double TreeUtils::getTreeScalingFactor(ModelParameters* m, std::shared_ptr<bpp::
     double totalLength = getTotalLength(tree);
     return avgUniqueStateCount/totalLength;
 }
+void TreeUtils::collapseWgdNodes(std::shared_ptr<bpp::PhyloTree> tree)
+{
+    // Collect wgdLower nodes before removal to avoid iterator invalidation
+    std::vector<std::shared_ptr<bpp::PhyloNode>> wgdLowerNodes;
+    for (auto& node : tree->getAllNodes()) {
+        if (tree->getNodeIndex(node) == tree->getRootIndex()) continue;
+        if (tree->getEdgeToFather(node)->getLength() == 0.0)
+            wgdLowerNodes.push_back(node);
+    }
+
+    uint nextEdgeIdx = 0;
+    for (auto& node : tree->getAllNodes()) {
+        if (tree->getNodeIndex(node) == tree->getRootIndex()) continue;
+        uint idx = tree->getEdgeIndex(tree->getEdgeToFather(node));
+        if (idx >= nextEdgeIdx) nextEdgeIdx = idx + 1;
+    }
+
+    for (auto& wgdLower : wgdLowerNodes) {
+        auto wgdUpper   = tree->getFatherOfNode(wgdLower);
+        auto child      = tree->getSons(wgdLower)[0];
+        double origLen  = tree->getEdgeToFather(wgdUpper)->getLength()
+                        + tree->getEdgeToFather(child)->getLength();
+        uint wgdEdgeIdx = tree->getEdgeIndex(tree->getEdgeToFather(wgdLower));
+        removeWGDNode(tree, {wgdUpper, wgdLower, origLen, wgdEdgeIdx}, nextEdgeIdx);
+    }
+}
+
+void TreeUtils::writeTree(std::shared_ptr<bpp::PhyloTree> tree, const std::string& outputPath)
+{
+    bpp::Newick newick;
+    std::cout << "Newick tree: ";
+    newick.writePhyloTree(*tree, std::cout);
+    std::cout << std::endl;
+
+    std::ofstream out(outputPath);
+    if (!out)
+        throw std::runtime_error("Cannot open output file: " + outputPath);
+    newick.writePhyloTree(*tree, out);
+    std::cout << "Tree written to: " << outputPath << std::endl;
+}

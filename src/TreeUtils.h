@@ -1,9 +1,12 @@
 #ifndef GENEVOL_TREEUTILS_H
 #define GENEVOL_TREEUTILS_H
 
-#include <string> 
+#include <string>
 #include <tuple>
 #include <sstream>
+#include <fstream>
+
+#include <Bpp/Phyl/Io/Newick.h>
 
 
 
@@ -35,6 +38,9 @@ class TreeUtils {
 
         // Returns zero-length edge IDs in left-to-right DFS order (used for WGD test mode)
         static std::vector<uint> collectWgdEdgesInOrder(std::shared_ptr<bpp::PhyloTree> tree);
+
+        static void collapseWgdNodes(std::shared_ptr<bpp::PhyloTree> tree);
+        static void writeTree(std::shared_ptr<bpp::PhyloTree> tree, const std::string& outputPath);
 };
 
 

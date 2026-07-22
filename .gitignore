@@ -17,4 +17,7 @@ Makefile
 *results*/
 figures/
 
+# Simulations
+sim_output/
+
 .DS_store

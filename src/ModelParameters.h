@@ -38,6 +38,7 @@ public: // Variables
     int optNumIterations_;
     double optTolerance_;
     string rootFreqModel_;
+    double rootLambda_;
     int stateOverhead_;
     int categories_;
     double branchMul_;

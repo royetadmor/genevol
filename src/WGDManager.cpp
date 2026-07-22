@@ -345,17 +345,4 @@ void WGDManager::printDetectionResults() const
     TreeUtils::printTopology(tree_);
 }
 
-void WGDManager::writeTree(const std::string& outputPath) const
-{
-    bpp::Newick newick;
-    std::cout << "Newick tree: ";
-    newick.writePhyloTree(*tree_, std::cout);
-    std::cout << std::endl;
-
-    std::ofstream out(outputPath);
-    if (!out)
-        throw std::runtime_error("Cannot open output file: " + outputPath);
-    newick.writePhyloTree(*tree_, out);
-    std::cout << "Tree with WGD events written to: " << outputPath << std::endl;
-}
 
