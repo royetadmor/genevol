@@ -1,0 +1,43 @@
+# WGD simulation — tree with one WGD node (tree_wgd.newick), fixed seed
+_treePath = test_data/tiley2016/Brassicaceae/tree_wgd.newick
+
+_outputFasta = /app/genevol/sim_output/simulated_wgd.fasta
+_outputTree  = /app/genevol/sim_output/simulated_wgd.nwk
+
+# Simulation settings
+_numSites = 500
+_seed     = 43
+
+# State space
+_minState         = 0
+_maxState         = 50
+_stateOverhead    = 0
+_allowCappedState = false
+
+# Root distribution
+_rootFreqModel = Poisson
+_rootLambda    = 1.5
+
+# Branch scaling
+_branchMul = 1
+
+# Rate parameters (CONST: one value each)
+_gain            = 1
+_loss            = 1
+_innovation      = 0.0001
+_elimination     = 0.0001
+
+# Rate dependency functions
+_gainFunc          = CONST
+_lossFunc          = CONST
+_innovationFunc    = CONST
+_eliminationFunc   = CONST
+
+# Site rate heterogeneity
+rate_distribution = Constant()
+
+# Mixture model disabled
+_useMixtureModel = false
+
+# WGD retention probability (one value per zero-length edge in tree_wgd.newick)
+_fixedWgdQ = 0.8

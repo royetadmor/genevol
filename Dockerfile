@@ -7,7 +7,7 @@ WORKDIR /app/genevol
 COPY . /app/genevol
 
 # Build program
-RUN /app/genevol/script/build.sh --workdir /app
+RUN /app/genevol/script/infra/build.sh --workdir /app
 
 # Default command to run when starting the container
 # (Modify as needed, e.g., "./myapp")

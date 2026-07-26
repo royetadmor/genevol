@@ -4,4 +4,4 @@ set -e
 
 docker build -t genevol -f Dockerfile .
 
-script/docker_run.sh
+script/infra/docker_run.sh

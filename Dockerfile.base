@@ -20,10 +20,10 @@ RUN apt-get update && \
 WORKDIR /app/genevol
 
 # Copy your C++ source files into the container
-COPY ./script/install_sources.sh /app/genevol/script/install_sources.sh
+COPY ./script/infra/install_sources.sh /app/genevol/script/infra/install_sources.sh
 
 # Install dependencies
-RUN /app/genevol/script/install_sources.sh --workdir /app
+RUN /app/genevol/script/infra/install_sources.sh --workdir /app
 
 # Default command to run when starting the container
 # (Modify as needed, e.g., "./myapp")

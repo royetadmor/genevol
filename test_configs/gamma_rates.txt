@@ -1,0 +1,40 @@
+# Test: Gamma rate heterogeneity across sites (4 categories)
+_treePath = test_data/tiley2016/Brassicaceae/tree.newick
+_dataPath = sim_output/simulated_base.fasta
+
+# State space — matches simulate_base.txt
+_minState         = 0
+_maxState         = 50
+_stateOverhead    = 0
+_allowCappedState = false
+
+# Branch scaling
+_branchMul = 1
+
+# Root distribution — computed from data
+_rootFreqModel = Poisson
+
+# Rate parameters (CONST: one value each)
+_gain            = 1
+_loss            = 1
+_innovation      = 0.0001
+_elimination     = 0.0001
+
+# Rate dependency functions
+_gainFunc          = CONST
+_lossFunc          = CONST
+_innovationFunc    = CONST
+_eliminationFunc   = CONST
+
+# Site rate heterogeneity — Gamma with 4 discrete categories
+rate_distribution = Gamma(n=4, alpha=1.0)
+
+# Mixture model disabled
+_useMixtureModel = false
+
+# Optimization
+_optNumIterations = 3
+_optTolerance     = 0.01
+
+ 
+ 

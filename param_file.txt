@@ -14,10 +14,10 @@ _dataPath = sim_output/simulated.fasta
 _branchMul = 1
 
 # Rate Params for classic model
-_gain=1.5
-_loss=1.5
-_innovation=0.1
-_elimination=0.1
+_gain=1
+_loss=1.0
+_innovation=0.001
+_elimination=0.001
 
 
 # Dependency functions for classic model
@@ -58,4 +58,4 @@ _wgdMode = detect
 _modelCriterion = AIC
 #_fixedWgdQ = 0.5
 
-_rootLambda = 1.5
+_rootLambda = 2

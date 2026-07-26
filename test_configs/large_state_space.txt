@@ -1,0 +1,41 @@
+# Test: Large state space — verifies correctness at high maxState (70)
+# Data was simulated with maxState=50 so no capping occurs; extra states are valid zero-probability
+_treePath = test_data/tiley2016/Brassicaceae/tree.newick
+_dataPath = sim_output/simulated_base.fasta
+
+# State space — extended beyond simulation range
+_minState         = 0
+_maxState         = 70
+_stateOverhead    = 0
+_allowCappedState = false
+
+# Branch scaling
+_branchMul = 1
+
+# Root distribution — computed from data
+_rootFreqModel = Poisson
+
+# Rate parameters (CONST: one value each)
+_gain            = 1
+_loss            = 1
+_innovation      = 0.0001
+_elimination     = 0.0001
+
+# Rate dependency functions
+_gainFunc          = CONST
+_lossFunc          = CONST
+_innovationFunc    = CONST
+_eliminationFunc   = CONST
+
+# Site rate heterogeneity
+rate_distribution = Constant()
+
+# Mixture model disabled
+_useMixtureModel = false
+
+# Optimization
+_optNumIterations = 3
+_optTolerance     = 0.01
+
+ 
+ 

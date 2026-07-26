@@ -16,7 +16,7 @@ RESULTS_DIR="${2:-./results/loss_func_comparison}"
 
 PARAM_TEMPLATE="./param_file_template.txt"
 PARAM_WORKING="./param_file.txt"
-RUN_SCRIPT="script/param_build_and_run.sh"
+RUN_SCRIPT="script/infra/param_build_and_run.sh"
 
 ############################
 # LOCATE INPUT FILES

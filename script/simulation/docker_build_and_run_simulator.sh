@@ -4,4 +4,4 @@ set -e
 
 docker build -t genevol -f Dockerfile .
 
-script/docker_run_simulator.sh "$@"
+script/simulation/docker_run_simulator.sh "$@"

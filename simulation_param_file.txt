@@ -1,14 +1,14 @@
 # inputs
-_treePath = test_data/tiley2016/Brassicaceae/tree_wgd.newick
+_treePath = test_data/tiley2016/Brassicaceae/tree.newick
 
 # output paths
 _outputFasta = /app/genevol/sim_output/simulated.fasta
 _outputTree  = /app/genevol/sim_output/simulated.nwk
 
 # Simulation settings
-_numSites   = 2000
-_seed       = 42
-_rootLambda = 1.5
+_numSites   = 500
+_seed       = 42237854
+_rootLambda = 2
 _minState = 0
 _maxState = 50
 
@@ -16,10 +16,10 @@ _maxState = 50
 _branchMul = 1
 
 # Rate Params for classic model
-_gain=1
-_loss=1
-_innovation=0.0001
-_elimination=0.0001
+_gain=2
+_loss=1.9
+_innovation=0.01
+_elimination=0.01
 
 
 # Dependency functions for classic model
@@ -55,4 +55,4 @@ _mixtureEliminationFunc = CONST
 #_showRate4Site = true
 
 # WGD detection threshold
-_fixedWgdQ = 0.8
+#_fixedWgdQ = 0.8

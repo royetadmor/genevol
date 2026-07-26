@@ -12,7 +12,7 @@ GENEVOL_PARAM_FILENAME="$(basename "$GENEVOL_PARAM_ABS")"
 
 # Step 1: Simulate
 echo "=== Step 1: Simulating data ==="
-script/docker_run_simulator.sh "$SIM_PARAM" "$OUTPUT_DIR"
+script/simulation/docker_run_simulator.sh "$SIM_PARAM" "$OUTPUT_DIR"
 
 # Step 2: Point param_file to simulated data and run genevol
 echo ""
@@ -30,4 +30,4 @@ echo "$GENEVOL_LOG"
 # Step 3: Compare recovered params to ground truth
 echo ""
 echo "=== Step 3: Parameter comparison ==="
-python3 script/compare_params.py "$SIM_PARAM_ABS" <<< "$GENEVOL_LOG"
+python3 script/simulation/compare_params.py "$SIM_PARAM_ABS" <<< "$GENEVOL_LOG"

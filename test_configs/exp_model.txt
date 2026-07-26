@@ -1,0 +1,41 @@
+# Test: EXP gain/loss — rate is an exponential function of current copy number
+# EXP takes 2 params: scale, exponent  =>  f(n) = p0 * exp(p1 * n)
+_treePath = test_data/tiley2016/Brassicaceae/tree.newick
+_dataPath = sim_output/simulated_base.fasta
+
+# State space — matches simulate_base.txt
+#_minState         = 0
+#_maxState         = 50
+#_stateOverhead    = 0
+#_allowCappedState = false
+
+# Branch scaling
+_branchMul = 1
+
+# Root distribution
+_rootFreqModel = Poisson
+
+# Rate parameters
+_gain            = 1,0
+_loss            = 1,0
+_innovation      = 0.0001
+_elimination     = 0.0001
+
+# Rate dependency functions
+_gainFunc          = EXP
+_lossFunc          = EXP
+_innovationFunc    = CONST
+_eliminationFunc   = CONST
+
+# Site rate heterogeneity
+rate_distribution = Constant()
+
+# Mixture model disabled
+_useMixtureModel = false
+
+# Optimization
+_optNumIterations = 3
+_optTolerance     = 0.01
+
+# WGD disabled
+#_wgdMode =

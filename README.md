@@ -7,12 +7,12 @@ GenEvol is a likelihood-based method for estimating gene family dynamics, includ
 To install GenEvol, run the following script:
 
 ```sh
-script/install_sources.sh --workdir <your_workdir>
+script/infra/install_sources.sh --workdir <your_workdir>
 ```
 
 If you're using codespaces, you can omit the workdir flag and use the default `/workspaces` directory.
 Once the sources are installed, execute the following commands:
 
 ```sh
-script/build.sh --workdir <your_workdir>
+script/infra/build.sh --workdir <your_workdir>
 ```
