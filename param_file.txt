@@ -1,6 +1,6 @@
 # Mandatory Params
 _treePath = test_data/tiley2016/Brassicaceae/tree.newick
-_dataPath = sim_output/simulated.fasta
+_dataPath = test_data/tiley2016/Brassicaceae/data.fasta
 
 #_treePath = test_data/arthur2020/9dicots/9dicots.newick
 #_dataPath = sim_output/simulated.fasta
@@ -11,11 +11,11 @@ _dataPath = sim_output/simulated.fasta
 #_allowCappedState = false
 
 # Branch normalization factor
-_branchMul = 1
+#_branchMul = 1
 
 # Rate Params for classic model
 _gain=1
-_loss=1.0
+_loss=1
 _innovation=0.001
 _elimination=0.001
 
@@ -43,10 +43,9 @@ _mixtureEliminationFunc = CONST
 
 #_fixedParams = gain,loss,innovation,elimination
 #_mixtureFixedParams = alphaGain,innovation
-#_constraintedParams=gain,innovation;loss,elimination
+#_constraintedParams=gain,innovation
 #_mixtureConstraintedParams=alphaGain,betaGain
 
-#rate_distribution = Constant()
 #rate_distribution = Gamma(n=4, alpha=1.5)
 #_rootFreqModel = NegBinomial
 
@@ -58,4 +57,5 @@ _wgdMode = detect
 _modelCriterion = AIC
 #_fixedWgdQ = 0.5
 
-_rootLambda = 2
+#_rootLambda = 2
+#_seed = 42

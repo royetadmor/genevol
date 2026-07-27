@@ -41,10 +41,9 @@ void WGDManager::optimizeParam(FunctionInterface* func, const std::string& param
         throw std::runtime_error("optimizeParam: parameter '" + paramName + "' not found.");
     }
 
-    cout << "Optimizing " << paramName << endl;
     auto f = std::shared_ptr<FunctionInterface>(func, [](FunctionInterface*) {});
     ExtendedBrentOptimizer optimizer(f);
-    optimizer.setVerbose(1);
+    optimizer.setVerbose(0);
     optimizer.setProfiler(0);
     optimizer.setMessageHandler(0);
     optimizer.setConstraintPolicy(AutoParameter::CONSTRAINTS_AUTO);
@@ -54,7 +53,6 @@ void WGDManager::optimizeParam(FunctionInterface* func, const std::string& param
     optimizer.setInitialInterval(lo, hi);
     optimizer.init(params.createSubList(actualName));
     optimizer.optimize();
-    cout << endl << actualName + " value after optimization " + std::to_string(func->getParameters().getParameter(actualName)->getValue()) << endl;
 }
 
 std::map<int, std::vector<double>> WGDManager::extractRateParams(SingleProcessPhyloLikelihood* lik) const

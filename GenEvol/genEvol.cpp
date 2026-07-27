@@ -52,16 +52,12 @@ int main(int args, char **argv) {
     auto constraintedParams = m->constraintedParams_;
     auto rDist = m->rDist_;
 
-    // Calculate new likelihood
-    auto likProc = LikelihoodUtils::createLikelihoodProcess(m, tree_, paramMap, rateChangeType, constraintedParams, rDist);
-    std::cout << "Likelihood: " << likProc->getValue() << std::endl;
-    if(std::isinf(likProc->getValue())) {
-        std::cout << "Likelihood is inf, exiting" << std::endl;
+    // Multi-start optimization
+    auto likProc = LikelihoodUtils::multiStartOptimize(m, tree_, rateChangeType, constraintedParams, rDist);
+    if (!likProc) {
+        std::cout << "All starting points gave infinite likelihood, exiting" << std::endl;
         return 1;
     }
-    // Optimization and assessment
-    std::cout << "Starting optimization for new model" << std::endl;
-    LikelihoodUtils::optimizeModelParametersOneDimension(likProc, m, m->optTolerance_, m->optNumIterations_);
 
     // Create mixture model, calculate likelihood and optimize
     if (m->useMixtureModel_) {

@@ -32,6 +32,7 @@
 #include "ExtendedBrentOptimizer.h"
 #include "GeneCountDependencyFunction.h"
 #include "ModelAdequacyUtils.h"
+#include <Bpp/Numeric/Random/RandomTools.h>
 
 
 
@@ -54,11 +55,14 @@ namespace bpp{
         static void printResults(SingleProcessPhyloLikelihood* lik, bool printRate4Site = false);
         static void printRootFreqsPerSite(SingleProcessPhyloLikelihood* lik);
         static void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoodProcess, ModelParameters* m,double tol, unsigned int maxNumOfIterations);
+        static SingleProcessPhyloLikelihood* multiStartOptimize(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::vector<int> rateChangeType, std::map<string, string> constraintedParams, std::shared_ptr<DiscreteDistributionInterface> rDist);
     private:
         static vector<string> getParametersByName(ParameterList params, string name);
         static void normalizeVector(vector<double>& data);
         static std::shared_ptr<PoissonFrequencySet> poissonRootFreqSet(ModelParameters* m, std::shared_ptr<const StateMapInterface> stateMap, double rootLambda = -1.0);
         static std::shared_ptr<NegBinomialFrequencySet> negBinRootFreqSet(ModelParameters* m, std::shared_ptr<const StateMapInterface> stateMap);
+        static std::map<int, std::vector<double>> createRandomRateParams(ModelParameters* m);
+        static std::vector<SingleProcessPhyloLikelihood*> selectTopK(const std::vector<SingleProcessPhyloLikelihood*>& candidates, int k);
   };
 }
 

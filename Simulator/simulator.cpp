@@ -21,12 +21,8 @@ int main(int argc, char** argv)
     
     // Sim-specific parameters
     int    numSites    = ApplicationTools::getIntParameter   ("_numSites",   app.getParams(), 1000,   "", true, -1);
-    int    seed        = ApplicationTools::getIntParameter   ("_seed",       app.getParams(), 42,     "", true, -1);
     string outputFasta = ApplicationTools::getStringParameter("_outputFasta", app.getParams(), "simulated.fasta", "", true, -1);
     string outputTree  = ApplicationTools::getStringParameter("_outputTree",  app.getParams(), "simulated.nwk",   "", true, -1);
-
-    // Seed the random number generator
-    RandomTools::setSeed(static_cast<long>(seed));
 
     // Read and scale tree
     Newick reader;
@@ -57,7 +53,6 @@ int main(int argc, char** argv)
     cout << "Min state:    " << m->minState_ << endl;
     cout << "Max state:    " << m->maxState_ << endl;
     cout << "Num sites:    " << numSites << endl;
-    cout << "Seed:         " << seed << endl;
     cout << "Root lambda:  " << m->rootLambda_ << endl;
     if (m->branchMul_ > 0.0) {
         cout << "Branch mul:   " << m->branchMul_ << endl;

@@ -1,5 +1,6 @@
 #include "ModelParameters.h"
 
+#include <Bpp/Numeric/Random/RandomTools.h>
 #include <fstream>
 #include <sstream>
 #include <iostream>
@@ -35,7 +36,7 @@ ModelParameters::ModelParameters(BppApplication GenEvol)
     // Load customization params
     ModelParameters::branchMul_    = ApplicationTools::getDoubleParameter("_branchMul",    GenEvol.getParams(), -999.0);
     ModelParameters::wgdThreshold_    = ApplicationTools::getDoubleParameter("_wgdThreshold",   GenEvol.getParams(), 10.0);
-    ModelParameters::wgdMode_         = ApplicationTools::getStringParameter ("_wgdMode",         GenEvol.getParams(), "", "", true, -1);
+    ModelParameters::wgdMode_         = ApplicationTools::getStringParameter ("_wgdMode",         GenEvol.getParams(), "disable", "", true, -1);
     ModelParameters::modelCriterion_  = ApplicationTools::getStringParameter ("_modelCriterion",  GenEvol.getParams(), "AIC",    "", true, -1);
     validateWgdMode();
     validateModelCriterion();
@@ -49,6 +50,10 @@ ModelParameters::ModelParameters(BppApplication GenEvol)
     ModelParameters::categories_ = ApplicationTools::getIntParameter("_numCategories", GenEvol.getParams(), 4, "", true, -1);
     ModelParameters::mixtureInnovation_ = ApplicationTools::getDoubleParameter("_mixtureInnovation", GenEvol.getParams(), 1.0);
     ModelParameters::mixtureElimination_ = ApplicationTools::getDoubleParameter("_mixtureElimination", GenEvol.getParams(), 1.0);
+
+    // Seed the random number generator
+    int seed = ApplicationTools::getIntParameter("_seed", GenEvol.getParams(), 42, "", true, -1);
+    RandomTools::setSeed(static_cast<long>(seed));
 
     // Load parameters and rate functions
     setBaseModelParameters(GenEvol);
@@ -286,9 +291,9 @@ void ModelParameters::validateTree(std::shared_ptr<bpp::PhyloTree> tree) {
 }
 
 void ModelParameters::validateWgdMode() {
-    if (!wgdMode_.empty() && wgdMode_ != "detect" && wgdMode_ != "test") {
+    if (wgdMode_ != "disable" && wgdMode_ != "detect" && wgdMode_ != "test") {
         throw std::runtime_error(
-            "Invalid value for _wgdMode: '" + wgdMode_ + "'. Must be 'detect', 'test', or empty.");
+            "Invalid value for _wgdMode: '" + wgdMode_ + "'. Must be 'disable', 'detect', or 'test'.");
     }
 }
 

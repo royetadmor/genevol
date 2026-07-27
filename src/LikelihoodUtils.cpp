@@ -1,4 +1,5 @@
 #include "LikelihoodUtils.h"
+#include <algorithm>
 
 using namespace bpp;
 using namespace std;
@@ -366,4 +367,122 @@ void LikelihoodUtils::optimizeModelParametersOneDimension(SingleProcessPhyloLike
 
     }
     delete optimizer;
+}
+
+std::map<int, std::vector<double>> LikelihoodUtils::createRandomRateParams(ModelParameters* m) {
+    std::map<int, std::vector<double>> result;
+
+    for (const auto& kv : m->paramMap_) {
+        int key = kv.first;
+        const std::vector<double>& userValues = kv.second;
+
+        GeneCountDependencyFunction::FunctionType funcType =
+            static_cast<GeneCountDependencyFunction::FunctionType>(m->rateChangeType_[key]);
+
+        // Sample each sub-parameter log-uniformly (equal probability per order of magnitude),
+        // falling back to uniform when the range includes zero. Bounds are queried sequentially
+        // so coupled constraints are respected (e.g. LINEAR slope depends on the sampled intercept).
+        bool isFixed = LikelihoodUtils::isFixedParam(GeneCountSubstitutionModel::eventTypeToString.at(key), m->fixedParams_);
+        if (funcType == GeneCountDependencyFunction::FunctionType::IGNORE || isFixed) {
+            result[key] = userValues;
+            continue;
+        }
+
+        GeneCountDependencyFunction* func = compositeParameter::getDependencyFunction(funcType);
+        func->setDomainsIfNeeded(m->minState_, m->maxState_);
+
+        std::vector<double> randomValues;
+        for (size_t i = 0; i < userValues.size(); ++i) {
+            double lower, upper;
+            func->getBoundsForInitialParams(i, randomValues, &lower, &upper, m->maxState_);
+            double sampled;
+            if (lower <= 0) {
+                sampled = RandomTools::giveRandomNumberBetweenZeroAndEntry(upper - lower) + lower;
+            } else {
+                double logLower = std::log(lower);
+                double logUpper = std::log(upper);
+                double logSampled = RandomTools::giveRandomNumberBetweenZeroAndEntry(logUpper - logLower) + logLower;
+                sampled = std::exp(logSampled);
+            }
+            randomValues.push_back(sampled);
+        }
+        delete func;
+        result[key] = randomValues;
+    }
+
+    return result;
+}
+
+std::vector<SingleProcessPhyloLikelihood*> LikelihoodUtils::selectTopK(
+    const std::vector<SingleProcessPhyloLikelihood*>& candidates, int k)
+{
+    std::vector<std::pair<double, int>> scores;
+    for (int i = 0; i < (int)candidates.size(); ++i) {
+        double val = candidates[i]->getValue();
+        if (!std::isinf(val))
+            scores.push_back({val, i});
+    }
+
+    std::sort(scores.begin(), scores.end());
+
+    int actualK = std::min(k, (int)scores.size());
+    std::vector<SingleProcessPhyloLikelihood*> result;
+    for (int i = 0; i < actualK; ++i)
+        result.push_back(candidates[scores[i].second]);
+
+    return result;
+}
+
+SingleProcessPhyloLikelihood* LikelihoodUtils::multiStartOptimize(
+    ModelParameters* m,
+    std::shared_ptr<bpp::PhyloTree> tree,
+    std::vector<int> rateChangeType,
+    std::map<string, string> constraintedParams,
+    std::shared_ptr<DiscreteDistributionInterface> rDist)
+{
+    const int NUM_STARTS = m->numStarts_;
+    const int TOP_K = m->topK_;
+
+    // Create all candidates: 1 user-supplied + 9 random
+    std::vector<SingleProcessPhyloLikelihood*> candidates;
+    candidates.push_back(createLikelihoodProcess(m, tree, m->paramMap_, rateChangeType, constraintedParams, rDist));
+    std::cout << "Start 0 (user) initial likelihood: " << candidates[0]->getValue() << std::endl;
+
+    for (int i = 1; i < NUM_STARTS; ++i) {
+        auto randomParams = createRandomRateParams(m);
+        candidates.push_back(createLikelihoodProcess(m, tree, randomParams, rateChangeType, constraintedParams, rDist));
+        std::cout << "Start " << i << " initial likelihood: " << candidates[i]->getValue() << std::endl;
+    }
+
+    // Select top K before optimization
+    auto topCandidates = selectTopK(candidates, TOP_K);
+    if (topCandidates.empty()) {
+        for (auto* c : candidates) deleteLikelihoodProcess(c);
+        return nullptr;
+    }
+
+    // Delete rejected candidates
+    std::set<SingleProcessPhyloLikelihood*> topSet(topCandidates.begin(), topCandidates.end());
+    for (auto* c : candidates) {
+        if (topSet.find(c) == topSet.end())
+            deleteLikelihoodProcess(c);
+    }
+
+    // Optimize each surviving candidate independently
+    for (auto* c : topCandidates) {
+        std::cout << "\nOptimizing candidate with initial likelihood: " << c->getValue() << std::endl;
+        optimizeModelParametersOneDimension(c, m, m->optTolerance_, m->optNumIterations_);
+    }
+
+    // Select best after optimization
+    auto best = selectTopK(topCandidates, 1);
+
+    // Delete non-best candidates
+    for (auto* c : topCandidates) {
+        if (c != best[0])
+            deleteLikelihoodProcess(c);
+    }
+
+    std::cout << "Best likelihood after multi-start optimization: " << best[0]->getValue() << std::endl;
+    return best[0];
 }

@@ -62,6 +62,8 @@ public: // Variables
     std::map<string, string> mixtureConstraintedParams_;
     std::shared_ptr<DiscreteDistributionInterface> rDist_;
     std::vector<double> fixedWgdQ_;
+    int numStarts_ = 10;
+    int topK_ = 3;
 
     // Translates rate functions from string to int
     const std::map<std::string, int> func_string_to_enum = {
