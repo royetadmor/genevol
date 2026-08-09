@@ -6,6 +6,8 @@
 #include <Bpp/App/ApplicationTools.h>
 #include <Bpp/Numeric/Random/RandomTools.h>
 #include <Bpp/Phyl/Simulation/SimpleSubstitutionProcessSiteSimulator.h>
+#include <Bpp/Phyl/Simulation/DetailedSiteSimulator.h>
+#include <Bpp/Numeric/Matrix/Matrix.h>
 
 #include "ModelParameters.h"
 #include "LikelihoodUtils.h"
@@ -20,9 +22,10 @@ int main(int argc, char** argv)
     ModelParameters* m = new ModelParameters(app);
     
     // Sim-specific parameters
-    int    numSites    = ApplicationTools::getIntParameter   ("_numSites",   app.getParams(), 1000,   "", true, -1);
-    string outputFasta = ApplicationTools::getStringParameter("_outputFasta", app.getParams(), "simulated.fasta", "", true, -1);
-    string outputTree  = ApplicationTools::getStringParameter("_outputTree",  app.getParams(), "simulated.nwk",   "", true, -1);
+    int    numSites    = ApplicationTools::getIntParameter    ("_numSites",    app.getParams(), 1000,             "", true, -1);
+    string outputFasta = ApplicationTools::getStringParameter ("_outputFasta", app.getParams(), "simulated.fasta", "", true, -1);
+    string outputTree  = ApplicationTools::getStringParameter ("_outputTree",  app.getParams(), "simulated.nwk",   "", true, -1);
+    bool   debugOutput = ApplicationTools::getBooleanParameter("_debugOutput", app.getParams(), false,            "", true, -1);
 
     // Read and scale tree
     Newick reader;
@@ -81,11 +84,50 @@ int main(int argc, char** argv)
     SimpleSubstitutionProcessSiteSimulator siteSim(process);
     const vector<string>& seqNames = siteSim.getSequenceNames();
 
+    // Collect non-root node IDs and labels for debug output
+    uint rootId = tree->getRootIndex();
+    vector<uint>   debugNodeIds;
+    vector<string> debugNodeLabels;
+    if (debugOutput) {
+        for (auto& node : tree->getAllNodes()) {
+            uint id = tree->getNodeIndex(node);
+            if (id == rootId) continue;
+            debugNodeIds.push_back(id);
+            string name;
+            try { name = node->getName(); } catch (...) {}
+            if (name.empty()) name = "node_" + to_string(id);
+            debugNodeLabels.push_back(name);
+        }
+    }
+
     cout << "Simulating " << numSites << " sites..." << endl;
-    vector<unique_ptr<Site>> sites;
+    vector<unique_ptr<SiteInterface>> sites;
     sites.reserve(static_cast<size_t>(numSites));
-    for (int i = 0; i < numSites; ++i)
-        sites.push_back(siteSim.simulateSite());
+
+    // Per-site ancestral (root) state; per-branch event counts [branch][site]
+    // Event matrix: total substitution counts summed across all sites and branches
+    vector<size_t>          ancestralStates;
+    vector<vector<size_t>>  branchCounts;
+    size_t alphabetSize = static_cast<size_t>(m->alphabet_->getSize());
+    RowMatrix<double>       eventMatrix(alphabetSize, alphabetSize);
+    if (debugOutput) {
+        ancestralStates.reserve(static_cast<size_t>(numSites));
+        branchCounts.assign(debugNodeIds.size(), vector<size_t>(static_cast<size_t>(numSites), 0));
+    }
+
+    for (int i = 0; i < numSites; ++i) {
+        if (debugOutput) {
+            auto result = siteSim.dSimulateSite();
+            ancestralStates.push_back(result->getAncestralState(rootId));
+            for (size_t b = 0; b < debugNodeIds.size(); ++b) {
+                branchCounts[b][static_cast<size_t>(i)] = result->getSubstitutionCount(debugNodeIds[b]);
+                result->getMutationPath(debugNodeIds[b]).getEventCounts(eventMatrix);
+            }
+            sites.push_back(result->getSite());
+        } else {
+            sites.push_back(siteSim.simulateSite());
+        }
+    }
 
     // Write simulated data as TSV (matches genevol input format)
     ofstream out(outputFasta);
@@ -106,6 +148,55 @@ int main(int argc, char** argv)
         out << "\n";
     }
     cout << "Written: " << outputFasta << endl;
+
+    // Write debug files if requested
+    if (debugOutput) {
+        string outputDir;
+        size_t lastSlash = outputFasta.find_last_of("/\\");
+        outputDir = (lastSlash != string::npos) ? outputFasta.substr(0, lastSlash) : ".";
+
+        // Ancestral states: one row per site
+        string ancestralFile = outputDir + "/ancestral_states.tsv";
+        ofstream aout(ancestralFile);
+        if (!aout.is_open())
+            throw runtime_error("Could not open output file: " + ancestralFile);
+        aout << "site_id\troot_state\n";
+        for (int i = 0; i < numSites; ++i)
+            aout << (i + 1) << "\t" << ancestralStates[static_cast<size_t>(i)] << "\n";
+        cout << "Written: " << ancestralFile << endl;
+
+        // Branch event counts: rows = branches, columns = sites
+        string branchFile = outputDir + "/branch_event_counts.tsv";
+        ofstream bout(branchFile);
+        if (!bout.is_open())
+            throw runtime_error("Could not open output file: " + branchFile);
+        bout << "branch";
+        for (int i = 1; i <= numSites; ++i)
+            bout << "\tFamily" << i;
+        bout << "\n";
+        for (size_t b = 0; b < debugNodeIds.size(); ++b) {
+            bout << debugNodeLabels[b];
+            for (int i = 0; i < numSites; ++i)
+                bout << "\t" << branchCounts[b][static_cast<size_t>(i)];
+            bout << "\n";
+        }
+        cout << "Written: " << branchFile << endl;
+
+        // Event matrix: total transitions summed across all sites and branches (sparse, non-zero only)
+        string matrixFile = outputDir + "/event_matrix.tsv";
+        ofstream mout(matrixFile);
+        if (!mout.is_open())
+            throw runtime_error("Could not open output file: " + matrixFile);
+        mout << "from_state\tto_state\tcount\n";
+        for (size_t from = 0; from < alphabetSize; ++from) {
+            for (size_t to = 0; to < alphabetSize; ++to) {
+                double count = eventMatrix(from, to);
+                if (count > 0)
+                    mout << (m->minState_ + from) << "\t" << (m->minState_ + to) << "\t" << count << "\n";
+            }
+        }
+        cout << "Written: " << matrixFile << endl;
+    }
 
     // Collapse WGD node triplets back into single branches before writing
     TreeUtils::collapseWgdNodes(tree);
