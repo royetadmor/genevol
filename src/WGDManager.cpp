@@ -83,6 +83,16 @@ std::map<int, std::vector<double>> WGDManager::extractRateParams(SingleProcessPh
     return result;
 }
 
+double WGDManager::extractRootLambda(SingleProcessPhyloLikelihood* lik) const
+{
+    ParameterList params = lik->getParameters();
+    for (size_t i = 0; i < params.size(); ++i) {
+        if (params[i].getName().find("Poisson.lambda") != std::string::npos)
+            return params[i].getValue();
+    }
+    return m_->rootLambda_;
+}
+
 std::shared_ptr<DiscreteDistributionInterface> WGDManager::extractRDist(SingleProcessPhyloLikelihood* lik) const
 {
     size_t nCat = m_->rDist_->getNumberOfCategories();
@@ -104,7 +114,8 @@ std::shared_ptr<DiscreteDistributionInterface> WGDManager::extractRDist(SinglePr
 WGDManager::CandidateResult WGDManager::evaluateCandidate(
     uint childId, double baseAIC,
     const std::map<int, std::vector<double>>& currentParams,
-    std::shared_ptr<DiscreteDistributionInterface> currentRDist)
+    std::shared_ptr<DiscreteDistributionInterface> currentRDist,
+    double rootLambda)
 {
     auto candChild = tree_->getNode(childId);
     CandidateResult best;
@@ -113,7 +124,7 @@ WGDManager::CandidateResult WGDManager::evaluateCandidate(
 
     auto altLik = LikelihoodUtils::createLikelihoodProcess(
         m_, tree_, currentParams, m_->rateChangeType_,
-        m_->constraintedParams_, currentRDist, wgdQMap_, 0.5);
+        m_->constraintedParams_, currentRDist, wgdQMap_, 0.5, rootLambda);
 
     uint upperBranchId = tree_->getEdgeIndex(tree_->getEdgeToFather(ins.wgdUpper));
     uint lowerBranchId = tree_->getEdgeIndex(tree_->getEdgeToFather(candChild));
@@ -154,6 +165,8 @@ WGDManager::CandidateResult WGDManager::evaluateCandidate(
 void WGDManager::forwardPass()
 {
     double baseAIC = ModelAdequacyUtils::calculateAIC(baseLik_);
+    // Keeping lambda between iterations
+    double currentRootLambda = extractRootLambda(baseLik_);
     std::cout << "WGD forward pass — baseline AIC: " << baseAIC << std::endl;
 
     while (true) {
@@ -167,7 +180,7 @@ void WGDManager::forwardPass()
         auto currentRDist  = extractRDist(baseLik_);
 
         for (uint childId : getCandidates()) {
-            CandidateResult res = evaluateCandidate(childId, baseAIC, currentParams, currentRDist);
+            CandidateResult res = evaluateCandidate(childId, baseAIC, currentParams, currentRDist, currentRootLambda);
 
             if (res.deltaAIC > bestDeltaAIC) {
                 if (bestLik) LikelihoodUtils::deleteLikelihoodProcess(bestLik);
@@ -249,7 +262,7 @@ void WGDManager::testWGD(const std::map<uint, double>& fixedEdges, const std::ve
     // Create and optimize alternative likelihood object (new hypothesis)
     auto altLik = LikelihoodUtils::createLikelihoodProcess(
         m_, tree_, extractRateParams(baseLik_), m_->rateChangeType_,
-        m_->constraintedParams_, extractRDist(baseLik_), altQMap, 0.0);
+        m_->constraintedParams_, extractRDist(baseLik_), altQMap, 0.0, extractRootLambda(baseLik_));
 
     // Set fixed q values
     for (const auto& kv : fixedEdges) {

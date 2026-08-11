@@ -80,13 +80,18 @@ private:
      *  Returns the best (deltaAIC, q, t, lik) found; caller owns the returned lik. */
     CandidateResult evaluateCandidate(uint childId, double baseAIC,
                                       const std::map<int, std::vector<double>>& currentParams,
-                                      std::shared_ptr<DiscreteDistributionInterface> currentRDist);
+                                      std::shared_ptr<DiscreteDistributionInterface> currentRDist,
+                                      double rootLambda);
 
     /** Read current rate parameter values from a likelihood object. */
     std::map<int, std::vector<double>> extractRateParams(SingleProcessPhyloLikelihood* lik) const;
 
     /** Clone m_->rDist_ and sync its parameters from the optimized likelihood. */
     std::shared_ptr<DiscreteDistributionInterface> extractRDist(SingleProcessPhyloLikelihood* lik) const;
+
+    /** Read the root Poisson lambda from a likelihood object.
+     *  In PoissonOpt mode returns the optimized value; otherwise returns m_->rootLambda_. */
+    double extractRootLambda(SingleProcessPhyloLikelihood* lik) const;
 
     // Return relevant node IDs for WGD detection
     std::vector<uint> getCandidates() const;

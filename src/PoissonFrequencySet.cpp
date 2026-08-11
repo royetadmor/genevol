@@ -13,14 +13,27 @@ using namespace std;
 
 PoissonFrequencySet::PoissonFrequencySet(
   shared_ptr<const StateMapInterface> stateMap,
-  double lambda)
+  double lambda,
+  bool optimize)
   :
   AbstractFrequencySet(stateMap, "Poisson.", "Poisson"),
-  lambda_(lambda)
+  lambda_(lambda),
+  optimize_(optimize)
 {
   if (lambda_ <= 0.0)
     throw Exception("PoissonFrequencySet: lambda must be > 0.");
 
+  if (optimize_)
+    addParameter_(new Parameter("Poisson.lambda", lambda_, Parameter::R_PLUS_STAR));
+
+  updateFrequencies_();
+}
+
+void PoissonFrequencySet::fireParameterChanged(const ParameterList& parameters)
+{
+  AbstractFrequencySet::fireParameterChanged(parameters);
+  if (optimize_)
+    lambda_ = getParameterValue("lambda");
   updateFrequencies_();
 }
 

@@ -71,7 +71,7 @@ std::vector<SingleProcessPhyloLikelihood*> MixtureModelLikelihoodFunction::getLi
             };
 
             likelihoodProcesses.push_back(
-                LikelihoodUtils::createLikelihoodProcess(m_, tree_, MMparamMap, m_->mixtureRateChangeType_, {}, nullptr)
+                LikelihoodUtils::createLikelihoodProcess(m_, tree_, MMparamMap, m_->mixtureRateChangeType_, {}, nullptr, {}, 0.0, m_->rootLambda_)
             );
         }
     }

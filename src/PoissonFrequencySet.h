@@ -22,15 +22,18 @@ class PoissonFrequencySet :
 {
 private:
   double lambda_;
+  bool optimize_;
 
 public:
   /**
    * @param stateMap  State map from the substitution model.
-   * @param lambda    Mean of the Poisson distribution
+   * @param lambda    Mean of the Poisson distribution (starting value when optimize=true).
+   * @param optimize  If true, lambda is registered as a bpp Parameter and optimized.
    */
   PoissonFrequencySet(
     std::shared_ptr<const StateMapInterface> stateMap,
-    double lambda);
+    double lambda,
+    bool optimize = false);
 
   PoissonFrequencySet(const PoissonFrequencySet&) = default;
 
@@ -45,6 +48,8 @@ public:
   void setFrequencies(const std::vector<double>& frequencies) override;
 
   double getLambda() const { return lambda_; }
+
+  void fireParameterChanged(const ParameterList& parameters) override;
 
 private:
   void updateFrequencies_();

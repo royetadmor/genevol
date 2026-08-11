@@ -46,9 +46,9 @@ std::shared_ptr<NonHomogeneousSubstitutionProcess> LikelihoodUtils::createSubsti
     return subProcesses;
 }
 
-SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, string> constraintedParams, std::shared_ptr<DiscreteDistributionInterface> rDist, std::map<uint, double> wgdQMap, double qInit) {
-    auto subProcesses = createSubstitutionProcess(m, tree, rateParams, rateChangeType, rDist, wgdQMap, qInit, m->rootLambda_);
-
+SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, string> constraintedParams, std::shared_ptr<DiscreteDistributionInterface> rDist, std::map<uint, double> wgdQMap, double qInit, double rootLambda) {
+    auto subProcesses = createSubstitutionProcess(m, tree, rateParams, rateChangeType, rDist, wgdQMap, qInit, rootLambda);
+    
     auto nsubPro = std::shared_ptr<SubstitutionProcessInterface>(subProcesses->clone());
     // Check for constrainted params, avoid constraining when computing WGD
     std::vector<uint> wgdEdgeIds;
@@ -260,7 +260,7 @@ std::shared_ptr<PoissonFrequencySet> LikelihoodUtils::poissonRootFreqSet(ModelPa
             total += site[j];
     }
     double lambda = total / totalDataSize;
-    return std::make_shared<PoissonFrequencySet>(stateMap, lambda);
+    return std::make_shared<PoissonFrequencySet>(stateMap, lambda, true);
 }
 
 std::shared_ptr<NegBinomialFrequencySet> LikelihoodUtils::negBinRootFreqSet(ModelParameters* m, std::shared_ptr<const StateMapInterface> stateMap) {
@@ -340,6 +340,9 @@ void LikelihoodUtils::optimizeModelParametersOneDimension(SingleProcessPhyloLike
                 lowerBound = 0.05;
                 upperBound = 100;
             } else if (nameOfParam.find("NegBinomial") != std::string::npos) {
+                lowerBound = 0.01;
+                upperBound = 100;
+            } else if (nameOfParam.find("Poisson") != std::string::npos) {
                 lowerBound = 0.01;
                 upperBound = 100;
             } else {
@@ -445,12 +448,12 @@ SingleProcessPhyloLikelihood* LikelihoodUtils::multiStartOptimize(
 
     // Create all candidates: 1 user-supplied + 9 random
     std::vector<SingleProcessPhyloLikelihood*> candidates;
-    candidates.push_back(createLikelihoodProcess(m, tree, m->paramMap_, rateChangeType, constraintedParams, rDist));
+    candidates.push_back(createLikelihoodProcess(m, tree, m->paramMap_, rateChangeType, constraintedParams, rDist,{}, 0.0, m->rootLambda_));
     std::cout << "Start 0 (user) initial likelihood: " << candidates[0]->getValue() << std::endl;
 
     for (int i = 1; i < NUM_STARTS; ++i) {
         auto randomParams = createRandomRateParams(m);
-        candidates.push_back(createLikelihoodProcess(m, tree, randomParams, rateChangeType, constraintedParams, rDist));
+        candidates.push_back(createLikelihoodProcess(m, tree, randomParams, rateChangeType, constraintedParams, rDist, {}, 0.0, m->rootLambda_));
         std::cout << "Start " << i << " initial likelihood: " << candidates[i]->getValue() << std::endl;
     }
 
