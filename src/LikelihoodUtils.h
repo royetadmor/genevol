@@ -47,8 +47,8 @@ namespace bpp{
         static void deleteLikelihoodProcess(SingleProcessPhyloLikelihood* lik);
         static int getParamIndex(string name);
         static std::vector<string> filterParamsByName(std::vector<std::string> listOfParams, std::string paramName);
-        static std::shared_ptr<NonHomogeneousSubstitutionProcess> createSubstitutionProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::shared_ptr<DiscreteDistributionInterface> rDist, std::map<uint, double> wgdQMap = {}, double qInit = 0.0, double rootLambda = -1.0);
-        static SingleProcessPhyloLikelihood* createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, string> constraintedParams, std::shared_ptr<DiscreteDistributionInterface> rDist, std::map<uint, double> wgdQMap = {}, double qInit = 0.0, double rootLambda = -1.0);
+        static std::shared_ptr<NonHomogeneousSubstitutionProcess> createSubstitutionProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::shared_ptr<DiscreteDistributionInterface> rDist, std::map<uint, double> wgdQMap = {}, double rootLambda = -1.0);
+        static SingleProcessPhyloLikelihood* createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, string> constraintedParams, std::shared_ptr<DiscreteDistributionInterface> rDist, std::map<uint, double> wgdQMap = {}, double rootLambda = -1.0);
         static void setProcessConstraintedParams(std::map<string, string> constraintedParams, AbstractParameterAliasable* process);
         static bool isFixedParam(const std::string& name, const std::vector<string> params);
         static std::vector<double> calculateExpectedRatePerSite(SingleProcessPhyloLikelihood* lik, const bool normalize);

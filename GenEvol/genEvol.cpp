@@ -92,7 +92,7 @@ int main(int args, char **argv) {
         // Assiging all fixed WGDs (if any) and reoptimizing parameters
         if (!fixedEdges.empty()) {
             baseLik = LikelihoodUtils::createLikelihoodProcess(
-                m, tree_, paramMap, rateChangeType, constraintedParams, rDist, fixedEdges, 0.0, m->rootLambda_);
+                m, tree_, paramMap, rateChangeType, constraintedParams, rDist, fixedEdges, m->rootLambda_);
             for (const auto& kv : fixedEdges) {
                 m->fixedParams_.push_back("WGD_" + std::to_string(kv.first) + ".q");
             }

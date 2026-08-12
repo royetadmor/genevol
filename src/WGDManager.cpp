@@ -124,7 +124,7 @@ WGDManager::CandidateResult WGDManager::evaluateCandidate(
 
     auto altLik = LikelihoodUtils::createLikelihoodProcess(
         m_, tree_, currentParams, m_->rateChangeType_,
-        m_->constraintedParams_, currentRDist, wgdQMap_, 0.5, rootLambda);
+        m_->constraintedParams_, currentRDist, wgdQMap_, rootLambda);
 
     uint upperBranchId = tree_->getEdgeIndex(tree_->getEdgeToFather(ins.wgdUpper));
     uint lowerBranchId = tree_->getEdgeIndex(tree_->getEdgeToFather(candChild));
@@ -262,7 +262,7 @@ void WGDManager::testWGD(const std::map<uint, double>& fixedEdges, const std::ve
     // Create and optimize alternative likelihood object (new hypothesis)
     auto altLik = LikelihoodUtils::createLikelihoodProcess(
         m_, tree_, extractRateParams(baseLik_), m_->rateChangeType_,
-        m_->constraintedParams_, extractRDist(baseLik_), altQMap, 0.0, extractRootLambda(baseLik_));
+        m_->constraintedParams_, extractRDist(baseLik_), altQMap, extractRootLambda(baseLik_));
 
     // Set fixed q values
     for (const auto& kv : fixedEdges) {

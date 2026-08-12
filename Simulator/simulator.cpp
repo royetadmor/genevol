@@ -78,7 +78,7 @@ int main(int argc, char** argv)
 
     // Build substitution process
     auto process = LikelihoodUtils::createSubstitutionProcess(
-        m, tree, m->paramMap_, m->rateChangeType_, m->rDist_, wgdQMap, 0.0, m->rootLambda_);
+        m, tree, m->paramMap_, m->rateChangeType_, m->rDist_, wgdQMap, m->rootLambda_);
 
     // Simulate
     SimpleSubstitutionProcessSiteSimulator siteSim(process);
