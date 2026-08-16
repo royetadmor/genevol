@@ -92,6 +92,8 @@ private:
     /** Read the root Poisson lambda from a likelihood object.
      *  In PoissonOpt mode returns the optimized value; otherwise returns m_->rootLambda_. */
     double extractRootLambda(SingleProcessPhyloLikelihood* lik) const;
+    
+    SingleProcessPhyloLikelihood* reoptimizeParams(SingleProcessPhyloLikelihood* prevLik);
 
     // Return relevant node IDs for WGD detection
     std::vector<uint> getCandidates() const;

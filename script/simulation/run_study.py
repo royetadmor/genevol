@@ -6,12 +6,13 @@ Usage:
   python3 run_study.py --mode standard   # rate parameter recovery across multiple trees
   python3 run_study.py --mode one_wgd    # WGD detection — single WGD event
   python3 run_study.py --mode two_wgds   # WGD detection — two WGD events
+  python3 run_study.py --mode four_wgds  # WGD detection — four WGD events
 
 Adding a new mode: add an entry to MODES below — no other code changes needed.
 
 Tree notes:
-  sim_trees   — list of trees used for simulation, cycled across sims (round-robin)
-  infer_tree  — tree used for genevol inference; None means same tree as simulation
+  sim_trees  — list of trees used for simulation, cycled across sims (round-robin)
+  infer_tree — tree used for genevol inference; None means same tree as simulation
 
 Root lambda notes:
   root_lambda > 0  — fixed lambda used for both simulation and inference (no optimization)
@@ -19,7 +20,7 @@ Root lambda notes:
   sim_root_lambda  — required when root_lambda <= 0; the true lambda used to generate data
 
 WGD notes:
-  true_qs — list of q values per WGD node (DFS left-to-right order in sim_trees[0])
+  true_qs — true q values per WGD node (DFS left-to-right order in the sim tree)
             [] disables WGD; non-empty enables detect mode and adds q columns to CSV
 """
 import argparse
@@ -61,19 +62,20 @@ MODES = {
     "one_wgd": {
         "description":     "WGD detection — single WGD event",
         "sim_trees": [
-            "test_data/tiley2016/Brassicaceae/tree_wgd.newick",
+            "test_data/tiley2016/Monocots/tree_wgd.newick",
         ],
-        "infer_tree":      "test_data/tiley2016/Brassicaceae/tree.newick",
-        "true_qs":         [0.15],
-        "root_lambda":     1.0,         # fixed lambda for both simulation and inference
-        "rate_init":       "true",      # genevol starts rates from true values
+        "infer_tree":      "test_data/tiley2016/Monocots/tree.newick",
+        "true_qs":         [0.3],
+        "root_lambda":     -1,
+        "sim_root_lambda": 1.5,
+        "rate_init":       "generic",
         "wgd_threshold":   10,
         "target_events":   5.0,
         "rates": {
-            "gain":        1.3,
+            "gain":        1.7,
             "loss":        1.0,
-            "innovation":  0.1,
-            "elimination": 0.05,
+            "innovation":  0.2,
+            "elimination": 0.15,
         },
         "results_csv":     "wgd_detection_results_one.csv",
         "sim_outputs_dir": "sim_outputs_one_wgd",
@@ -81,12 +83,12 @@ MODES = {
     "two_wgds": {
         "description":     "WGD detection — two WGD events",
         "sim_trees": [
-            "test_data/tiley2016/Brassicaceae/tree_wgds.newick",
+            "test_data/tiley2016/Monocots/tree_wgds.newick",
         ],
-        "infer_tree":      "test_data/tiley2016/Brassicaceae/tree.newick",
-        "true_qs":         [0.4, 0.2],
-        "root_lambda":     1.0,         # fixed lambda for both simulation and inference
-        "rate_init":       "true",      # genevol starts rates from true values
+        "infer_tree":      "test_data/tiley2016/Monocots/tree.newick",
+        "true_qs":         [0.5, 0.5],
+        "root_lambda":     1.0,
+        "rate_init":       "true",
         "wgd_threshold":   10,
         "target_events":   5.0,
         "rates": {
@@ -98,11 +100,31 @@ MODES = {
         "results_csv":     "wgd_detection_results_two.csv",
         "sim_outputs_dir": "sim_outputs_two_wgds",
     },
+    "four_wgds": {
+        "description":     "WGD detection — four WGD events",
+        "sim_trees": [
+            "test_data/tiley2016/Monocots/tree_4wgds.newick",
+        ],
+        "infer_tree":      "test_data/tiley2016/Monocots/tree.newick",
+        "true_qs":         [0.5, 0.5, 0.5, 0.5],
+        "root_lambda":     1.0,
+        "rate_init":       "true",
+        "wgd_threshold":   10,
+        "target_events":   5.0,
+        "rates": {
+            "gain":        1.3,
+            "loss":        1.0,
+            "innovation":  0.1,
+            "elimination": 0.05,
+        },
+        "results_csv":     "wgd_detection_results_four.csv",
+        "sim_outputs_dir": "sim_outputs_four_wgds",
+    },
 }
 
 # ── Shared constants ───────────────────────────────────────────────────────────
 
-NUM_SIMS  = 5
+NUM_SIMS  = 10
 NUM_SITES = 1000
 MAX_STATE = 50
 
@@ -253,11 +275,12 @@ def parse_wgd_results(log):
 
     Returns list of {q, delta_aic} in detection order, or [] if none detected.
     """
-    if "No WGD events detected." in log:
+    block_match = re.search(r"=== WGD Detection Results ===(.*?)(?:===|\Z)", log, re.DOTALL)
+    if not block_match or "No WGD events detected." in block_match.group(1):
         return []
     rows = []
     for m in re.finditer(
-        r"^\s+\d+\s+\d+\s+([\d.eE+\-]+)\s+([\d.eE+\-]+)", log, re.MULTILINE
+        r"^\s+\d+\s+\d+\s+([\d.eE+\-]+)\s+([\d.eE+\-]+)", block_match.group(1), re.MULTILINE
     ):
         rows.append({"q": float(m.group(1)), "delta_aic": float(m.group(2))})
     return rows
@@ -412,10 +435,10 @@ def main():
         writer.writeheader()
 
         for sim_id in range(1, NUM_SIMS + 1):
-            sim_tree              = cfg["sim_trees"][(sim_id - 1) % len(cfg["sim_trees"])]
-            infer_tree            = cfg["infer_tree"] or sim_tree
-            tree_label, _, bm     = branch_muls[sim_tree]
-            seed                  = sim_id
+            sim_tree          = cfg["sim_trees"][(sim_id - 1) % len(cfg["sim_trees"])]
+            infer_tree        = cfg.get("infer_tree") or sim_tree
+            tree_label, _, bm = branch_muls[sim_tree]
+            seed              = sim_id
 
             print(f"[{sim_id:02d}/{NUM_SIMS}] tree={tree_label}  seed={seed}  branchMul={bm:.6f}")
 
@@ -459,6 +482,7 @@ def main():
                 elapsed = time.time() - t_start
                 print(f"         ERROR: {e}", file=sys.stderr)
                 row = build_error_row(cfg, csv_fields, sim_id, tree_label, seed, elapsed)
+
                 writer.writerow(row)
                 csvfile.flush()
 

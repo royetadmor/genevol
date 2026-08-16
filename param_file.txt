@@ -11,13 +11,13 @@ _dataPath = test_data/tiley2016/Brassicaceae/data.fasta
 #_allowCappedState = false
 
 # Branch normalization factor
-#_branchMul = 1
+_branchMul = 0.007401
 
 # Rate Params for classic model
-_gain=1
-_loss=1
-_innovation=0.001
-_elimination=0.001
+_gain=0.1
+_loss=2
+_innovation=0.1
+_elimination=1
 
 
 # Dependency functions for classic model
@@ -43,7 +43,7 @@ _mixtureEliminationFunc = CONST
 
 #_fixedParams = gain,loss,innovation,elimination
 #_mixtureFixedParams = alphaGain,innovation
-#_constraintedParams=gain,innovation
+#_constraintedParams=gain,innovation;loss,elimination
 #_mixtureConstraintedParams=alphaGain,betaGain
 
 #rate_distribution = Gamma(n=4, alpha=1.5)
@@ -57,5 +57,5 @@ _wgdMode = detect
 _modelCriterion = AIC
 #_fixedWgdQ = 0.5
 
-#_rootLambda = 2
-#_seed = 42
+#_rootLambda = 1
+_rootFreqModel = Poisson

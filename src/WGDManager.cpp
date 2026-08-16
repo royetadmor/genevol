@@ -162,10 +162,18 @@ WGDManager::CandidateResult WGDManager::evaluateCandidate(
     return best;
 }
 
+SingleProcessPhyloLikelihood* WGDManager::reoptimizeParams(SingleProcessPhyloLikelihood* prevLik)
+{
+    auto newLik = LikelihoodUtils::createLikelihoodProcess(
+        m_, tree_, extractRateParams(prevLik), m_->rateChangeType_,
+        m_->constraintedParams_, extractRDist(prevLik), wgdQMap_, m_->rootLambda_);
+    LikelihoodUtils::optimizeModelParametersOneDimension(newLik, m_, m_->optTolerance_, m_->optNumIterations_);
+    return newLik;
+}
+
 void WGDManager::forwardPass()
 {
     double baseAIC = ModelAdequacyUtils::calculateAIC(baseLik_);
-    // Keeping lambda between iterations
     double currentRootLambda = extractRootLambda(baseLik_);
     std::cout << "WGD forward pass — baseline AIC: " << baseAIC << std::endl;
 
@@ -220,6 +228,13 @@ void WGDManager::forwardPass()
         res.t            = bestT;
         res.deltaAIC     = bestDeltaAIC;
         results_.push_back(res);
+    }
+
+    if (!results_.empty()) {
+        std::cout << "Re-optimizing parameters after forward pass..." << std::endl;
+        auto reOptLik = reoptimizeParams(baseLik_);
+        ownedLiks_.push_back(reOptLik);
+        baseLik_ = reOptLik;
     }
 }
 
@@ -340,6 +355,7 @@ void WGDManager::printTestResults(SingleProcessPhyloLikelihood* altLik,
 
 void WGDManager::printDetectionResults() const
 {
+    LikelihoodUtils::printResults(baseLik_);
     if (results_.empty()) {
         std::cout << "No WGD events detected." << std::endl;
         return;

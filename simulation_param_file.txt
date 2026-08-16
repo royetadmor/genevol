@@ -6,20 +6,20 @@ _outputFasta = /app/genevol/sim_output/simulated.fasta
 _outputTree  = /app/genevol/sim_output/simulated.nwk
 
 # Simulation settings
-_numSites   = 500
-_seed       = 42237854
-_rootLambda = 2
+_numSites   = 1000
+_seed       = 16
+_rootLambda = 5
 _minState = 0
 _maxState = 50
 
 # Branch normalization factor
-_branchMul = 1
+_branchMul = 0.007401
 
 # Rate Params for classic model
-_gain=2
-_loss=1.9
-_innovation=0.01
-_elimination=0.01
+_gain=1.5
+_loss=1.5
+_innovation=0.5
+_elimination=0.5
 
 
 # Dependency functions for classic model
@@ -56,3 +56,4 @@ _mixtureEliminationFunc = CONST
 
 # WGD detection threshold
 #_fixedWgdQ = 0.8
+#_debugOutput = true
