@@ -221,6 +221,24 @@ void WGDManager::forwardPass()
         acceptedTCount_++;
         baseAIC = ModelAdequacyUtils::calculateAIC(baseLik_, acceptedTCount_);
 
+        if (!results_.empty()) {
+            std::cout << "Re-optimizing " << results_.size()
+                      << " previously accepted WGD q value(s)..." << std::endl;
+            for (auto& prev : results_) {
+                const std::string qName = "WGD_" + std::to_string(prev.wgdEdgeIdx) + ".q";
+                optimizeParam(baseLik_, qName, 0.0, 1.0, m_->optTolerance_);
+                ParameterList ps = baseLik_->getParameters();
+                for (size_t pi = 0; pi < ps.size(); ++pi) {
+                    if (ps[pi].getName().find(qName) != std::string::npos) {
+                        prev.q = ps[pi].getValue();
+                        wgdQMap_[prev.wgdEdgeIdx] = prev.q;
+                        break;
+                    }
+                }
+            }
+            baseAIC = ModelAdequacyUtils::calculateAIC(baseLik_, acceptedTCount_);
+        }
+
         WGDResult res;
         res.childNodeId  = static_cast<uint>(bestChildId);
         res.wgdEdgeIdx   = acceptedIns.wgdEdgeIdx;
