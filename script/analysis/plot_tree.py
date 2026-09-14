@@ -50,7 +50,7 @@ wgd_clades = [
     if c is not tree.root and (c.branch_length or 0) == 0
 ]
 
-fig, ax = plt.subplots(figsize=(7, 4))
+fig, ax = plt.subplots(figsize=(12, 4))
 Phylo.draw(tree, axes=ax, do_show=False,
            label_func=lambda c: c.name if c.is_terminal() else "")
 
@@ -66,7 +66,7 @@ for (_, _), pts in groups.items():
     n = len(pts)
     offsets = [JITTER * (i - (n - 1) / 2) for i in range(n)]
     for (x, y), dy in zip(pts, offsets):
-        ax.plot(x, y + dy, marker="D", ms=10, color="#27ae60", zorder=5, clip_on=False)
+        ax.plot(x, y + dy, marker="D", ms=6, color="#27ae60", zorder=5, clip_on=False)
 
 ax.set_title("")
 ax.set_xlabel("Branch length", fontsize=11)

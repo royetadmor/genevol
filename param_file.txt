@@ -15,9 +15,9 @@ _branchMul = 0.007401
 
 # Rate Params for classic model
 _gain=0.1
-_loss=2
-_innovation=0.1
-_elimination=1
+_loss=0.1
+_innovation=0.5
+_elimination=0.5
 
 
 # Dependency functions for classic model

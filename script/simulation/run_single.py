@@ -221,9 +221,9 @@ def parse_wgd_results(log):
         return []
     rows = []
     for m in re.finditer(
-        r"^\s+\d+\s+\d+\s+([\d.eE+\-]+)\s+([\d.eE+\-]+)", block_match.group(1), re.MULTILINE
+        r"^\s+\d+\s+(\d+)\s+([\d.eE+\-]+)\s+([\d.eE+\-]+)", block_match.group(1), re.MULTILINE
     ):
-        rows.append({"q": float(m.group(1)), "delta_aic": float(m.group(2))})
+        rows.append({"child_node": int(m.group(1)), "q": float(m.group(2)), "delta_aic": float(m.group(3))})
     return rows
 
 # ── Main ───────────────────────────────────────────────────────────────────────
@@ -259,7 +259,7 @@ def main():
 
     t_start = time.time()
     try:
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(dir=sim_output) as tmpdir:
             sim_param     = os.path.join(tmpdir, "sim_param.txt")
             genevol_param = os.path.join(tmpdir, "genevol_param.txt")
 
@@ -295,8 +295,9 @@ def main():
         if n_wgds > 0:
             result["n_detected"] = len(wgd_rows)
             for i in range(n_wgds):
-                result[f"detected_q_{i+1}"] = wgd_rows[i]["q"]   if i < len(wgd_rows) else None
-                result[f"delta_aic_{i+1}"]  = wgd_rows[i]["delta_aic"] if i < len(wgd_rows) else None
+                result[f"detected_node_{i+1}"] = wgd_rows[i]["child_node"] if i < len(wgd_rows) else None
+                result[f"detected_q_{i+1}"]    = wgd_rows[i]["q"]          if i < len(wgd_rows) else None
+                result[f"delta_aic_{i+1}"]     = wgd_rows[i]["delta_aic"]  if i < len(wgd_rows) else None
             result["inferred_gain"]        = rec.get("gain")
             result["inferred_loss"]        = rec.get("loss")
             result["inferred_innovation"]  = rec.get("innovation")
