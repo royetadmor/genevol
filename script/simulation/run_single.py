@@ -50,9 +50,9 @@ MODES = {
     "one_wgd": {
         "description":     "WGD detection — single WGD event",
         "sim_trees": [
-            "test_data/tiley2016/Monocots/tree_wgd.newick",
+            "/groups/itay_mayrose_nosnap/royetadmor/genevol_proj/genevol/test_data/tiley2016/Monocots/tree_1wgd.newick",
         ],
-        "infer_tree":      "test_data/tiley2016/Monocots/tree.newick",
+        "infer_tree":      "/groups/itay_mayrose_nosnap/royetadmor/genevol_proj/genevol/test_data/tiley2016/Monocots/tree.newick",
         "true_qs":         [0.3],
         "root_lambda":     -1,
         "sim_root_lambda": 1.5,
@@ -71,9 +71,9 @@ MODES = {
     "two_wgds": {
         "description":     "WGD detection — two WGD events",
         "sim_trees": [
-            "test_data/tiley2016/Monocots/tree_wgds.newick",
+            "/groups/itay_mayrose_nosnap/royetadmor/genevol_proj/genevol/test_data/tiley2016/Monocots/tree_2wgd.newick",
         ],
-        "infer_tree":      "test_data/tiley2016/Monocots/tree.newick",
+        "infer_tree":      "/groups/itay_mayrose_nosnap/royetadmor/genevol_proj/genevol/test_data/tiley2016/Monocots/tree.newick",
         "true_qs":         [0.5, 0.5],
         "root_lambda":     1.0,
         "rate_init":       "generic",
@@ -91,9 +91,9 @@ MODES = {
     "four_wgds": {
         "description":     "WGD detection — four WGD events",
         "sim_trees": [
-            "test_data/tiley2016/Monocots/tree_4wgds.newick",
+            "/groups/itay_mayrose_nosnap/royetadmor/genevol_proj/genevol/test_data/tiley2016/Monocots/tree_4wgd.newick",
         ],
-        "infer_tree":      "test_data/tiley2016/Monocots/tree.newick",
+        "infer_tree":      "/groups/itay_mayrose_nosnap/royetadmor/genevol_proj/genevol/test_data/tiley2016/Monocots/tree.newick",
         "true_qs":         [0.5, 0.5, 0.5, 0.5],
         "root_lambda":     1.0,
         "rate_init":       "generic",
@@ -113,7 +113,7 @@ MODES = {
 # ── Shared constants ───────────────────────────────────────────────────────────
 
 NUM_SITES = 1000
-MAX_STATE = 50
+MAX_STATE = 100
 
 SCRIPT_DIR = os.path.dirname(os.path.realpath(__file__))
 REPO_ROOT  = os.path.dirname(os.path.dirname(SCRIPT_DIR))
@@ -132,7 +132,7 @@ def write_sim_param_file(path, cfg, tree, branch_mul, seed):
     rates = cfg["rates"]
     with open(path, "w") as f:
         f.write(f"_treePath        = {tree}\n")
-        f.write(f"_outputFasta     = sim_output/simulated.fasta\n")
+        f.write(f"_outputFasta     = {os.path.dirname(path)}/simulated.fasta\n")
         f.write(f"_gain            = {rates['gain']}\n")
         f.write(f"_loss            = {rates['loss']}\n")
         f.write(f"_innovation      = {rates['innovation']}\n")
@@ -157,7 +157,7 @@ def write_genevol_param_file(path, cfg, tree, branch_mul):
     n     = len(cfg["true_qs"])
     with open(path, "w") as f:
         f.write(f"_treePath        = {tree}\n")
-        f.write(f"_dataPath        = sim_output/simulated.fasta\n")
+        f.write(f"_dataPath        = {os.path.dirname(path)}/simulated.fasta\n")
         if cfg["rate_init"] == "true":
             f.write(f"_gain            = {rates['gain']}\n")
             f.write(f"_loss            = {rates['loss']}\n")
@@ -259,7 +259,7 @@ def main():
 
     t_start = time.time()
     try:
-        with tempfile.TemporaryDirectory(dir=sim_output) as tmpdir:
+        with tempfile.TemporaryDirectory(dir="/groups/itay_mayrose_nosnap/royetadmor/genevol_proj/genevol") as tmpdir:
             sim_param     = os.path.join(tmpdir, "sim_param.txt")
             genevol_param = os.path.join(tmpdir, "genevol_param.txt")
 

@@ -11,6 +11,7 @@ Makefile
 
 # Generated binaries
 /GenEvol/genEvol
+/Simulator/simulator
 *.so*
 
 # Result dir
