@@ -108,7 +108,8 @@ std::shared_ptr<DiscreteDistributionInterface> WGDManager::extractRDist(SinglePr
             break;
         }
     }
-    return std::make_shared<GammaDiscreteRateDistribution>(nCat, alpha);
+    m_->rDist_->setParameterValue("alpha", alpha);
+    return m_->rDist_;
 }
 
 WGDManager::CandidateResult WGDManager::evaluateCandidate(
@@ -166,7 +167,7 @@ SingleProcessPhyloLikelihood* WGDManager::reoptimizeParams(SingleProcessPhyloLik
 {
     auto newLik = LikelihoodUtils::createLikelihoodProcess(
         m_, tree_, extractRateParams(prevLik), m_->rateChangeType_,
-        m_->constraintedParams_, extractRDist(prevLik), wgdQMap_, m_->rootLambda_);
+        m_->constraintedParams_, extractRDist(prevLik), wgdQMap_, extractRootLambda(prevLik));
     LikelihoodUtils::optimizeModelParametersOneDimension(newLik, m_, m_->optTolerance_, m_->optNumIterations_);
     return newLik;
 }
