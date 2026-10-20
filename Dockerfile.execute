@@ -1,5 +1,3 @@
 FROM genevol:latest
 
-COPY param_file.txt /app/genevol/param_file.txt
-
 CMD ["./GenEvol/genEvol", "param=/app/genevol/param_file.txt"]

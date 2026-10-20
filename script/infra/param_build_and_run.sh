@@ -1,5 +1,9 @@
 set -e
 
-docker build -t genevol_exec -f Dockerfile.execute . 
+PARAM_FILE="$(realpath "${1:-./param_file.txt}")"
 
-docker run --rm genevol_exec
+docker build -t genevol_exec -f Dockerfile.execute .
+
+docker run --rm \
+    -v "${PARAM_FILE}:/app/genevol/param_file.txt:ro" \
+    genevol_exec
