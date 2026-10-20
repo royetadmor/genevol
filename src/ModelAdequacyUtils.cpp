@@ -3,7 +3,7 @@
 using namespace bpp;
 using namespace std;
 
-double ModelAdequacyUtils::calculateAIC(SingleProcessPhyloLikelihood* lik, size_t extraParams)
+double ModelAdequacyUtils::calculateAIC(SingleProcessPhyloLikelihood* lik, size_t extraParams, size_t fixedParams)
 {
     ParameterList params = lik->getSubstitutionProcess()->getIndependentParameters();
     size_t numOfParams = 0;
@@ -12,6 +12,7 @@ double ModelAdequacyUtils::calculateAIC(SingleProcessPhyloLikelihood* lik, size_
             numOfParams++;
     }
     numOfParams += extraParams;
+    numOfParams -= fixedParams;
     return 2.0 * lik->getValue() + 2.0 * numOfParams;
 }
 

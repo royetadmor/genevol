@@ -167,7 +167,7 @@ SingleProcessPhyloLikelihood* WGDManager::reoptimizeParams(SingleProcessPhyloLik
 {
     auto newLik = LikelihoodUtils::createLikelihoodProcess(
         m_, tree_, extractRateParams(prevLik), m_->rateChangeType_,
-        m_->constraintedParams_, extractRDist(prevLik), wgdQMap_, extractRootLambda(prevLik));
+        m_->constraintedParams_, extractRDist(prevLik), wgdQMap_, extractRootLambda(prevLik), /*freeLambda=*/true);
     LikelihoodUtils::optimizeModelParametersOneDimension(newLik, m_, m_->optTolerance_, m_->optNumIterations_);
     return newLik;
 }
@@ -288,29 +288,31 @@ void WGDManager::testWGD(const std::map<uint, double>& fixedEdges, const std::ve
     std::cout << "." << std::endl;
 
     // altQMap: fixed edges at their q values, free edges seeded at 0.5
-    std::map<uint, double> altQMap = fixedEdges;;
+    std::map<uint, double> altQMap = fixedEdges;
     for (uint edgeId : freeEdgeIds) {
-        altQMap[edgeId] = 0.0;
+        altQMap[edgeId] = 0.5;
     }
 
     // Create and optimize alternative likelihood object (new hypothesis)
     auto altLik = LikelihoodUtils::createLikelihoodProcess(
         m_, tree_, extractRateParams(baseLik_), m_->rateChangeType_,
-        m_->constraintedParams_, extractRDist(baseLik_), altQMap, extractRootLambda(baseLik_));
+        m_->constraintedParams_, extractRDist(baseLik_), altQMap, extractRootLambda(baseLik_), /*freeLambda=*/true);
 
-    // Set fixed q values
+    // Fix the fixed q values so base-param optimization doesn't touch them
     for (const auto& kv : fixedEdges) {
         m_->fixedParams_.push_back("WGD_" + std::to_string(kv.first) + ".q");
     }
-    cout << "Optimizing alternative model" << endl;
+    cout << "Optimizing alternative model (base params + WGD q jointly)" << endl;
+
+    // optimize free q values
+    for (uint edgeId : freeEdgeIds) {
+        optimizeParam(altLik, "WGD_" + std::to_string(edgeId) + ".q", 0.0, 1.0, m_->optTolerance_);
+    }
+
+    // re-optimize base params
     LikelihoodUtils::optimizeModelParametersOneDimension(altLik, m_, m_->optTolerance_, m_->optNumIterations_);
     for (size_t i = 0; i < fixedEdges.size(); ++i) {
         m_->fixedParams_.pop_back();
-    }
-
-    // Optimize free q values
-    for (uint edgeId : freeEdgeIds) {
-        optimizeParam(altLik, "WGD_" + std::to_string(edgeId) + ".q", 0.0, 1.0, m_->optTolerance_);
     }
 
     printTestResults(altLik, baseLik_, fixedEdges, freeEdgeIds);
@@ -348,7 +350,7 @@ void WGDManager::printTestResults(SingleProcessPhyloLikelihood* altLik,
         }
     }
 
-    double altAIC = ModelAdequacyUtils::calculateAIC(altLik);
+    double altAIC = ModelAdequacyUtils::calculateAIC(altLik, 0, fixedEdges.size());
     std::cout << "  Alt  likelihood=" << altLik->getValue() << "  AIC=" << altAIC << std::endl;
 
     if (baseLik == nullptr) {
@@ -357,7 +359,7 @@ void WGDManager::printTestResults(SingleProcessPhyloLikelihood* altLik,
     }
 
     if (m_->modelCriterion_ == "AIC") {
-        double baseAIC  = ModelAdequacyUtils::calculateAIC(baseLik);
+        double baseAIC  = ModelAdequacyUtils::calculateAIC(baseLik, 0, freeEdgeIds.size() + fixedEdges.size());
         double deltaAIC = baseAIC - altAIC;
         std::cout << "  Base AIC=" << baseAIC << std::endl;
         std::cout << "  ΔAIC (base - alt) = " << deltaAIC << std::endl;

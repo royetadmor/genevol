@@ -5,7 +5,7 @@ using namespace bpp;
 using namespace std;
 
 
-std::shared_ptr<NonHomogeneousSubstitutionProcess> LikelihoodUtils::createSubstitutionProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::shared_ptr<DiscreteDistributionInterface> rDist, std::map<uint, double> wgdQMap, double rootLambda) {
+std::shared_ptr<NonHomogeneousSubstitutionProcess> LikelihoodUtils::createSubstitutionProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::shared_ptr<DiscreteDistributionInterface> rDist, std::map<uint, double> wgdQMap, double rootLambda, bool freeLambda) {
     // Create substitution process components
     auto parTree = std::make_shared<ParametrizablePhyloTree>(*tree);
 
@@ -18,7 +18,7 @@ std::shared_ptr<NonHomogeneousSubstitutionProcess> LikelihoodUtils::createSubsti
     if (m->rootFreqModel_ == "NegBinomial") {
         rootFrequencies = negBinRootFreqSet(m, subModel->getStateMap());
     } else {
-        rootFrequencies = poissonRootFreqSet(m, subModel->getStateMap(), rootLambda);
+        rootFrequencies = poissonRootFreqSet(m, subModel->getStateMap(), rootLambda, freeLambda);
     }
 
     // Create substitution process
@@ -46,8 +46,8 @@ std::shared_ptr<NonHomogeneousSubstitutionProcess> LikelihoodUtils::createSubsti
     return subProcesses;
 }
 
-SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, string> constraintedParams, std::shared_ptr<DiscreteDistributionInterface> rDist, std::map<uint, double> wgdQMap, double rootLambda) {
-    auto subProcesses = createSubstitutionProcess(m, tree, rateParams, rateChangeType, rDist, wgdQMap, rootLambda);
+SingleProcessPhyloLikelihood* LikelihoodUtils::createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, string> constraintedParams, std::shared_ptr<DiscreteDistributionInterface> rDist, std::map<uint, double> wgdQMap, double rootLambda, bool freeLambda) {
+    auto subProcesses = createSubstitutionProcess(m, tree, rateParams, rateChangeType, rDist, wgdQMap, rootLambda, freeLambda);
     
     auto nsubPro = std::shared_ptr<SubstitutionProcessInterface>(subProcesses->clone());
     // Check for constrainted params, avoid constraining when computing WGD
@@ -202,9 +202,9 @@ bool LikelihoodUtils::isFixedParam(const std::string& name, const std::vector<st
     return false;
 }
 
-void LikelihoodUtils::printResults(SingleProcessPhyloLikelihood* lik, bool printRate4Site) {
+void LikelihoodUtils::printResults(SingleProcessPhyloLikelihood* lik, bool printRate4Site, size_t fixedParams) {
     double likelihood = lik->getValue();
-    double aic = ModelAdequacyUtils::calculateAIC(lik);
+    double aic = ModelAdequacyUtils::calculateAIC(lik, 0, fixedParams);
 
     std::cout << "Likelihood: " << likelihood << std::endl;
     std::cout << "AIC score: " << aic << std::endl;
@@ -226,6 +226,16 @@ void LikelihoodUtils::printResults(SingleProcessPhyloLikelihood* lik, bool print
     }
 }
 
+void LikelihoodUtils::printLikelihoodPerSite(SingleProcessPhyloLikelihood* lik)
+{
+    auto perSite = lik->getLikelihoodPerSite();
+    std::cout << "Log-likelihood per site:" << std::endl;
+    for (size_t i = 0; i < perSite.size(); ++i) {
+        double ll = -(std::log(bpp::ExtendedFloat::convert(perSite[i])));
+        std::cout << "  site " << i << ": " << ll << std::endl;
+    }
+}
+
 // Function mostly for debugging, consider removing in the future
 void LikelihoodUtils::printRootFreqsPerSite(SingleProcessPhyloLikelihood* lik)
 {
@@ -242,9 +252,9 @@ void LikelihoodUtils::printRootFreqsPerSite(SingleProcessPhyloLikelihood* lik)
     }
 }
 
-std::shared_ptr<PoissonFrequencySet> LikelihoodUtils::poissonRootFreqSet(ModelParameters* m, std::shared_ptr<const StateMapInterface> stateMap, double rootLambda) {
+std::shared_ptr<PoissonFrequencySet> LikelihoodUtils::poissonRootFreqSet(ModelParameters* m, std::shared_ptr<const StateMapInterface> stateMap, double rootLambda, bool freeLambda) {
     if (rootLambda > 0.0) {
-        return std::make_shared<PoissonFrequencySet>(stateMap, rootLambda);
+        return std::make_shared<PoissonFrequencySet>(stateMap, rootLambda, freeLambda);
     }
 
     double total = 0.0;

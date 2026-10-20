@@ -13,7 +13,7 @@ public:
     ModelAdequacyUtils() {}
     virtual ~ModelAdequacyUtils() {}
 
-    static double calculateAIC(SingleProcessPhyloLikelihood* lik, size_t extraParams = 0);
+    static double calculateAIC(SingleProcessPhyloLikelihood* lik, size_t extraParams = 0, size_t fixedParams = 0);
 
     // Chi-squared survival function: P(X > stat | df).
     static double chi2pvalue(double stat, int df);

@@ -47,19 +47,20 @@ namespace bpp{
         static void deleteLikelihoodProcess(SingleProcessPhyloLikelihood* lik);
         static int getParamIndex(string name);
         static std::vector<string> filterParamsByName(std::vector<std::string> listOfParams, std::string paramName);
-        static std::shared_ptr<NonHomogeneousSubstitutionProcess> createSubstitutionProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::shared_ptr<DiscreteDistributionInterface> rDist, std::map<uint, double> wgdQMap = {}, double rootLambda = -1.0);
-        static SingleProcessPhyloLikelihood* createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, string> constraintedParams, std::shared_ptr<DiscreteDistributionInterface> rDist, std::map<uint, double> wgdQMap = {}, double rootLambda = -1.0);
+        static std::shared_ptr<NonHomogeneousSubstitutionProcess> createSubstitutionProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::shared_ptr<DiscreteDistributionInterface> rDist, std::map<uint, double> wgdQMap = {}, double rootLambda = -1.0, bool freeLambda = false);
+        static SingleProcessPhyloLikelihood* createLikelihoodProcess(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::map<int, std::vector<double>> rateParams, std::vector<int> rateChangeType, std::map<string, string> constraintedParams, std::shared_ptr<DiscreteDistributionInterface> rDist, std::map<uint, double> wgdQMap = {}, double rootLambda = -1.0, bool freeLambda = false);
         static void setProcessConstraintedParams(std::map<string, string> constraintedParams, AbstractParameterAliasable* process);
         static bool isFixedParam(const std::string& name, const std::vector<string> params);
         static std::vector<double> calculateExpectedRatePerSite(SingleProcessPhyloLikelihood* lik, const bool normalize);
-        static void printResults(SingleProcessPhyloLikelihood* lik, bool printRate4Site = false);
+        static void printResults(SingleProcessPhyloLikelihood* lik, bool printRate4Site = false, size_t fixedParams = 0);
         static void printRootFreqsPerSite(SingleProcessPhyloLikelihood* lik);
+        static void printLikelihoodPerSite(SingleProcessPhyloLikelihood* lik);
         static void optimizeModelParametersOneDimension(SingleProcessPhyloLikelihood* likelihoodProcess, ModelParameters* m,double tol, unsigned int maxNumOfIterations);
         static SingleProcessPhyloLikelihood* multiStartOptimize(ModelParameters* m, std::shared_ptr<bpp::PhyloTree> tree, std::vector<int> rateChangeType, std::map<string, string> constraintedParams, std::shared_ptr<DiscreteDistributionInterface> rDist);
     private:
         static vector<string> getParametersByName(ParameterList params, string name);
         static void normalizeVector(vector<double>& data);
-        static std::shared_ptr<PoissonFrequencySet> poissonRootFreqSet(ModelParameters* m, std::shared_ptr<const StateMapInterface> stateMap, double rootLambda = -1.0);
+        static std::shared_ptr<PoissonFrequencySet> poissonRootFreqSet(ModelParameters* m, std::shared_ptr<const StateMapInterface> stateMap, double rootLambda = -1.0, bool freeLambda = false);
         static std::shared_ptr<NegBinomialFrequencySet> negBinRootFreqSet(ModelParameters* m, std::shared_ptr<const StateMapInterface> stateMap);
         static std::map<int, std::vector<double>> createRandomRateParams(ModelParameters* m);
         static std::vector<SingleProcessPhyloLikelihood*> selectTopK(const std::vector<SingleProcessPhyloLikelihood*>& candidates, int k);
