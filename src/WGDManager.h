@@ -67,7 +67,7 @@ public:
 private:
     /** Run Brent optimization on a single named parameter of func over [lo, hi]. */
     void optimizeParam(FunctionInterface* func, const std::string& paramName,
-                       double lo, double hi, double tolerance);
+                       double lo, double hi, double tolerance, bool verbose = false);
 
     struct CandidateResult {
         double deltaAIC = 0;

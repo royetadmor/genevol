@@ -27,7 +27,7 @@ WGDManager::WGDManager(ModelParameters* m,
 
 
 void WGDManager::optimizeParam(FunctionInterface* func, const std::string& paramName,
-                               double lo, double hi, double tolerance)
+                               double lo, double hi, double tolerance, bool verbose)
 {
     ParameterList params = func->getParameters();
     std::string actualName;
@@ -41,6 +41,8 @@ void WGDManager::optimizeParam(FunctionInterface* func, const std::string& param
         throw std::runtime_error("optimizeParam: parameter '" + paramName + "' not found.");
     }
 
+    double valueBefore = verbose ? params.getParameter(actualName)->getValue() : 0.0;
+
     auto f = std::shared_ptr<FunctionInterface>(func, [](FunctionInterface*) {});
     ExtendedBrentOptimizer optimizer(f);
     optimizer.setVerbose(0);
@@ -53,6 +55,11 @@ void WGDManager::optimizeParam(FunctionInterface* func, const std::string& param
     optimizer.setInitialInterval(lo, hi);
     optimizer.init(params.createSubList(actualName));
     optimizer.optimize();
+
+    if (verbose) {
+        double valueAfter = func->getParameters().getParameter(actualName)->getValue();
+        std::cout << "  " << actualName << ": " << valueBefore << " -> " << valueAfter << std::endl;
+    }
 }
 
 std::map<int, std::vector<double>> WGDManager::extractRateParams(SingleProcessPhyloLikelihood* lik) const
@@ -175,7 +182,6 @@ SingleProcessPhyloLikelihood* WGDManager::reoptimizeParams(SingleProcessPhyloLik
 void WGDManager::forwardPass()
 {
     double baseAIC = ModelAdequacyUtils::calculateAIC(baseLik_);
-    double currentRootLambda = extractRootLambda(baseLik_);
     std::cout << "WGD forward pass — baseline AIC: " << baseAIC << std::endl;
 
     while (true) {
@@ -185,9 +191,12 @@ void WGDManager::forwardPass()
         double bestT        = 0.5;
         SingleProcessPhyloLikelihood* bestLik = nullptr;
 
-        auto currentParams = extractRateParams(baseLik_);
-        auto currentRDist  = extractRDist(baseLik_);
+        // Re-extract from baseLik_ each round so candidates see up-to-date params
+        auto currentParams      = extractRateParams(baseLik_);
+        auto currentRDist       = extractRDist(baseLik_);
+        double currentRootLambda = extractRootLambda(baseLik_);
 
+        std::cout << "Searching for a new WGD event..." << std::endl;
         for (uint childId : getCandidates()) {
             CandidateResult res = evaluateCandidate(childId, baseAIC, currentParams, currentRDist, currentRootLambda);
 
@@ -216,44 +225,39 @@ void WGDManager::forwardPass()
                   << "  t=" << bestT << "  ΔAIC=" << bestDeltaAIC << "  q=" << bestQ << std::endl;
 
         wgdQMap_[acceptedIns.wgdEdgeIdx] = bestQ;
-
-        ownedLiks_.push_back(bestLik);
-        baseLik_ = bestLik;
         acceptedTCount_++;
-        baseAIC = ModelAdequacyUtils::calculateAIC(baseLik_, acceptedTCount_);
 
-        if (!results_.empty()) {
-            std::cout << "Re-optimizing " << results_.size()
-                      << " previously accepted WGD q value(s)..." << std::endl;
-            for (auto& prev : results_) {
-                const std::string qName = "WGD_" + std::to_string(prev.wgdEdgeIdx) + ".q";
-                optimizeParam(baseLik_, qName, 0.0, 1.0, m_->optTolerance_);
-                ParameterList ps = baseLik_->getParameters();
-                for (size_t pi = 0; pi < ps.size(); ++pi) {
-                    if (ps[pi].getName().find(qName) != std::string::npos) {
-                        prev.q = ps[pi].getValue();
-                        wgdQMap_[prev.wgdEdgeIdx] = prev.q;
-                        break;
-                    }
+        // Record result before joint re-optimization so all q values are updated in place
+        WGDResult newResult;
+        newResult.childNodeId = static_cast<uint>(bestChildId);
+        newResult.wgdEdgeIdx  = acceptedIns.wgdEdgeIdx;
+        newResult.q           = bestQ;
+        newResult.t           = bestT;
+        newResult.deltaAIC    = bestDeltaAIC;
+        results_.push_back(newResult);
+
+        // Jointly re-optimize base params then all accepted q values.
+        // This ensures the next round's candidate search uses unbiased base params.
+        std::cout << "Re-optimizing base params and all " << results_.size()
+                  << " accepted WGD q value(s)..." << std::endl;
+        auto reOptLik = reoptimizeParams(bestLik);
+        for (auto& r : results_) {
+            const std::string qName = "WGD_" + std::to_string(r.wgdEdgeIdx) + ".q";
+            optimizeParam(reOptLik, qName, 0.0, 1.0, m_->optTolerance_, /*verbose=*/true);
+            ParameterList ps = reOptLik->getParameters();
+            for (size_t pi = 0; pi < ps.size(); ++pi) {
+                if (ps[pi].getName().find(qName) != std::string::npos) {
+                    r.q = ps[pi].getValue();
+                    wgdQMap_[r.wgdEdgeIdx] = r.q;
+                    break;
                 }
             }
-            baseAIC = ModelAdequacyUtils::calculateAIC(baseLik_, acceptedTCount_);
         }
 
-        WGDResult res;
-        res.childNodeId  = static_cast<uint>(bestChildId);
-        res.wgdEdgeIdx   = acceptedIns.wgdEdgeIdx;
-        res.q            = bestQ;
-        res.t            = bestT;
-        res.deltaAIC     = bestDeltaAIC;
-        results_.push_back(res);
-    }
-
-    if (!results_.empty()) {
-        std::cout << "Re-optimizing parameters after forward pass..." << std::endl;
-        auto reOptLik = reoptimizeParams(baseLik_);
+        ownedLiks_.push_back(bestLik);
         ownedLiks_.push_back(reOptLik);
         baseLik_ = reOptLik;
+        baseAIC = ModelAdequacyUtils::calculateAIC(baseLik_, acceptedTCount_);
     }
 }
 
