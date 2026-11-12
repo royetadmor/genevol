@@ -20,6 +20,7 @@ figures/
 
 # Simulations
 sim_output/
+bootstrap_output/
 
 # Test / run logs
 log/

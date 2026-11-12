@@ -36,6 +36,7 @@ ModelParameters::ModelParameters(BppApplication GenEvol)
     // Load customization params
     ModelParameters::branchMul_    = ApplicationTools::getDoubleParameter("_branchMul",    GenEvol.getParams(), -999.0);
     ModelParameters::wgdThreshold_    = ApplicationTools::getDoubleParameter("_wgdThreshold",   GenEvol.getParams(), 10.0);
+    ModelParameters::maxWgdEvents_     = (size_t)ApplicationTools::getIntParameter("_maxWgdEvents", GenEvol.getParams(), 1000000, "", true, -1);
     ModelParameters::wgdMode_         = ApplicationTools::getStringParameter ("_wgdMode",         GenEvol.getParams(), "disable", "", true, -1);
     ModelParameters::modelCriterion_  = ApplicationTools::getStringParameter ("_modelCriterion",  GenEvol.getParams(), "AIC",    "", true, -1);
     validateWgdMode();

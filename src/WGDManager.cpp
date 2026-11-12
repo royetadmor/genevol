@@ -235,6 +235,10 @@ void WGDManager::forwardPass()
         newResult.t           = bestT;
         newResult.deltaAIC    = bestDeltaAIC;
         results_.push_back(newResult);
+        if (results_.size() >= m_->maxWgdEvents_) {
+            std::cout << "Reached " << results_.size() << " WGD event(s). Stopping search." << std::endl;
+            break;
+        }
 
         // Jointly re-optimize base params then all accepted q values.
         // This ensures the next round's candidate search uses unbiased base params.

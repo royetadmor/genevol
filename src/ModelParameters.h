@@ -64,6 +64,7 @@ public: // Variables
     std::vector<double> fixedWgdQ_;
     int numStarts_ = 10;
     int topK_ = 3;
+    size_t maxWgdEvents_;
 
     // Translates rate functions from string to int
     const std::map<std::string, int> func_string_to_enum = {
