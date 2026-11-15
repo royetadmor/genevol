@@ -398,7 +398,7 @@ def _run_hpc(args):
             f'--array=1-{n_reps}',
             f'--output={os.path.join(logs_dir, "bootstrap_%A_%a.out")}',
             f'--error={os.path.join(logs_dir, "bootstrap_%A_%a.err")}',
-            SLURM_SCRIPT, out_dir, param_file,
+            SLURM_SCRIPT, out_dir, param_file, os.path.join(SCRIPT_DIR, 'parametric_bootstrap.py'),
         ],
         capture_output=True, text=True,
     )

@@ -9,10 +9,9 @@
 
 OUT_DIR="${1}"
 PARAM_FILE="${2}"
+BOOTSTRAP_SCRIPT="${3}"
 
-SCRIPT_DIR="$(dirname "$(realpath "$0")")"
-
-python3 "${SCRIPT_DIR}/parametric_bootstrap.py" \
+python3 "${BOOTSTRAP_SCRIPT}" \
     --run-rep \
     --rep-id "$SLURM_ARRAY_TASK_ID" \
     --out-dir "$OUT_DIR" \
